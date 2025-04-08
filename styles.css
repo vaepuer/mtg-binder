@@ -17,6 +17,8 @@ body {
   max-width: 1200px; /* Prevent it from stretching too far */
   justify-content: space-between;
   flex-wrap: wrap; /* Allow wrapping for small screens */
+  flex-direction: column; /* Stack panels vertically */
+  gap: 20px; /* Space between panels */
 }
 
 /* Adjust for mobile-friendly design */
@@ -27,28 +29,21 @@ body {
 
 /* Adjust left and right panels */
 .left-panel, .right-panel {
-  width: 48%; /* Keep the panels fixed at 48% of the width */
+  width: 100%; /* Panels take full width on small screens */
   background-color: #ffffff;
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   padding: 20px;
   overflow-y: auto;
-  max-height: 90vh;
+  max-height: 70vh; /* Ensure panels don't stretch too far */
 }
 
-/* For smaller screens, adjust the panel width */
-@media (max-width: 768px) {
-  .left-panel, .right-panel {
-    width: 100%; /* Panels take full width */
-    margin-bottom: 20px; /* Add space between panels */
-  }
-
-  .ko-fi {
-    transform: translate(0px, 300px); /* Adjust position for mobile */
-  }
+/* Make sure the preview is on top on smaller screens */
+.left-panel {
+  order: 1; /* Ensure preview is on top */
 }
 
-/* Adjust table styles */
+/* Table styles */
 table {
   width: 100%;
   table-layout: fixed; /* Prevent the table from resizing */
@@ -94,40 +89,7 @@ input[type="text"] {
   }
 }
 
-/* Foil checkbox and other tags */
-input[type="checkbox"] {
-  margin-left: 10px;
-}
-
-/* Display [F] when the foil checkbox is selected */
-.foil-tag {
-  color: #00cc00; /* Color for foil tag */
-  font-weight: bold;
-}
-
-/* Prevent elements from shifting and resizing */
-#cardTable {
-  width: 100%;
-  max-width: 100%;
-  table-layout: fixed;
-  overflow-y: auto;
-  word-wrap: break-word;
-}
-
-td {
-  white-space: nowrap; /* Prevent content from wrapping */
-}
-
-/* Card preview box */
-#previewBox {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  max-width: 100%;
-}
-
-/* Clean, minimalist button styles */
+/* Button styling */
 button {
   background-color: #9e9e9e;
   color: white;
@@ -145,14 +107,6 @@ button:hover {
 
 button:focus {
   outline: none;
-}
-
-#previewImage {
-  width: 100%;
-  max-width: 300px;
-  margin-bottom: 10px;
-  border-radius: 10px;
-  transition: all 0.3s ease; /* Adding smooth transition for shadow */
 }
 
 /* Modal */
@@ -179,14 +133,23 @@ button:focus {
   z-index: 100;
 }
 
-/* Wrapper for card image and foil effect */
+/* Preview Box */
+#previewBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+}
+
+/* Card preview container - ensure it’s clickable */
 .preview-container {
   position: relative;
   display: inline-block;
   border-radius: 10px;
-  perspective: 1000px; /* Adds depth */
-  
-  transform: rotateX(0deg) rotateY(0deg); /* Neutral position when the card first appears */
+  perspective: 1000px;
+  cursor: pointer; /* Make sure it’s clickable */
+  transition: transform 0.1s ease;
 }
 
 .preview-container img {
@@ -194,19 +157,19 @@ button:focus {
   width: 100%;
   height: 283px;
   border-radius: 10px;
-  background-color: transparent; /* Ensures no background is applied to the image */
-  object-fit: cover; /* Ensures the image covers the container properly */
+  background-color: transparent;
+  object-fit: cover;
   transition: transform 0.1s ease;
   transform-style: preserve-3d;
-  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1); /* Shadow under the card image */
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
   will-change: transform;
   pointer-events: none;
 }
 
-/* Rainbow foil effect overlay */
+/* Rainbow foil effect */
 .rainbow-foil img {
   position: relative;
-  z-index: 2; /* Ensure the image is behind the foil */
+  z-index: 2;
 }
 
 .rainbow-foil::after {
@@ -220,15 +183,15 @@ button:focus {
   height: 283px;
   background: url('rainbow-foil.png') no-repeat center center;
   background-size: cover;
-  pointer-events: none; /* Make sure it doesn't block any interactions */
-  z-index: 2; /* This will place the foil effect on top of the image */
-  opacity: 0.5; /* Adjust the opacity to control how intense the foil effect is */
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.5;
 }
 
-/* Piss foil effect overlay */
+/* Piss foil effect */
 .piss-foil img {
   position: relative;
-  z-index: 2; /* Ensure the image is behind the foil */
+  z-index: 2;
 }
 
 .piss-foil::after {
@@ -242,7 +205,7 @@ button:focus {
   height: 283px;
   background: url('piss-foil.png') no-repeat center center;
   background-size: cover;
-  pointer-events: none; /* Make sure it doesn't block any interactions */
-  z-index: 2; /* This will place the foil effect on top of the image */
-  opacity: 0.5; /* Adjust the opacity to control how intense the foil effect is */
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.5;
 }

@@ -116,10 +116,38 @@ function renderCards() {
         // Hover event to show the card preview
         row.addEventListener('mouseenter', () => showPreview(card));
 
+        // Add a data attribute for the card ID to the preview container
+        const previewContainer = document.createElement('td');
+        previewContainer.classList.add('preview-container');
+        previewContainer.setAttribute('data-card-id', card.id); // Attach the card ID for selection
+        row.appendChild(previewContainer);
+
         // Append row to table body
         tableBody.appendChild(row);
     });
+
+    // Now add the event listener for the preview container (tap-to-select preview)
+    document.querySelectorAll('.preview-container').forEach(item => {
+        item.addEventListener('click', function() {
+            const cardId = this.getAttribute('data-card-id'); // Get the card ID
+            showCardPreview(cardId); // Call the preview function
+        });
+    });
 }
+
+// Function to handle the preview of a card when clicked
+function showCardPreview(cardId) {
+    const card = cardList.find(c => c.id === cardId); // Find the card using its ID
+    if (card) {
+        console.log('Previewing card with ID:', cardId);
+        // You can expand this function to show the detailed preview (image, effects, etc.)
+        // E.g., call `showPreview(card)` here to display the card preview
+        showPreview(card); // Assuming this function is defined elsewhere to show the preview
+    } else {
+        console.warn('Card not found for preview:', cardId);
+    }
+}
+
 
 
 
