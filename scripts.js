@@ -47,9 +47,6 @@ function addRow() {
     resetForm();
 }
 
-
-
-
 function renderCards() {
     const tableBody = document.querySelector('#cardTable tbody');
     tableBody.innerHTML = ''; // Clear existing rows
@@ -121,9 +118,6 @@ function renderCards() {
     });
 }
 
-
-
-
 function updateQuantity(cardId, change) {
     const card = cardList.find(card => card.id === cardId);
     card.quantity += change;
@@ -148,7 +142,6 @@ function resetForm() {
     document.getElementById('collectorNumberInput').value = ''; // Reset the collector number
 }
 
-// Show card preview function
 function showPreview(card) {
     const previewBox = document.getElementById('previewBox');
     const previewContainer = document.getElementById('previewContainer');
@@ -231,9 +224,6 @@ function showPreview(card) {
         });
 }
 
-
-
-
 previewContainer.addEventListener('mousemove', (event) => {
     const { width, height, left, top } = previewContainer.getBoundingClientRect();
     const offsetX = event.clientX - left;
@@ -246,8 +236,8 @@ previewContainer.addEventListener('mousemove', (event) => {
     const deltaY = (offsetY - centerY) / centerY; // Y axis movement
 
     // Adjust the tilt effect based on mouse movement
-    const tiltX = deltaY * 10;  
-    const tiltY = deltaX * -10; 
+    const tiltX = deltaY * -10;  
+    const tiltY = deltaX * 10; 
 
     previewContainer.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
 });
