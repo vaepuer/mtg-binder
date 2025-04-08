@@ -1,37 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Card Collection</title>
-  <link rel="stylesheet" href="styles.css" />
-  <script defer src="app.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <!-- Login Form -->
-  <form id="loginForm">
-    <input type="text" id="username" placeholder="Username" required>
-    <input type="password" id="password" placeholder="Password" required>
-    <button type="submit">Login</button>
-</form>
-<div id="errorMessage">ERROR</div>
-
-
-  <!-- Signup Form -->
-  <div id="signup-form">
-    <h2>Signup</h2>
-    <form id="signup">
-        <input type="text" id="signup-username" placeholder="Username" required />
-
-      <input type="password" id="signup-password" placeholder="Password" required />
-      <button type="submit">Create Account</button>
+    <h1>Login</h1>
+    <form id="loginForm">
+        <input type="text" id="username" placeholder="Username" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <button type="submit">Login</button>
     </form>
-    <p>Already have an account? <a href="#" id="show-login">Login</a></p>
-  </div>
+    <div id="errorMessage"></div>
 
-  <!-- Card Collection App -->
-  <div id="app-container">
-    <!-- Your card collection app will be injected/rendered here -->
-  </div>
+    <script src="script.js"></script>
 </body>
 </html>
