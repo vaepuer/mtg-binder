@@ -1,37 +1,52 @@
-// Global card list (for simplicity, stored in memory)
+// Global card list
 let cardList = JSON.parse(localStorage.getItem('cardList')) || [];
 
-const users = [
-    { username: 'admin', password: 'adminpassword', role: 'admin' },
-    { username: 'spectator', password: 'spectatorpassword', role: 'spectator' },
-];
+function addRow() {
+    const cardNameInput = document.getElementById('cardNameInput').value.trim();
+    const setCode = document.getElementById('setCodeInput').value.trim();
+    const treatment = document.getElementById('treatmentSelect').value; // Get selected treatment value
+    const collectorNumber = document.getElementById('collectorNumberInput').value.trim(); // Collector number input
 
-// Handle login form submission
-document.getElementById('loginForm')?.addEventListener('submit', function (e) {
-    e.preventDefault();
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
-
-    const user = users.find(user => user.username === username && user.password === password);
-    
-    if (user) {
-        localStorage.setItem('userRole', user.role);
-        window.location.href = 'main.html';  // Redirect to the main page after login
-    } else {
-        document.getElementById('errorMessage').textContent = 'Invalid credentials';
+    if (!cardNameInput || !setCode) {
+        alert('Card name and set code are required');
+        return;
     }
-});
 
-// Check the user role when rendering the collection page
-const userRole = localStorage.getItem('userRole');
+    // Parse the card name and quantity (if the name starts with a number)
+    const regex = /^(\d+)\s+(.*)$/; // Matches number followed by space and the rest of the name
+    let cardName = cardNameInput;
+    let quantity = 1; // Default to 1 if no quantity is specified
 
-if (userRole === 'spectator') {
-    document.getElementById('addCardButton').disabled = true; // Disable adding cards
-} else if (userRole !== 'admin') {
-    window.location.href = 'login.html';  // Redirect to login if no role is found
+    const match = cardNameInput.match(regex);
+    if (match) {
+        quantity = parseInt(match[1], 10); // Extract the number as quantity
+        cardName = match[2]; // Extract the actual card name
+    }
+
+    // Check if the card already exists in the list
+    const existingCard = cardList.find(card => card.name === cardName && card.setCode === setCode && card.treatment === treatment && card.collectorNumber === collectorNumber);
+    
+    if (existingCard) {
+        // If the card already exists, update its quantity
+        existingCard.quantity += quantity;
+    } else {
+        // If the card doesn't exist, create a new entry
+        const card = {
+            name: cardName,
+            setCode: setCode,
+            quantity: quantity, // Use the parsed quantity
+            treatment: treatment || '', // Set treatment value, empty string if none selected
+            collectorNumber: collectorNumber,
+            id: Date.now() // Unique ID for this card entry
+        };
+        cardList.push(card);
+    }
+
+    localStorage.setItem('cardList', JSON.stringify(cardList));
+    renderCards();
+    resetForm();
 }
 
-// Function to render cards in the table
 function renderCards() {
     const tableBody = document.querySelector('#cardTable tbody');
     tableBody.innerHTML = ''; // Clear existing rows
@@ -39,37 +54,47 @@ function renderCards() {
     cardList.forEach(card => {
         const row = document.createElement('tr');
 
-        // Card Name
+        // Card Name Cell (Remove prefix for display)
         const nameCell = document.createElement('td');
-        let displayName = card.name.replace(/\[.*?\]\s*/g, '').trim();
+        let displayName = card.name;
+
+        // Remove any bracketed prefix for display
+        displayName = displayName.replace(/\[.*?\]\s*/g, '').trim();
+
         nameCell.textContent = displayName;
         row.appendChild(nameCell);
 
-        // Set Code
+        // Set Code Cell
         const setCodeCell = document.createElement('td');
         setCodeCell.textContent = card.setCode;
         row.appendChild(setCodeCell);
 
-        // Treatment
+        // Treatment Cell (Display "Foil" or "Non-Foil")
         const treatmentCell = document.createElement('td');
-        treatmentCell.textContent = card.treatment === 'F' ? 'Foil' : card.treatment === 'PF' ? 'Piss Foil' : 'Non-Foil';
+        if (card.treatment === 'F') {
+            treatmentCell.textContent = 'Foil';
+        } else if (card.treatment === 'PF') {
+            treatmentCell.textContent = 'Piss Foil';
+        } else {
+            treatmentCell.textContent = 'Non-Foil';
+        }
         row.appendChild(treatmentCell);
 
-        // Quantity with buttons
+        // Quantity Cell with buttons
         const quantityCell = document.createElement('td');
         quantityCell.innerHTML = `
-            <button onclick="updateQuantity(${card.id}, -1)">-</button>
+            <button class="adjust-quantity" onclick="updateQuantity(${card.id}, -1)">-</button>
             ${card.quantity}
-            <button onclick="updateQuantity(${card.id}, 1)">+</button>
+            <button class="adjust-quantity" onclick="updateQuantity(${card.id}, 1)">+</button>
         `;
         row.appendChild(quantityCell);
 
-        // Collector Number
+        // Collector Number Cell
         const collectorCell = document.createElement('td');
-        collectorCell.textContent = card.collectorNumber || 'N/A';
+        collectorCell.textContent = card.collectorNumber || 'N/A'; // Display the collector number or 'N/A' if not available
         row.appendChild(collectorCell);
 
-        // Search Button
+        // Search Button Cell
         const searchCell = document.createElement('td');
         const searchButton = document.createElement('button');
         searchButton.textContent = 'Search';
@@ -77,70 +102,159 @@ function renderCards() {
         searchCell.appendChild(searchButton);
         row.appendChild(searchCell);
 
-        // Actions (Delete button)
+        // Remove Button Cell
         const removeCell = document.createElement('td');
         const removeButton = document.createElement('button');
         removeButton.textContent = 'Delete';
-        if (userRole === 'spectator') {
-            removeButton.disabled = true;  // Disable for spectators
-        } else {
-            removeButton.onclick = () => confirmDeleteRow(card.id);
-        }
+        removeButton.onclick = () => confirmDeleteRow(card.id);
         removeCell.appendChild(removeButton);
         row.appendChild(removeCell);
 
+        // Hover event to show the card preview
+        row.addEventListener('mouseenter', () => showPreview(card));
+
+        // Append row to table body
         tableBody.appendChild(row);
     });
 }
 
-// Function to add or update quantity
 function updateQuantity(cardId, change) {
     const card = cardList.find(card => card.id === cardId);
     card.quantity += change;
-    if (card.quantity <= 0) card.quantity = 1;
+
+    if (card.quantity <= 0) {
+        card.quantity = 1;
+    }
+
     localStorage.setItem('cardList', JSON.stringify(cardList));
     renderCards();
 }
 
-// Search for card on CardMarket
 function searchCard(cardName, setCode) {
     const url = `https://www.cardmarket.com/en/Magic/Products/Search?searchString=${encodeURIComponent(cardName)}&setName=${encodeURIComponent(setCode)}`;
     window.open(url, '_blank');
 }
 
-// Confirm delete row
+function resetForm() {
+    document.getElementById('cardNameInput').value = '';
+    document.getElementById('setCodeInput').value = '';
+    document.getElementById('treatmentSelect').selectedIndex = 0;
+    document.getElementById('collectorNumberInput').value = ''; // Reset the collector number
+}
+
+function showPreview(card) {
+    const previewBox = document.getElementById('previewBox');
+    const previewContainer = document.getElementById('previewContainer');
+    const previewImage = document.getElementById('previewImage');
+    const foilOverlay = document.getElementById('foilOverlay');
+
+    const setCode = card.setCode.toLowerCase();
+    let collectorNumber = card.collectorNumber?.padStart(3, '0');
+
+    // Normalize the collector number to handle both padded and non-padded versions
+    const normalizedCollectorNumber = collectorNumber ? collectorNumber.replace(/^0+/, '') : '';
+
+    const applyFoilEffect = () => {
+        // Check the treatment and apply the corresponding foil overlay
+        if (card.treatment === 'F') {
+            previewContainer.classList.add('rainbow-foil');
+            previewContainer.classList.remove('piss-foil');
+        } else if (card.treatment === 'PF') {
+            previewContainer.classList.add('piss-foil');
+            previewContainer.classList.remove('rainbow-foil');
+        } else {
+            previewContainer.classList.remove('rainbow-foil', 'piss-foil');
+            foilOverlay.style.display = 'none';  // Hide foil overlay when treatment is not foil
+        }
+    };
+
+    let url;
+    if (normalizedCollectorNumber) {
+        // Try collector number-based lookup
+        url = `https://api.scryfall.com/cards/${setCode}/${normalizedCollectorNumber}`;
+    } else {
+        // Fall back to name + set
+        const cleanName = card.rawName || card.name.replace(/\[.*?\]\s*/, '');
+        url = `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(cleanName)}&set=${setCode}`;
+    }
+
+    fetch(url)
+        .then(response => {
+            if (!response.ok) throw new Error('Collector number lookup failed');
+            return response.json();
+        })
+        .then(data => {
+            // Set the image of the card based on the data fetched
+            previewImage.src = data.image_uris?.normal || data.card_faces?.[0]?.image_uris?.normal;
+            previewImage.alt = card.name;
+            previewBox.style.display = 'flex';  // Ensure the preview box is displayed
+
+            applyFoilEffect();  // Apply the foil effect
+
+            // Add the shadow and tilt effect
+            previewContainer.classList.add('tilted');
+
+            // Reset tilt on initial load (centered position)
+            previewContainer.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg)';
+        })
+        .catch(error => {
+            console.warn('Collector number lookup failed, trying fallback:', error);
+            const fallbackName = card.rawName || card.name.replace(/\[.*?\]\s*/, '');
+            const fallbackUrl = `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(fallbackName)}&set=${setCode}`;
+
+            fetch(fallbackUrl)
+                .then(res => res.json())
+                .then(data => {
+                    // Set the image of the card based on the data fetched
+                    previewImage.src = data.image_uris?.normal || data.card_faces?.[0]?.image_uris?.normal;
+                    previewImage.alt = card.name;
+                    previewBox.style.display = 'flex';  // Ensure the preview box is displayed
+                    applyFoilEffect();  // Apply the foil effect
+
+                    // Add the shadow and tilt effect
+                    previewContainer.classList.add('tilted');
+
+                    // Reset tilt on initial load (centered position)
+                    previewContainer.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg)';
+                })
+                .catch(err => {
+                    console.error('Fallback failed:', err);
+                    previewBox.style.display = 'none';
+                });
+        });
+}
+
+previewContainer.addEventListener('mousemove', (event) => {
+    const { width, height, left, top } = previewContainer.getBoundingClientRect();
+    const offsetX = event.clientX - left;
+    const offsetY = event.clientY - top;
+
+    const centerX = width / 2;
+    const centerY = height / 2;
+
+    const deltaX = (offsetX - centerX) / centerX; // X axis movement
+    const deltaY = (offsetY - centerY) / centerY; // Y axis movement
+
+    // Adjust the tilt effect based on mouse movement
+    const tiltX = deltaY * -10;  
+    const tiltY = deltaX * 10; 
+
+    previewContainer.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+});
+
+// Reset tilt when mouse leaves the card container
+previewContainer.addEventListener('mouseleave', () => {
+    previewContainer.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg)';
+});
+
+// Delete a card row
 function confirmDeleteRow(cardId) {
     const confirmation = confirm("Are you sure you want to delete this card?");
     if (confirmation) {
         cardList = cardList.filter(card => card.id !== cardId);
         localStorage.setItem('cardList', JSON.stringify(cardList));
         renderCards();
-}
-
-// Add card functionality (for admin only)
-document.getElementById('addCardButton')?.addEventListener('click', () => {
-    const cardName = prompt("Enter card name:");
-    const setCode = prompt("Enter set code:");
-    const treatment = prompt("Enter treatment (F = Foil, PF = Piss Foil, leave empty for Non-Foil):");
-    const collectorNumber = prompt("Enter collector number:");
-
-    if (cardName && setCode) {
-        const card = {
-            name: cardName,
-            setCode: setCode,
-            quantity: 1,
-            treatment: treatment || '',
-            collectorNumber: collectorNumber,
-            id: Date.now(),
-        };
-        cardList.push(card);
-        localStorage.setItem('cardList', JSON.stringify(cardList));
-        renderCards();
-    } else {
-        alert('Card name and set code are required!');
     }
-});
-
-// Initial render of cards
-document.addEventListener('DOMContentLoaded', renderCards);
 }
+// On page load, render cards
+document.addEventListener('DOMContentLoaded', renderCards);
