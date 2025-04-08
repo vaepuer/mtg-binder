@@ -102,6 +102,10 @@ table {
   border-radius: 8px;
   border-collapse: collapse;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  
+  /* Add max-height and scroll */
+  max-height: 400px; /* Adjust this height as needed */
+  overflow-y: auto; /* Enable vertical scrolling */
 }
 
 table th, table td {
