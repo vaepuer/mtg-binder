@@ -1,4 +1,4 @@
-/* Prevent layout shifting */
+/* General Reset and Layout */
 body {
   font-family: Arial, sans-serif;
   background-color: #f0f0f0;
@@ -9,52 +9,101 @@ body {
   align-items: flex-start; /* Align content to the top */
   height: 100vh; /* Full viewport height */
   overflow: hidden; /* Prevent scrolling */
+  flex-direction: column; /* Stack elements vertically */
 }
 
+h1 {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 2em;
+}
+
+/* Container for Form and Table */
 .container {
-  display: flex;
   width: 90%; /* Fix the container width */
   max-width: 1200px; /* Prevent it from stretching too far */
-  justify-content: space-between;
-  flex-wrap: wrap; /* Allow wrapping for small screens */
-  flex-direction: column; /* Stack panels vertically */
-  gap: 20px; /* Space between panels */
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column; /* Stack form and table vertically */
+  align-items: center; /* Center content horizontally */
+  gap: 20px; /* Add spacing between the form and the table */
 }
 
-/* Adjust for mobile-friendly design */
-.ko-fi {
-  transform: translate(-30px, 420px);
-  border: none;
-}
-
-/* Adjust left and right panels */
-.left-panel, .right-panel {
-  width: 100%; /* Panels take full width on small screens */
-  background-color: #ffffff;
+/* Form container with flexbox */
+#cardForm {
+  display: flex;
+  flex-wrap: wrap; /* Allow items to wrap */
+  gap: 20px; /* Add space between form fields */
+  background-color: white;
+  padding: 20px;
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  overflow-y: auto;
-  max-height: 70vh; /* Ensure panels don't stretch too far */
+  width: 100%;
+  max-width: 800px; /* Limit the max width of the form */
+  margin-bottom: 20px;
 }
 
-/* Make sure the preview is on top on smaller screens */
-.left-panel {
-  order: 1; /* Ensure preview is on top */
+/* Form fields styling */
+#cardForm input[type="text"], #cardForm select {
+  width: calc(50% - 10px); /* Each input takes up 50% minus a little gap */
+  padding: 8px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  margin-bottom: 10px; /* Add space between rows */
 }
 
-/* Table styles */
+/* Adjust button to take full width when stacked */
+#cardForm button {
+  width: 100%;
+  padding: 10px 15px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+/* Stack form elements vertically on smaller screens */
+@media (max-width: 768px) {
+  #cardForm input[type="text"], #cardForm select {
+    width: 100%; /* Input fields take full width on smaller screens */
+  }
+}
+
+input[type="text"], select {
+  width: 100%; /* Make form inputs take full width */
+  max-width: 400px; /* Limit the width of input fields */
+  padding: 8px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+button {
+  background-color: #9e9e9e;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #666;
+}
+
+/* Table Styling */
 table {
   width: 100%;
+  max-width: 800px; /* Limit the width of the table */
   table-layout: fixed; /* Prevent the table from resizing */
-  max-height: 70vh;
-  overflow-y: auto;
+  margin: 0 auto; /* Center the table */
   border-radius: 8px;
   border-collapse: collapse;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* Table header and cell styling */
 table th, table td {
   padding: 10px;
   text-align: left;
@@ -65,32 +114,13 @@ table th, table td {
   word-wrap: break-word;
 }
 
-/* Keep form elements side by side */
-.form-container {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-input[type="text"] {
-  width: 45%; /* Adjust the width of input fields */
-}
-
-/* For smaller devices, make form fields stack vertically */
-@media (max-width: 768px) {
-  .form-container {
-    flex-direction: column; /* Stack form elements */
-    align-items: center;
-  }
-
-  input[type="text"] {
-    width: 100%; /* Input fields take full width on small screens */
-  }
+table th {
+  background-color: #f4f4f4;
+  font-weight: bold;
 }
 
 /* Button styling */
-button {
+button, .button {
   background-color: #9e9e9e;
   color: white;
   padding: 8px 8px;
@@ -99,113 +129,13 @@ button {
   border-radius: 5px;
   font-size: 14px;
   transition: background-color 0.3s ease;
+  text-decoration: none;
 }
 
-button:hover {
+button:hover, .button:hover {
   background-color: #cccccc;
 }
 
-button:focus {
+button:focus, .button:focus {
   outline: none;
-}
-
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 50;
-}
-
-.modal {
-  display: none;
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 20px;
-  border-radius: 10px;
-  z-index: 100;
-}
-
-/* Preview Box */
-#previewBox {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  max-width: 100%;
-}
-
-/* Card preview container - ensure it’s clickable */
-.preview-container {
-  position: relative;
-  display: inline-block;
-  border-radius: 10px;
-  perspective: 1000px;
-  cursor: pointer; /* Make sure it’s clickable */
-  transition: transform 0.1s ease;
-}
-
-.preview-container img {
-  display: block;
-  width: 100%;
-  height: 283px;
-  border-radius: 10px;
-  background-color: transparent;
-  object-fit: cover;
-  transition: transform 0.1s ease;
-  transform-style: preserve-3d;
-  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
-  will-change: transform;
-  pointer-events: none;
-}
-
-/* Rainbow foil effect */
-.rainbow-foil img {
-  position: relative;
-  z-index: 2;
-}
-
-.rainbow-foil::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: 10px;
-  height: 283px;
-  background: url('rainbow-foil.png') no-repeat center center;
-  background-size: cover;
-  pointer-events: none;
-  z-index: 2;
-  opacity: 0.5;
-}
-
-/* Piss foil effect */
-.piss-foil img {
-  position: relative;
-  z-index: 2;
-}
-
-.piss-foil::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: 10px;
-  height: 283px;
-  background: url('piss-foil.png') no-repeat center center;
-  background-size: cover;
-  pointer-events: none;
-  z-index: 2;
-  opacity: 0.5;
 }

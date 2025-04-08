@@ -1,77 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Cardmarket Collection Tool</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <title>Card Inventory</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-    <div class="left-panel" id="leftPanel">
-        <h2>My Binder</h2>
-        <!-- Add card form -->
-        <div class="form-container">
-            <label for="cardNameInput">Card Name:</label>
-            <input type="text" id="cardNameInput" placeholder="Enter card name">
+  <h1>Card Inventory</h1>
 
-            <label for="setCodeInput">Set Code:</label>
-            <input type="text" id="setCodeInput" placeholder="Enter set code (e.g., 'MH2')">
+  <!-- Container to hold both the form and the table -->
+  <div class="container">
+    
+    <!-- Form for adding cards -->
+    <form id="cardForm">
+        <input type="text" id="cardNameInput" placeholder="Card Name or '2 Card Name'" required />
+        <input type="text" id="setCodeInput" placeholder="Set Code" required />
+        <input type="text" id="collectorNumberInput" placeholder="Collector #" />
+        <select id="treatmentSelect" title="Card Finish Type">
+          <option value="">Non-Foil</option>
+          <option value="F">Foil</option>
+          <option value="PF">Piss Foil</option>
+        </select>
+        <button type="submit">Add Card</button>
+      </form>
 
-            <label for="collectorNumberInput">Collector Number:</label>
-            <input type="text" id="collectorNumberInput" placeholder="Enter collector number (e.g., '0460')">
-            
-            <label for="treatmentSelect">Card Treatment:</label>
-            <select id="treatmentSelect">
-              <option value="">None</option>
-              <option value="F">Foil</option>
-              <option value="PF">Piss Foil</option>
-            </select>
+    <!-- Table to display added cards -->
+    <table id="cardTable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Set</th>
+          <th>Treatment</th>
+          <th>Qty</th>
+          <th>Collector</th>
+          <th>Search</th>
+          <th>Delete</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
 
-            <button onclick="addRow()">Add Card</button>
-        </div>
+    <!-- Button to go to binder -->
+    <a href="binder.html" class="button">Open Binder</a>
+  </div>
 
-        <div class="table-scroll">
-            <table id="cardTable">
-                <thead>
-                    <tr>
-                        <th>Card Name</th>
-                        <th>Set Code</th> 
-                        <th>Treatment</th>
-                        <th>Quantity</th>
-                        <th>Collector #</th>
-                        <th>Search</th>
-                        <th>Delete</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Rows will be populated from localStorage here -->
-                </tbody>
-            </table>
-        </div>
-        
-    </div>
-    <!-- Right Panel for Card Preview -->
-    <div class="right-panel">
-        <h3>Card Preview</h3>
-        <div id="previewBox" style="display:none; flex-direction: column;">
-          <div id="previewContainer" class="preview-container">
-            <img id="previewImage" src="" alt="Card Preview"/>
-            <div id="foilOverlay" class="foil-overlay"></div>
-            <div id="shineEffect" class="shine"></div>
-          </div>
-        </div>
-    </div>
-
-    <!-- Confirmation Modal -->
-    <div class="modal-overlay" id="modalOverlay" style="display:none;"></div>
-    <div class="modal" id="confirmationModal">
-        <div class="modal-content">
-            <span id="modalMessage"></span>
-            <button onclick="confirmDelete()">Yes</button>
-            <button onclick="closeModal()">No</button>
-        </div>
-    </div>
-
-    <script src="scripts.js"></script>
+  <script src="scripts.js"></script>
 </body>
 </html>
