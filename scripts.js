@@ -8,7 +8,7 @@ const firebaseConfig = {
   authDomain: "tgbinder-8e3c6.firebaseapp.com",
   databaseURL: "https://tgbinder-8e3c6-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "tgbinder-8e3c6",
-  storageBucket: "tgbinder-8e3c6.firebasestorage.app",
+  storageBucket: "tgbinder-8e3c6.appspot.com",
   messagingSenderId: "903450561301",
   appId: "1:903450561301:web:df2407af369db0895bb71c",
 };
@@ -16,150 +16,96 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+const auth = getAuth(app);
 const cardsRef = ref(db, 'cards');
 
-// DOM Content Loaded
 document.addEventListener('DOMContentLoaded', () => {
-  const container = document.getElementById('cardTableWrapper');
   const addCardForm = document.getElementById('cardForm');
-  const cardTable = document.getElementById('cardTable').getElementsByTagName('tbody')[0];
+  const cardTableBody = document.querySelector('#cardTable tbody');
 
-  // Ensure the table is available before proceeding
-  if (!container) {
-    console.error('cardTableWrapper not found!');
-    return;
-  }
-
-  // Listen for card data from Firebase
+  // 💾 Load cards from Firebase and populate the table
   onValue(cardsRef, (snapshot) => {
     const data = snapshot.val();
-    console.log('Firebase Data:', data);  // Debugging: Check the data from Firebase
+    cardTableBody.innerHTML = ''; // Clear current rows
 
-    // Clear the table before re-populating
-    cardTable.innerHTML = '';
+    if (data) {
+      Object.entries(data).forEach(([cardId, card]) => {
+        addNewCardToTable(card, cardId);
+      });
+    }
+  });
 
-    if (!data) {
-      console.log('No data found.');
+  // ➕ Handle form submission
+  addCardForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    const cardName = document.getElementById('cardNameInput').value.trim();
+    const cardSetCode = document.getElementById('setCodeInput').value.trim();
+    const cardCollectorNumber = document.getElementById('collectorNumberInput').value.trim();
+    const cardTreatment = document.getElementById('treatmentSelect').value;
+    const cardQuantity = parseInt(cardName.split(' ')[0]) || 1;
+    const nameWithoutQty = cardQuantity > 1 ? cardName.split(' ').slice(1).join(' ') : cardName;
+
+    if (!cardName || !cardSetCode) {
+      alert('Please provide at least the card name and set code.');
       return;
     }
 
-    Object.entries(data).forEach(([cardId, card]) => {
-      // Create a row for the card
-      const row = cardTable.insertRow();
-      const nameCell = row.insertCell(0);
-      const setCell = row.insertCell(1);
-      const treatmentCell = row.insertCell(2);
-      const quantityCell = row.insertCell(3);
-      const collectorCell = row.insertCell(4);
-      const searchCell = row.insertCell(5);
-      const deleteCell = row.insertCell(6);
+    const newCard = {
+      name: nameWithoutQty,
+      quantity: cardQuantity,
+      treatment: cardTreatment,
+      setCode: cardSetCode,
+      collectorNumber: cardCollectorNumber,
+    };
 
-      // Set cell contents
-      nameCell.textContent = card.name;
-      setCell.textContent = card.setCode;
-      treatmentCell.textContent = card.treatment || 'Non-Foil';
-      quantityCell.textContent = card.quantity;
-      collectorCell.textContent = card.collectorNumber || 'N/A';
-
-      // Create and append the delete button
-      const deleteButton = document.createElement('button');
-      deleteButton.textContent = 'Delete';
-      deleteButton.classList.add('delete-button');
-      deleteButton.onclick = () => {
-        deleteCard(cardId);  // Delete the card from Firebase
-      };
-      deleteCell.appendChild(deleteButton);
-    });
+    const newCardRef = push(cardsRef);
+    set(newCardRef, newCard)
+      .then(() => {
+        console.log("✅ Card added successfully!");
+        addCardForm.reset();
+      })
+      .catch(error => {
+        console.error("❌ Error adding card:", error);
+      });
   });
 
-  // Form submission to add new card
-  addCardForm.addEventListener('submit', (event) => {
-    event.preventDefault(); // Prevent form submission
-
-    const cardName = document.getElementById('cardNameInput').value;
-    const cardQuantity = parseInt(document.getElementById('cardQuantityInput').value, 10);
-    const cardTreatment = document.getElementById('treatmentSelect').value;
-    const cardSetCode = document.getElementById('setCodeInput').value; // Assuming this input is present in the form
-    const cardCollectorNumber = document.getElementById('collectorNumberInput').value; // Assuming this input is present in the form
-    const auth = getAuth();
-    const user = auth.currentUser;
-    const userId = user ? user.uid : null;
-
-    if (cardName && cardQuantity) {
-      const newCard = {
-        name: cardName,
-        quantity: cardQuantity,
-        treatment: cardTreatment,
-        setCode: cardSetCode,
-        collectorNumber: cardCollectorNumber,
-        userId: auth.currentUser.uid  // Add the userId to the card data
-      };
-
-      // Add card to Firebase
-      const newCardRef = push(cardsRef);
-      set(newCardRef, newCard)
-        .then(() => {
-          console.log("Card added successfully!");
-          addNewCardToTable(newCard, newCardRef.key); // Add the card to the table with its unique ID
-          addCardForm.reset();
-        })
-        .catch(error => {
-          console.error("Error adding card: ", error);
-        });
-    }
-  });
-
-  // Function to delete card from Firebase
+  // ❌ Delete a card
   function deleteCard(cardId) {
-    const cardRef = ref(db, 'cards/' + cardId);
+    const cardRef = ref(db, `cards/${cardId}`);
     remove(cardRef)
       .then(() => {
-        console.log('Card deleted successfully!');
-        removeCardFromTable(cardId); // Remove the card row from the table
+        console.log("🗑️ Card deleted!");
       })
-      .catch((error) => {
-        console.error('Error deleting card:', error);
+      .catch(error => {
+        console.error("❌ Error deleting card:", error);
       });
   }
 
-  // Function to remove the card from the table
-  function removeCardFromTable(cardId) {
-    const rows = cardTable.getElementsByTagName('tr');
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
-      const firstCell = row.cells[0];
-      if (firstCell && firstCell.textContent === cardId) {
-        row.remove();
-        break;
-      }
-    }
-  }
-
-  // Function to update the table with a new card
+  // 🧱 Add new card row to the table
   function addNewCardToTable(card, cardId) {
-    const row = cardTable.insertRow();
-    const nameCell = row.insertCell(0);
-    const setCell = row.insertCell(1);
-    const treatmentCell = row.insertCell(2);
-    const quantityCell = row.insertCell(3);
-    const collectorCell = row.insertCell(4);
-    const searchCell = row.insertCell(5);
-    const deleteCell = row.insertCell(6);
+    const row = cardTableBody.insertRow();
+    row.setAttribute('data-id', cardId);
 
-    // Set cell contents
-    nameCell.textContent = card.name;
-    setCell.textContent = card.setCode;
-    treatmentCell.textContent = card.treatment || 'Non-Foil';
-    quantityCell.textContent = card.quantity;
-    collectorCell.textContent = card.collectorNumber || 'N/A';
+    row.innerHTML = `
+      <td>${card.name}</td>
+      <td>${card.setCode}</td>
+      <td>${card.treatment || 'Non-Foil'}</td>
+      <td>${card.quantity || 1}</td>
+      <td>${card.collectorNumber || 'N/A'}</td>
+      <td><button class="search-btn">Search</button></td>
+      <td><button class="delete-btn">Delete</button></td>
+    `;
 
-    // Create and append the delete button
-    const deleteButton = document.createElement('button');
-    deleteButton.textContent = 'Delete';
-    deleteButton.classList.add('delete-button');
-    deleteButton.onclick = () => {
-      deleteCard(cardId);  // Delete the card from Firebase
-    };
-    deleteCell.appendChild(deleteButton);
+    // 🔍 Search button
+    row.querySelector('.search-btn').addEventListener('click', () => {
+      const searchURL = `https://www.cardmarket.com/en/Magic/Products/Search?searchString=${encodeURIComponent(card.name)}&setName=${encodeURIComponent(card.setCode)}`;
+      window.open(searchURL, '_blank');
+    });
+
+    // 🗑️ Delete button
+    row.querySelector('.delete-btn').addEventListener('click', () => {
+      deleteCard(cardId);
+    });
   }
 });
