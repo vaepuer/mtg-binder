@@ -1,44 +1,18 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
-// 🔥 Your Firebase config (replace these with your actual values)
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT.firebaseio.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+// Initialize Firebase app and get a reference to the database
+const db = getDatabase();
+const cardsRef = ref(db, 'cards');
 
 document.addEventListener('DOMContentLoaded', () => {
   const container = document.getElementById('binderContainer');
 
-  // Add a loading message
-  const loadingMessage = document.createElement('p');
-  loadingMessage.textContent = 'Loading cards...';
-  loadingMessage.style.fontWeight = 'bold';
-  loadingMessage.style.marginTop = '20px';
-  container.appendChild(loadingMessage);
-
-  const cardsRef = ref(db, 'cards');
-
   // Listen for card data from Firebase
   onValue(cardsRef, (snapshot) => {
-    container.innerHTML = ''; // Clear any existing content (including loading)
+    container.innerHTML = ''; // Clear old entries
     const data = snapshot.val();
-
     if (!data) {
-      const emptyMessage = document.createElement('p');
-      emptyMessage.textContent = 'No cards yet!';
-      emptyMessage.style.fontStyle = 'italic';
-      emptyMessage.style.marginTop = '20px';
-      container.appendChild(emptyMessage);
+      container.innerHTML = 'No cards found.';
       return;
     }
 

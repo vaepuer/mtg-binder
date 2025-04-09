@@ -1,21 +1,7 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
-
-let cardList = JSON.parse(localStorage.getItem('cardList')) || [];
-
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT.firebaseio.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+// Initialize Firebase app and get a reference to the database
+const db = getDatabase();
 
 function addRow() {
   const nameInput = document.getElementById('cardNameInput').value.trim();
@@ -47,81 +33,26 @@ function addRow() {
   if (existingCard) {
     existingCard.quantity += quantity;
   } else {
-    const newCard = {
+    cardList.push({
       id: Date.now(),
       name,
       setCode,
       treatment,
       collectorNumber,
       quantity
-    };
-    cardList.push(newCard);
-
-    // 🔥 Push new card to Firebase
-    const cardsRef = ref(db, 'cards');
-    push(cardsRef, newCard)
-      .then(() => console.log("Card saved to Firebase"))
-      .catch(err => console.error("Error saving to Firebase:", err));
+    });
   }
 
-  localStorage.setItem('cardList', JSON.stringify(cardList));
+  // Save data to Firebase
+  const cardRef = ref(db, 'cards/' + Date.now());
+  set(cardRef, {
+    name,
+    setCode,
+    treatment,
+    collectorNumber,
+    quantity
+  });
+
   renderCards();
   resetForm();
 }
-
-
-function renderCards() {
-  const tbody = document.querySelector("#cardTable tbody");
-  tbody.innerHTML = "";
-
-  cardList.forEach(card => {
-    const row = document.createElement("tr");
-
-    row.innerHTML = `
-      <td>${card.name}</td>
-      <td>${card.setCode}</td>
-      <td>${card.treatment || "Non-Foil"}</td>
-      <td>
-        <button onclick="updateQuantity(${card.id}, -1)">-</button>
-        ${card.quantity}
-        <button onclick="updateQuantity(${card.id}, 1)">+</button>
-      </td>
-      <td>${card.collectorNumber || 'N/A'}</td>
-      <td><button onclick="searchCard('${card.name}', '${card.setCode}')">Search</button></td>
-      <td><button onclick="deleteCard(${card.id})">Delete</button></td>
-    `;
-
-    tbody.appendChild(row);
-  });
-}
-
-function updateQuantity(id, change) {
-  const card = cardList.find(c => c.id === id);
-  card.quantity = Math.max(1, card.quantity + change);
-  localStorage.setItem('cardList', JSON.stringify(cardList));
-  renderCards();
-}
-
-function deleteCard(id) {
-  cardList = cardList.filter(c => c.id !== id);
-  localStorage.setItem('cardList', JSON.stringify(cardList));
-  renderCards();
-}
-
-function resetForm() {
-  document.getElementById('cardNameInput').value = '';
-  document.getElementById('setCodeInput').value = '';
-  document.getElementById('treatmentSelect').selectedIndex = 0;
-  document.getElementById('collectorNumberInput').value = '';
-}
-
-function searchCard(name, set) {
-  const url = `https://www.cardmarket.com/en/Magic/Products/Search?searchString=${encodeURIComponent(name)}&setName=${encodeURIComponent(set)}`;
-  window.open(url, '_blank');
-}
-
-function goToBinder() {
-  window.location.href = 'binder.html';
-}
-
-document.addEventListener('DOMContentLoaded', renderCards);
