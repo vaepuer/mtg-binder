@@ -1,5 +1,6 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
 
 // Firebase configuration
 const firebaseConfig = {
@@ -7,14 +8,14 @@ const firebaseConfig = {
   authDomain: "tgbinder-8e3c6.firebaseapp.com",
   databaseURL: "https://tgbinder-8e3c6-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "tgbinder-8e3c6",
-  storageBucket: "tgbinder-8e3c6.firebasestorage.app",
+  storageBucket: "tgbinder-8e3c6.appspot.com",
   messagingSenderId: "903450561301",
-  appId: "1:903450561301:web:df2407af369db0895bb71c",
+  appId: "1:903450561301:web:df2407af369db0895bb71c"
 };
 
 // Initialize Firebase
-//const app = initializeApp(firebaseConfig);
-//const db = getDatabase(app);
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const db = getDatabase(app);
 const cardsRef = ref(db, 'cards');
 
 // DOM Content Loaded
