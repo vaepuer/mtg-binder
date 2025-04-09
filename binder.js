@@ -1,17 +1,55 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+// 🔥 Your Firebase config (replace these with your actual values)
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
 document.addEventListener('DOMContentLoaded', () => {
-    const container = document.getElementById('binderContainer');
-    const cardList = JSON.parse(localStorage.getItem('cardList')) || [];
-  
-    cardList.forEach(card => {
+  const container = document.getElementById('binderContainer');
+
+  // Add a loading message
+  const loadingMessage = document.createElement('p');
+  loadingMessage.textContent = 'Loading cards...';
+  loadingMessage.style.fontWeight = 'bold';
+  loadingMessage.style.marginTop = '20px';
+  container.appendChild(loadingMessage);
+
+  const cardsRef = ref(db, 'cards');
+
+  // Listen for card data from Firebase
+  onValue(cardsRef, (snapshot) => {
+    container.innerHTML = ''; // Clear any existing content (including loading)
+    const data = snapshot.val();
+
+    if (!data) {
+      const emptyMessage = document.createElement('p');
+      emptyMessage.textContent = 'No cards yet!';
+      emptyMessage.style.fontStyle = 'italic';
+      emptyMessage.style.marginTop = '20px';
+      container.appendChild(emptyMessage);
+      return;
+    }
+
+    Object.values(data).forEach(card => {
       const cardBox = document.createElement('div');
       cardBox.className = 'card-box';
-  
-      // Quantity badge
+
       const quantity = document.createElement('div');
       quantity.className = 'quantity-badge';
       quantity.textContent = `x${card.quantity}`;
-  
-      // Treatment badge
+
       const treatment = document.createElement('div');
       treatment.className = 'foil-badge';
       if (card.treatment === 'F') {
@@ -23,26 +61,21 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         treatment.textContent = 'Non-Foil';
       }
-  
-      // Only show Collector Number if it exists
+
       if (card.collectorNumber) {
         const collectorBadge = document.createElement('div');
         collectorBadge.className = 'collector-badge';
         collectorBadge.textContent = `#${card.collectorNumber}`;
-        cardBox.appendChild(collectorBadge);  // Append only if it exists
+        cardBox.appendChild(collectorBadge);
       }
-  
-      // Card Image
+
       const img = document.createElement('img');
       const name = card.name;
       const set = card.setCode?.toLowerCase();
       const rawCollector = card.collectorNumber;
-
-      // Normalize the collector number by removing leading zeros (if any)
       const normalizedCollector = rawCollector ? rawCollector.replace(/^0+/, '') : null;
-  
       const fallbackUrl = `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(name)}&set=${set}`;
-  
+
       const fetchCardImage = () => {
         if (normalizedCollector && set) {
           const url = `https://api.scryfall.com/cards/${set}/${normalizedCollector}`;
@@ -69,11 +102,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
       };
-  
+
       fetchCardImage();
       img.alt = name;
-  
-      // Search Button
+
       const button = document.createElement('button');
       button.textContent = 'Search';
       button.classList.add('button');
@@ -81,12 +113,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const url = `https://www.cardmarket.com/en/Magic/Products/Search?searchString=${encodeURIComponent(name)}&setName=${encodeURIComponent(card.setCode)}`;
         window.open(url, '_blank');
       };
-  
-      // Append everything
+
       cardBox.appendChild(quantity);
       cardBox.appendChild(treatment);
       cardBox.appendChild(img);
       cardBox.appendChild(button);
       container.appendChild(cardBox);
     });
+  });
 });

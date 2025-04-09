@@ -1,4 +1,21 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+
 let cardList = JSON.parse(localStorage.getItem('cardList')) || [];
+
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
 function addRow() {
   const nameInput = document.getElementById('cardNameInput').value.trim();
@@ -30,20 +47,28 @@ function addRow() {
   if (existingCard) {
     existingCard.quantity += quantity;
   } else {
-    cardList.push({
+    const newCard = {
       id: Date.now(),
       name,
       setCode,
       treatment,
       collectorNumber,
       quantity
-    });
+    };
+    cardList.push(newCard);
+
+    // 🔥 Push new card to Firebase
+    const cardsRef = ref(db, 'cards');
+    push(cardsRef, newCard)
+      .then(() => console.log("Card saved to Firebase"))
+      .catch(err => console.error("Error saving to Firebase:", err));
   }
 
   localStorage.setItem('cardList', JSON.stringify(cardList));
   renderCards();
   resetForm();
 }
+
 
 function renderCards() {
   const tbody = document.querySelector("#cardTable tbody");

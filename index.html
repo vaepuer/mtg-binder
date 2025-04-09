@@ -4,6 +4,11 @@
   <meta charset="UTF-8" />
   <title>Card Inventory</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+   <!-- Firebase scripts -->
+   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -11,7 +16,9 @@
 
   <!-- Container to hold both the form and the table -->
   <div class="container">
-    
+    <div class="form-with-image">
+      <div class="form-container">
+        <form id="cardForm">
     <!-- Form for adding cards -->
     <form id="cardForm">
         <input type="text" id="cardNameInput" placeholder="Card Name or '2 Card Name'" required />
