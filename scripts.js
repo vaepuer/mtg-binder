@@ -30,16 +30,19 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Listen for card data from Firebase
-  onValue(cardsRef, (snapshot) => {
-    const data = snapshot.val();
-    if (!data) {
+onValue(cardsRef, (snapshot) => {
+  const data = snapshot.val();
+  console.log('Firebase Data:', data);  // Debugging: Check the data from Firebase
+
+  // Clear current table content
+  cardTable.innerHTML = ''; // Clear existing table rows
+
+  if (!data) {
       container.innerHTML = 'No cards found.';
       return;
-    }
+  }
 
-    container.innerHTML = '';  // Clear old entries if data exists
-
-    Object.entries(data).forEach(([cardId, card]) => {
+  Object.entries(data).forEach(([cardId, card]) => {
       const row = cardTable.insertRow();
       row.insertCell(0).textContent = card.name;
       row.insertCell(1).textContent = card.setCode;
@@ -51,8 +54,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const searchButton = document.createElement('button');
       searchButton.textContent = 'Search';
       searchButton.onclick = () => {
-        const url = `https://www.cardmarket.com/en/Magic/Products/Search?searchString=${encodeURIComponent(card.name)}&setName=${encodeURIComponent(card.setCode)}`;
-        window.open(url, '_blank');
+          const url = `https://www.cardmarket.com/en/Magic/Products/Search?searchString=${encodeURIComponent(card.name)}&setName=${encodeURIComponent(card.setCode)}`;
+          window.open(url, '_blank');
       };
       row.insertCell(5).appendChild(searchButton);
 
@@ -60,11 +63,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const deleteButton = document.createElement('button');
       deleteButton.textContent = 'Delete';
       deleteButton.onclick = () => {
-        remove(ref(db, `cards/${cardId}`));
+          remove(ref(db, `cards/${cardId}`));
       };
       row.insertCell(6).appendChild(deleteButton);
-    });
   });
+});
+
 
   // Form submission to add new card
   addCardForm.addEventListener('submit', (event) => {
@@ -76,27 +80,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const cardSetCode = document.getElementById('setCodeInput').value;
     const cardCollectorNumber = document.getElementById('collectorNumberInput').value;
 
+    console.log('Form submitted with values:');
+    console.log(`Name: ${cardName}, Quantity: ${cardQuantity}, Treatment: ${cardTreatment}, Set Code: ${cardSetCode}, Collector Number: ${cardCollectorNumber}`);
+
     if (cardName && cardQuantity) {
-      const newCard = {
-        name: cardName,
-        quantity: cardQuantity,
-        treatment: cardTreatment,
-        setCode: cardSetCode,
-        collectorNumber: cardCollectorNumber
-      };
+        const newCard = {
+            name: cardName,
+            quantity: cardQuantity,
+            treatment: cardTreatment,
+            setCode: cardSetCode,
+            collectorNumber: cardCollectorNumber
+        };
 
-      // Add card to Firebase
-      const newCardRef = push(cardsRef);
-      set(newCardRef, newCard)
-        .then(() => {
-          console.log("Card added successfully!");
+        console.log('New Card to Add:', newCard);
 
-          // Optionally, reset the form fields after adding the card
-          addCardForm.reset();
-        })
-        .catch(error => {
-          console.error("Error adding card: ", error);
-        });
+        // Add card to Firebase
+        const newCardRef = push(cardsRef);
+        set(newCardRef, newCard)
+            .then(() => {
+                console.log("Card added to Firebase successfully!");
+
+                // Optionally, reset the form fields after adding the card
+                addCardForm.reset();
+            })
+            .catch(error => {
+                console.error("Error adding card to Firebase: ", error);
+            });
     }
-  });
+});
+
 });
