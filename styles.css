@@ -94,7 +94,7 @@ button:hover {
 }
 
 /* Table Styling */
-table {
+table, .cardTable {
   width: 100%;
   max-width: 800px; /* Limit the width of the table */
   table-layout: fixed; /* Prevent the table from resizing */
