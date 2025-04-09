@@ -1,6 +1,6 @@
-import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-// Initialize Firebase app and get a reference to the database
+// Initialize Firebase (add this part if it's not already in your script)
 const db = getDatabase();
 
 function addRow() {
@@ -43,8 +43,8 @@ function addRow() {
     });
   }
 
-  // Write the card data to Firebase
-  const newCardRef = ref(db, 'cards/' + Date.now());  // Ensure a unique key
+  // Write the new card data to Firebase
+  const newCardRef = ref(db, 'cards/' + Date.now());  // Ensure a unique key using current timestamp
   set(newCardRef, {
     name,
     setCode,
@@ -57,6 +57,9 @@ function addRow() {
     console.error("Error writing data to Firebase:", error);
   });
 
+  // Save to localStorage (if necessary)
+  localStorage.setItem('cardList', JSON.stringify(cardList));
+  
   renderCards();
   resetForm();
 }
