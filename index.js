@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, push, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -22,6 +22,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const addCardForm = document.getElementById('cardForm');
   const cardTable = document.getElementById('cardTable').getElementsByTagName('tbody')[0];
 
+  // Check if form and table are present
+  if (!addCardForm || !cardTable) {
+    console.error("Form or Table elements are missing!");
+    return;
+  }
+
+  console.log("Form and Table elements found");
+
   // Form submission handler
   addCardForm.addEventListener('submit', (event) => {
     event.preventDefault(); // Prevent form submission
@@ -32,6 +40,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const cardTreatment = document.getElementById('treatmentSelect').value;
     const cardSetCode = document.getElementById('setCodeInput').value;
     const cardCollectorNumber = document.getElementById('collectorNumberInput').value;
+
+    console.log(`Card Name: ${cardName}, Set: ${cardSetCode}, Collector: ${cardCollectorNumber}`);
 
     if (cardName && cardSetCode) {
       // Create a new card object
@@ -54,11 +64,14 @@ document.addEventListener('DOMContentLoaded', () => {
         .catch(error => {
           console.error("Error adding card to Firebase: ", error);
         });
+    } else {
+      console.log("Card Name and Set Code are required.");
     }
   });
 
   // Function to add a card to the table
   function addCardToTable(card) {
+    console.log("Adding card to table:", card); // Debug log
     const row = cardTable.insertRow();
     row.insertCell(0).textContent = card.name;
     row.insertCell(1).textContent = card.setCode;
@@ -90,6 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Listen for changes in Firebase and update the table
   onValue(cardsRef, (snapshot) => {
     const data = snapshot.val();
+    console.log("Firebase Data:", data); // Debug log
     if (!data) return;
 
     // Clear the table before re-rendering
