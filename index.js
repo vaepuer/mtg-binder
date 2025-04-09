@@ -13,8 +13,8 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+//const app = initializeApp(firebaseConfig);
+//const db = getDatabase(app);
 const cardsRef = ref(db, 'cards');
 
 // DOM Content Loaded
