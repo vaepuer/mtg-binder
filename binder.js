@@ -23,15 +23,21 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
+  console.log('binderContainer found!', container); // Debugging log
+
+  // Continue with the Firebase code here...
+
+
   // Listen for card data from Firebase
   onValue(cardsRef, (snapshot) => {
-    container.innerHTML = ''; // Clear old entries
     const data = snapshot.val();
-
+    console.log('Firebase data:', data); // Debugging log to check the data
+  
     if (!data) {
       container.innerHTML = 'No cards found.';
       return;
     }
+  
 
     Object.entries(data).forEach(([cardId, card]) => {
       const cardBox = document.createElement('div');
