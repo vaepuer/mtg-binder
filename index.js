@@ -43,14 +43,18 @@ function addRow() {
     });
   }
 
-  // Save data to Firebase
-  const cardRef = ref(db, 'cards/' + Date.now());
-  set(cardRef, {
+  // Write the card data to Firebase
+  const newCardRef = ref(db, 'cards/' + Date.now());  // Ensure a unique key
+  set(newCardRef, {
     name,
     setCode,
     treatment,
     collectorNumber,
     quantity
+  }).then(() => {
+    console.log("Data written to Firebase successfully.");
+  }).catch((error) => {
+    console.error("Error writing data to Firebase:", error);
   });
 
   renderCards();
