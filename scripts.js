@@ -39,12 +39,14 @@ document.addEventListener('DOMContentLoaded', () => {
   addCardForm.addEventListener('submit', (event) => {
     event.preventDefault();
 
-    const cardName = document.getElementById('cardNameInput').value.trim();
+    const nameInput = document.getElementById('cardNameInput').value.trim();
     const cardSetCode = document.getElementById('setCodeInput').value.trim();
     const cardCollectorNumber = document.getElementById('collectorNumberInput').value.trim();
     const cardTreatment = document.getElementById('treatmentSelect').value;
-    const cardQuantity = parseInt(cardName.split(' ')[0]) || 1;
-    const nameWithoutQty = cardQuantity > 1 ? cardName.split(' ').slice(1).join(' ') : cardName;
+    const cardQuantity = parseInt(nameInput.split(' ')[0]) || 1;
+    const nameWithoutQty = cardQuantity > 1 ? nameInput.split(' ').slice(1).join(' ') : nameInput;
+
+    
 
     if (!cardName || !cardSetCode) {
       alert('Please provide at least the card name and set code.');
@@ -58,6 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
       setCode: cardSetCode,
       collectorNumber: cardCollectorNumber,
     };
+    
 
     const newCardRef = push(cardsRef);
     set(newCardRef, newCard)
