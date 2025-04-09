@@ -1,5 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getDatabase, ref, onValue, push, set, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -80,6 +81,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const cardTreatment = document.getElementById('treatmentSelect').value;
     const cardSetCode = document.getElementById('setCodeInput').value; // Assuming this input is present in the form
     const cardCollectorNumber = document.getElementById('collectorNumberInput').value; // Assuming this input is present in the form
+    const auth = getAuth();
+    const user = auth.currentUser;
+    const userId = user ? user.uid : null;
 
     if (cardName && cardQuantity) {
       const newCard = {
@@ -87,7 +91,8 @@ document.addEventListener('DOMContentLoaded', () => {
         quantity: cardQuantity,
         treatment: cardTreatment,
         setCode: cardSetCode,
-        collectorNumber: cardCollectorNumber
+        collectorNumber: cardCollectorNumber,
+        userId: auth.currentUser.uid  // Add the userId to the card data
       };
 
       // Add card to Firebase
