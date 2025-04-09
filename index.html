@@ -5,10 +5,7 @@
   <title>Card Inventory</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-   <!-- Firebase scripts -->
-   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
-
+  <!-- Remove Firebase scripts from here as we are importing them as modules -->
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -19,41 +16,41 @@
     <div class="form-with-image">
       <div class="form-container">
         <form id="cardForm">
-    <!-- Form for adding cards -->
-    <form id="cardForm">
-        <input type="text" id="cardNameInput" placeholder="Card Name or '2 Card Name'" required />
-        <input type="text" id="setCodeInput" placeholder="Set Code" required />
-        <input type="text" id="collectorNumberInput" placeholder="Collector #" />
-        <select id="treatmentSelect" title="Card Finish Type">
-          <option value="">Non-Foil</option>
-          <option value="F">Foil</option>
-          <option value="PF">Piss Foil</option>
-        </select>
-        <button type="submit">Add Card</button>
-      </form>
+          <!-- Form for adding cards -->
+          <input type="text" id="cardNameInput" placeholder="Card Name or '2 Card Name'" required />
+          <input type="text" id="setCodeInput" placeholder="Set Code" required />
+          <input type="text" id="collectorNumberInput" placeholder="Collector #" />
+          <select id="treatmentSelect" title="Card Finish Type">
+            <option value="">Non-Foil</option>
+            <option value="F">Foil</option>
+            <option value="PF">Piss Foil</option>
+          </select>
+          <button type="submit">Add Card</button>
+        </form>
 
-    <!-- Table to display added cards -->
-     <!-- Button to go to binder -->
-    <a href="binder.html" class="button">Open Binder</a>
-    <div id="cardTableWrapper">
-      <table id="cardTable">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Set</th>
-            <th>Treatment</th>
-            <th>Qty</th>
-            <th>Collector</th>
-            <th>Search</th>
-            <th>Delete</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+        <!-- Table to display added cards -->
+        <a href="binder.html" class="button">Open Binder</a>
+        <div id="cardTableWrapper">
+          <table id="cardTable">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Set</th>
+                <th>Treatment</th>
+                <th>Qty</th>
+                <th>Collector</th>
+                <th>Search</th>
+                <th>Delete</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
     </div>
-    
   </div>
 
+  <!-- Include Firebase and your own script as modules -->
   <script type="module" src="scripts.js"></script>
 </body>
 </html>
