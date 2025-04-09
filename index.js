@@ -1,65 +1,103 @@
-import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getDatabase, ref, push, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-// Initialize Firebase (add this part if it's not already in your script)
-const db = getDatabase();
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAia2iO0Qx7AmJxXlbG5BK60VRJSZ2Srh8",
+  authDomain: "tgbinder-8e3c6.firebaseapp.com",
+  databaseURL: "https://tgbinder-8e3c6-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "tgbinder-8e3c6",
+  storageBucket: "tgbinder-8e3c6.firebasestorage.app",
+  messagingSenderId: "903450561301",
+  appId: "1:903450561301:web:df2407af369db0895bb71c",
+};
 
-function addRow() {
-  const nameInput = document.getElementById('cardNameInput').value.trim();
-  const setCode = document.getElementById('setCodeInput').value.trim();
-  const treatment = document.getElementById('treatmentSelect').value;
-  const collectorNumber = document.getElementById('collectorNumberInput').value.trim();
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const cardsRef = ref(db, 'cards');
 
-  if (!nameInput || !setCode) {
-    alert("Card name and set code are required.");
-    return;
-  }
+// DOM Content Loaded
+document.addEventListener('DOMContentLoaded', () => {
+  const addCardForm = document.getElementById('cardForm');
+  const cardTable = document.getElementById('cardTable').getElementsByTagName('tbody')[0];
 
-  const match = nameInput.match(/^(\d+)\s+(.*)$/);
-  let quantity = 1;
-  let name = nameInput;
+  // Form submission handler
+  addCardForm.addEventListener('submit', (event) => {
+    event.preventDefault(); // Prevent form submission
 
-  if (match) {
-    quantity = parseInt(match[1]);
-    name = match[2];
-  }
+    // Get form data
+    const cardName = document.getElementById('cardNameInput').value;
+    const cardQuantity = 1; // Default quantity to 1 for simplicity
+    const cardTreatment = document.getElementById('treatmentSelect').value;
+    const cardSetCode = document.getElementById('setCodeInput').value;
+    const cardCollectorNumber = document.getElementById('collectorNumberInput').value;
 
-  const existingCard = cardList.find(card =>
-    card.name === name &&
-    card.setCode === setCode &&
-    card.treatment === treatment &&
-    card.collectorNumber === collectorNumber
-  );
+    if (cardName && cardSetCode) {
+      // Create a new card object
+      const newCard = {
+        name: cardName,
+        quantity: cardQuantity,
+        treatment: cardTreatment,
+        setCode: cardSetCode,
+        collectorNumber: cardCollectorNumber
+      };
 
-  if (existingCard) {
-    existingCard.quantity += quantity;
-  } else {
-    cardList.push({
-      id: Date.now(),
-      name,
-      setCode,
-      treatment,
-      collectorNumber,
-      quantity
-    });
-  }
-
-  // Write the new card data to Firebase
-  const newCardRef = ref(db, 'cards/' + Date.now());  // Ensure a unique key using current timestamp
-  set(newCardRef, {
-    name,
-    setCode,
-    treatment,
-    collectorNumber,
-    quantity
-  }).then(() => {
-    console.log("Data written to Firebase successfully.");
-  }).catch((error) => {
-    console.error("Error writing data to Firebase:", error);
+      // 1. Add card to Firebase
+      const newCardRef = push(cardsRef);
+      set(newCardRef, newCard)
+        .then(() => {
+          console.log("Card added to Firebase successfully!");
+          addCardToTable(newCard); // Add card to the table immediately
+          addCardForm.reset(); // Reset form after adding card
+        })
+        .catch(error => {
+          console.error("Error adding card to Firebase: ", error);
+        });
+    }
   });
 
-  // Save to localStorage (if necessary)
-  localStorage.setItem('cardList', JSON.stringify(cardList));
-  
-  renderCards();
-  resetForm();
-}
+  // Function to add a card to the table
+  function addCardToTable(card) {
+    const row = cardTable.insertRow();
+    row.insertCell(0).textContent = card.name;
+    row.insertCell(1).textContent = card.setCode;
+    row.insertCell(2).textContent = card.treatment || 'Non-Foil';
+    row.insertCell(3).textContent = card.quantity || 1;
+    row.insertCell(4).textContent = card.collectorNumber || '';
+
+    // Create Search Button
+    const searchButton = document.createElement('button');
+    searchButton.textContent = 'Search';
+    searchButton.onclick = () => {
+      const url = `https://www.cardmarket.com/en/Magic/Products/Search?searchString=${encodeURIComponent(card.name)}&setName=${encodeURIComponent(card.setCode)}`;
+      window.open(url, '_blank');
+    };
+    row.insertCell(5).appendChild(searchButton);
+
+    // Create Delete Button
+    const deleteButton = document.createElement('button');
+    deleteButton.textContent = 'Delete';
+    deleteButton.onclick = () => {
+      // Remove card from both the table and Firebase
+      const rowIndex = row.rowIndex;
+      cardTable.deleteRow(rowIndex);
+      remove(ref(db, `cards/${newCardRef.key}`)); // This deletes from Firebase
+    };
+    row.insertCell(6).appendChild(deleteButton);
+  }
+
+  // Listen for changes in Firebase and update the table
+  onValue(cardsRef, (snapshot) => {
+    const data = snapshot.val();
+    if (!data) return;
+
+    // Clear the table before re-rendering
+    cardTable.innerHTML = ''; 
+
+    // Render all the cards in Firebase to the table
+    Object.entries(data).forEach(([cardId, card]) => {
+      addCardToTable(card); // Add each card to the table
+    });
+  });
+});
