@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, onValue, push, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
+// Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyAia2iO0Qx7AmJxXlbG5BK60VRJSZ2Srh8",
   authDomain: "tgbinder-8e3c6.firebaseapp.com",
@@ -16,8 +17,11 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const cardsRef = ref(db, 'cards');
 
+// DOM Content Loaded
 document.addEventListener('DOMContentLoaded', () => {
   const container = document.getElementById('binderContainer');
+  const addCardForm = document.getElementById('cardForm');
+  const cardTable = document.getElementById('cardTable').getElementsByTagName('tbody')[0];
 
   // Ensure the container element is available before proceeding
   if (!container) {
@@ -28,8 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Listen for card data from Firebase
   onValue(cardsRef, (snapshot) => {
     const data = snapshot.val();
-    console.log('Firebase Data:', data);  // Debugging: Check the data from Firebase
-
     if (!data) {
       container.innerHTML = 'No cards found.';
       return;
@@ -38,92 +40,63 @@ document.addEventListener('DOMContentLoaded', () => {
     container.innerHTML = '';  // Clear old entries if data exists
 
     Object.entries(data).forEach(([cardId, card]) => {
-      // Create a div for the card
-      const cardBox = document.createElement('div');
-      cardBox.className = 'card-box';
+      const row = cardTable.insertRow();
+      row.insertCell(0).textContent = card.name;
+      row.insertCell(1).textContent = card.setCode;
+      row.insertCell(2).textContent = card.treatment || 'Non-Foil';
+      row.insertCell(3).textContent = card.quantity || 1;
+      row.insertCell(4).textContent = card.collectorNumber || '';
 
-      // Create and append the quantity badge
-      const quantity = document.createElement('div');
-      quantity.className = 'quantity-badge';
-      quantity.textContent = `x${card.quantity}`;
-
-      // Create and append the treatment badge
-      const treatment = document.createElement('div');
-      treatment.className = 'foil-badge';
-      if (card.treatment === 'F') {
-        treatment.textContent = 'Foil';
-        treatment.classList.add('f');
-      } else if (card.treatment === 'PF') {
-        treatment.textContent = 'Piss Foil';
-        treatment.classList.add('pf');
-      } else {
-        treatment.textContent = 'Non-Foil';
-      }
-
-      // Optionally, add collector number if available
-      if (card.collectorNumber) {
-        const collectorBadge = document.createElement('div');
-        collectorBadge.className = 'collector-badge';
-        collectorBadge.textContent = `#${card.collectorNumber}`;
-        cardBox.appendChild(collectorBadge);
-      }
-
-      // Create and append the card image
-      const img = document.createElement('img');
-      const name = card.name;
-      const set = card.setCode?.toLowerCase();
-      const rawCollector = card.collectorNumber;
-      const normalizedCollector = rawCollector ? rawCollector.replace(/^0+/, '') : null;
-      const fallbackUrl = `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(name)}&set=${set}`;
-
-      const fetchCardImage = () => {
-        if (normalizedCollector && set) {
-          const url = `https://api.scryfall.com/cards/${set}/${normalizedCollector}`;
-          fetch(url)
-            .then(res => {
-              if (!res.ok) throw new Error('Fallback');
-              return res.json();
-            })
-            .then(data => {
-              img.src = data.image_uris?.normal || data.card_faces?.[0]?.image_uris?.normal || '';
-            })
-            .catch((error) => {
-              console.error("Error fetching card image:", error);
-              fetch(fallbackUrl)
-                .then(res => res.json())
-                .then(data => {
-                  img.src = data.image_uris?.normal || data.card_faces?.[0]?.image_uris?.normal || '';
-                });
-            });
-        } else {
-          fetch(fallbackUrl)
-            .then(res => res.json())
-            .then(data => {
-              img.src = data.image_uris?.normal || data.card_faces?.[0]?.image_uris?.normal || '';
-            });
-        }
-      };
-
-      fetchCardImage();
-      img.alt = name;
-
-      // Create and append the search button
-      const button = document.createElement('button');
-      button.textContent = 'Search';
-      button.classList.add('button');
-      button.onclick = () => {
-        const url = `https://www.cardmarket.com/en/Magic/Products/Search?searchString=${encodeURIComponent(name)}&setName=${encodeURIComponent(card.setCode)}`;
+      // Create Search Button
+      const searchButton = document.createElement('button');
+      searchButton.textContent = 'Search';
+      searchButton.onclick = () => {
+        const url = `https://www.cardmarket.com/en/Magic/Products/Search?searchString=${encodeURIComponent(card.name)}&setName=${encodeURIComponent(card.setCode)}`;
         window.open(url, '_blank');
       };
+      row.insertCell(5).appendChild(searchButton);
 
-      // Append all elements to the cardBox
-      cardBox.appendChild(quantity);
-      cardBox.appendChild(treatment);
-      cardBox.appendChild(img);
-      cardBox.appendChild(button);
-
-      // Finally, append the cardBox to the container
-      container.appendChild(cardBox);
+      // Create Delete Button
+      const deleteButton = document.createElement('button');
+      deleteButton.textContent = 'Delete';
+      deleteButton.onclick = () => {
+        remove(ref(db, `cards/${cardId}`));
+      };
+      row.insertCell(6).appendChild(deleteButton);
     });
+  });
+
+  // Form submission to add new card
+  addCardForm.addEventListener('submit', (event) => {
+    event.preventDefault(); // Prevent form submission
+
+    const cardName = document.getElementById('cardNameInput').value;
+    const cardQuantity = parseInt(document.getElementById('cardQuantityInput').value, 10);
+    const cardTreatment = document.getElementById('treatmentSelect').value;
+    const cardSetCode = document.getElementById('setCodeInput').value;
+    const cardCollectorNumber = document.getElementById('collectorNumberInput').value;
+
+    if (cardName && cardQuantity) {
+      const newCard = {
+        name: cardName,
+        quantity: cardQuantity,
+        treatment: cardTreatment,
+        setCode: cardSetCode,
+        collectorNumber: cardCollectorNumber
+      };
+
+      // Add card to Firebase
+      const newCardRef = push(cardsRef);
+      set(newCardRef, newCard)
+        .then(() => {
+          console.log("Card added successfully!");
+
+          // Optionally, reset the form fields after adding the card
+          addCardForm.reset();
+        })
+        .catch(error => {
+          console.error("Error adding card: ", error);
+        });
+    }
   });
 });

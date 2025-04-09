@@ -5,19 +5,17 @@
   <title>Card Inventory</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-  <!-- Remove Firebase scripts from here as we are importing them as modules -->
   <link rel="stylesheet" href="styles.css" />
   <link rel="icon" href="favicon.ico" type="image/x-icon" />
 </head>
 <body>
   <h1>Card Inventory</h1>
 
-  <!-- Container to hold both the form and the table -->
   <div class="container">
     <div class="form-with-image">
       <div class="form-container">
+        <!-- Form to add cards -->
         <form id="cardForm">
-          <!-- Form for adding cards -->
           <input type="text" id="cardNameInput" placeholder="Card Name or '2 Card Name'" required />
           <input type="text" id="setCodeInput" placeholder="Set Code" required />
           <input type="text" id="collectorNumberInput" placeholder="Collector #" />
@@ -29,8 +27,10 @@
           <button type="submit">Add Card</button>
         </form>
 
-        <!-- Table to display added cards -->
+        <!-- Link to open the binder -->
         <a href="binder.html" class="button">Open Binder</a>
+
+        <!-- Table for displaying added cards -->
         <div id="cardTableWrapper">
           <table id="cardTable">
             <thead>
@@ -51,7 +51,6 @@
     </div>
   </div>
 
-  <!-- Include Firebase and your own script as modules -->
   <script type="module" src="scripts.js"></script>
 </body>
 </html>
