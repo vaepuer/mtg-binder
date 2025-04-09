@@ -13,10 +13,28 @@
     appId: "1:903450561301:web:df2407af369db0895bb71c",
   };
 
+  document.addEventListener('DOMContentLoaded', () => {
+    const container = document.getElementById('binderContainer');
+    if (!container) {
+      console.error('binderContainer not found!');
+      return;
+    }
+  });
+
   // Initialize Firebase
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
   const cardsRef = ref(db, 'cards');
+
+  onValue(cardsRef, (snapshot) => {
+    const data = snapshot.val();
+    console.log("Firebase Data:", data);  // Log Firebase data
+  
+    if (!data) {
+      container.innerHTML = 'No cards found.';
+      return;
+    }
+  });
 
   document.addEventListener('DOMContentLoaded', () => {
     const container = document.getElementById('binderContainer');
