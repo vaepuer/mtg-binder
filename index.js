@@ -1,16 +1,7 @@
-// index.js
-import {
-  getDatabase,
-  ref,
-  onValue,
-  remove
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-import {
-  initializeApp,
-  getApps
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 
-// Firebase config (same as scripts.js)
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyAia2iO0Qx7AmJxXlbG5BK60VRJSZ2Srh8",
   authDomain: "tgbinder-8e3c6.firebaseapp.com",
@@ -34,30 +25,48 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
+  // Listen to changes in Firebase
   onValue(cardsRef, (snapshot) => {
     const data = snapshot.val();
-    cardTable.innerHTML = ''; // Clear previous table
+    cardTable.innerHTML = ''; // Clear previous data
 
-    if (!data) return;
+    if (!data) {
+      console.log("No cards found.");
+      return;
+    }
 
+    // Iterate over the cards from Firebase
     Object.entries(data).forEach(([cardId, card]) => {
+      // Default fallback values for missing data
+      const cardName = card.name || 'Unnamed Card';
+      const cardSetCode = card.setCode || 'N/A';
+      const cardTreatment = card.treatment || 'Non-Foil';
+      const cardQuantity = card.quantity || 0; // default to 0 if no quantity
+      const cardCollectorNumber = card.collectorNumber || 'N/A';
+
       const row = cardTable.insertRow();
 
       row.innerHTML = `
-        <td>${card.name}</td>
-        <td>${card.setCode}</td>
-        <td>${card.treatment || 'Non-Foil'}</td>
-        <td>${card.quantity}</td>
-        <td>${card.collectorNumber || 'N/A'}</td>
-        <td></td>
+        <td>${cardName}</td>
+        <td>${cardSetCode}</td>
+        <td>${cardTreatment}</td>
+        <td>${cardQuantity}</td>
+        <td>${cardCollectorNumber}</td>
+        <td></td> <!-- Placeholder for search -->
         <td><button class="delete-button" data-id="${cardId}">Delete</button></td>
       `;
 
+      // Add event listener for the delete button
       row.querySelector('.delete-button').addEventListener('click', () => {
         const cardRef = ref(db, `cards/${cardId}`);
         remove(cardRef)
-          .then(() => console.log(`Card ${cardId} deleted.`))
-          .catch((err) => console.error("Delete failed:", err));
+          .then(() => {
+            console.log(`Card ${cardId} deleted.`);
+            row.remove(); // Remove the row from the table after successful deletion
+          })
+          .catch((err) => {
+            console.error("Delete failed:", err);
+          });
       });
     });
   });
