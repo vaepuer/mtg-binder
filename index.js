@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Listen to changes in Firebase
   onValue(cardsRef, (snapshot) => {
     const data = snapshot.val();
+    console.log("Firebase data updated:", data); // Check if data is being received
     cardTable.innerHTML = ''; // Clear previous data
 
     if (!data) {
