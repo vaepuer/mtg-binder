@@ -5,17 +5,27 @@
   <title>Card Inventory</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
 </head>
 <body>
   <h1>Card Inventory</h1>
 
-  <div class="container">
+  <!-- Login Form -->
+  <div id="loginForm" class="form-container">
+    <h2>Login</h2>
+    <input type="email" id="email" placeholder="Email" required />
+    <input type="password" id="password" placeholder="Password" required />
+    <button id="loginButton">Login</button>
+    <p id="errorMessage">No Login</p>
+  </div>
+
+  <!-- Content for authenticated users -->
+  <div id="cardContent" class="container" style="display: none;">
     <div class="form-with-image">
       <div class="form-container">
         <!-- Form to add cards -->
         <form id="cardForm">
           <input type="text" id="cardNameInput" placeholder="Card Name or '2 Card Name'" required />
-          <input type="number" id="cardQuantityInput" placeholder="Quantity" value="1" required />
           <input type="text" id="setCodeInput" placeholder="Set Code" required />
           <input type="text" id="collectorNumberInput" placeholder="Collector #" />
           <select id="treatmentSelect" title="Card Finish Type">
@@ -25,9 +35,6 @@
           </select>
           <button type="submit">Add Card</button>
         </form>
-
-        <!-- Link to open the binder -->
-        <a href="binder.html" class="button">Open Binder</a>
 
         <!-- Table for displaying added cards -->
         <div id="cardTableWrapper">

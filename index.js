@@ -1,7 +1,8 @@
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 
-// Firebase config
+// Firebase config (same as scripts.js)
 const firebaseConfig = {
   apiKey: "AIzaSyAia2iO0Qx7AmJxXlbG5BK60VRJSZ2Srh8",
   authDomain: "tgbinder-8e3c6.firebaseapp.com",
@@ -15,61 +16,82 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const db = getDatabase(app);
+const auth = getAuth(app);
 const cardsRef = ref(db, 'cards');
 
-document.addEventListener('DOMContentLoaded', () => {
-  const cardTable = document.getElementById('cardTable').getElementsByTagName('tbody')[0];
+// DOM elements
+const loginForm = document.getElementById('loginForm');
+const cardContent = document.getElementById('cardContent');
+const cardTable = document.getElementById('cardTable').getElementsByTagName('tbody')[0];
+const loginButton = document.getElementById('loginButton');
+const errorMessage = document.getElementById('errorMessage');
 
-  if (!cardTable) {
-    console.error("Card table not found!");
-    return;
+// Login event listener
+loginButton.addEventListener('click', (e) => {
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+
+  signInWithEmailAndPassword(auth, email, password)
+    .then((userCredential) => {
+      const user = userCredential.user;
+      console.log("Logged in as:", user.email);
+
+      // Hide login form and show card content
+      loginForm.style.display = 'none';
+      cardContent.style.display = 'block';
+
+      // Fetch cards
+      fetchCards(user.uid);
+    })
+    .catch((error) => {
+      errorMessage.textContent = error.message;
+    });
+});
+
+// Handle authentication state change
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    console.log("User is logged in:", user.uid);
+    // Hide login form and show card content
+    loginForm.style.display = 'none';
+    cardContent.style.display = 'block';
+    fetchCards(user.uid);  // Pass the logged-in user's UID
+  } else {
+    console.log("No user logged in");
+    loginForm.style.display = 'block';
+    cardContent.style.display = 'none';
   }
+});
 
-  // Listen to changes in Firebase
+// Fetch cards and display them
+function fetchCards(userId) {
   onValue(cardsRef, (snapshot) => {
     const data = snapshot.val();
-    console.log("Firebase data updated:", data); // Log the data
+    cardTable.innerHTML = ''; // Clear previous table
 
-    cardTable.innerHTML = ''; // Clear previous data
+    if (!data) return;
 
-    if (!data) {
-      console.log("No cards found.");
-      return;
-    }
-
-    // Iterate over the cards from Firebase
     Object.entries(data).forEach(([cardId, card]) => {
-      // Default fallback values for missing data
-      const cardName = card.name || 'Unnamed Card';
-      const cardSetCode = card.setCode || 'N/A';
-      const cardTreatment = card.treatment || 'Non-Foil';
-      const cardQuantity = card.quantity || 0; // default to 0 if no quantity
-      const cardCollectorNumber = card.collectorNumber || 'N/A';
+      if (card.userId === userId) { // Check if the card belongs to the logged-in user
+        const row = cardTable.insertRow();
 
-      const row = cardTable.insertRow();
+        row.innerHTML = `
+          <td>${card.name}</td>
+          <td>${card.setCode}</td>
+          <td>${card.treatment || 'Non-Foil'}</td>
+          <td>${card.quantity}</td>
+          <td>${card.collectorNumber || 'N/A'}</td>
+          <td></td>
+          <td><button class="delete-button" data-id="${cardId}">Delete</button></td>
+        `;
 
-      row.innerHTML = `
-        <td>${cardName}</td>
-        <td>${cardSetCode}</td>
-        <td>${cardTreatment}</td>
-        <td>${cardQuantity}</td>
-        <td>${cardCollectorNumber}</td>
-        <td></td> <!-- Placeholder for search -->
-        <td><button class="delete-button" data-id="${cardId}">Delete</button></td>
-      `;
-
-      // Add event listener for the delete button
-      row.querySelector('.delete-button').addEventListener('click', () => {
-        const cardRef = ref(db, `cards/${cardId}`);
-        remove(cardRef)
-          .then(() => {
-            console.log(`Card ${cardId} deleted.`);
-            row.remove(); // Remove the row from the table after successful deletion
-          })
-          .catch((err) => {
-            console.error("Delete failed:", err);
-          });
-      });
+        row.querySelector('.delete-button').addEventListener('click', () => {
+          const cardRef = ref(db, `cards/${cardId}`);
+          remove(cardRef)
+            .then(() => console.log(`Card ${cardId} deleted.`))
+            .catch((err) => console.error("Delete failed:", err));
+        });
+      }
     });
   });
-});
+}
