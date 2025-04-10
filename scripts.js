@@ -1,6 +1,18 @@
-import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, onValue, push, set, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+// scripts.js
+import {
+  getDatabase,
+  ref,
+  push,
+  set,
+  remove
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import {
+  getAuth
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import {
+  initializeApp,
+  getApps
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 
 // Firebase config
 const firebaseConfig = {
@@ -13,7 +25,7 @@ const firebaseConfig = {
   appId: "1:903450561301:web:df2407af369db0895bb71c",
 };
 
-// Initialize Firebase
+// Initialize Firebase once
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const db = getDatabase(app);
 const auth = getAuth(app);
@@ -21,63 +33,45 @@ const cardsRef = ref(db, 'cards');
 
 document.addEventListener('DOMContentLoaded', () => {
   const addCardForm = document.getElementById('cardForm');
-  const cardTable = document.getElementById('cardTable')?.getElementsByTagName('tbody')[0];
 
-  // Load existing cards from Firebase
-  onValue(cardsRef, (snapshot) => {
-    const data = snapshot.val();
-    if (!data || !cardTable) return;
+  if (!addCardForm) {
+    console.error('Form not found!');
+    return;
+  }
 
-    // Clear and rebuild the table
-    cardTable.innerHTML = '';
-    Object.entries(data).forEach(([cardId, card]) => addCardToTable(card, cardId));
-  });
+  addCardForm.addEventListener('submit', (event) => {
+    event.preventDefault();
 
-  // Form submission handler
-  addCardForm?.addEventListener('submit', (e) => {
-    e.preventDefault();
+    const cardName = document.getElementById('cardNameInput').value.trim();
+    const cardQuantity = parseInt(document.getElementById('cardQuantityInput')?.value || "1", 10);
+    const cardTreatment = document.getElementById('treatmentSelect')?.value || "";
+    const cardSetCode = document.getElementById('setCodeInput')?.value || "";
+    const cardCollectorNumber = document.getElementById('collectorNumberInput')?.value || "";
 
-    const name = document.getElementById('cardNameInput')?.value;
-    const quantity = parseInt(document.getElementById('cardQuantityInput')?.value, 10);
-    const treatment = document.getElementById('treatmentSelect')?.value || 'Non-Foil';
-    const setCode = document.getElementById('setCodeInput')?.value || '';
-    const collectorNumber = document.getElementById('collectorNumberInput')?.value || '';
+    const user = auth.currentUser;
 
-    if (!name || isNaN(quantity)) return;
+    if (!cardName || isNaN(cardQuantity)) {
+      alert('Please enter a valid card name and quantity.');
+      return;
+    }
 
     const newCard = {
-      name,
-      quantity,
-      treatment,
-      setCode,
-      collectorNumber,
-      userId: auth.currentUser?.uid || 'anonymous'
+      name: cardName,
+      quantity: cardQuantity,
+      treatment: cardTreatment,
+      setCode: cardSetCode,
+      collectorNumber: cardCollectorNumber,
+      userId: user?.uid || "anonymous"
     };
 
     const newCardRef = push(cardsRef);
     set(newCardRef, newCard)
       .then(() => {
-        console.log("Card added.");
+        console.log("Card added!");
         addCardForm.reset();
       })
-      .catch((err) => console.error("Error adding card:", err));
+      .catch((error) => {
+        console.error("Error adding card:", error);
+      });
   });
-
-  // Add a card row to the table
-  function addCardToTable(card, cardId) {
-    if (!cardTable) return;
-
-    const row = cardTable.insertRow();
-    row.insertCell(0).textContent = card.name;
-    row.insertCell(1).textContent = card.setCode;
-    row.insertCell(2).textContent = card.treatment || 'Non-Foil';
-    row.insertCell(3).textContent = card.quantity;
-    row.insertCell(4).textContent = card.collectorNumber || 'N/A';
-    row.insertCell(5).innerHTML = ''; // Optional: Add link/search/etc.
-
-    const deleteBtn = document.createElement('button');
-    deleteBtn.textContent = 'Delete';
-    deleteBtn.onclick = () => remove(ref(db, `cards/${cardId}`));
-    row.insertCell(6).appendChild(deleteBtn);
-  }
 });
