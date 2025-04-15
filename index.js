@@ -1,4 +1,4 @@
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, createUserWithEmailAndPassword  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 
@@ -26,6 +26,7 @@ const cardTable = document.getElementById('cardTable').getElementsByTagName('tbo
 const loginButton = document.getElementById('loginButton');
 const errorMessage = document.getElementById('errorMessage');
 const openBinderButton = document.getElementById('openBinderButton');
+const signupButton = document.getElementById('signupButton');
 
 // Login event listener
 loginButton.addEventListener('click', (e) => {
@@ -47,6 +48,24 @@ loginButton.addEventListener('click', (e) => {
     })
     .catch((error) => {
       errorMessage.textContent = error.message;
+    });
+});
+
+signupButton.addEventListener('click', (e) => {
+  e.preventDefault();
+
+  const email = document.getElementById("signup-username").value;
+  const password = document.getElementById("signup-password").value;
+
+  createUserWithEmailAndPassword(auth, email, password)
+    .then((userCredential) => {
+      console.log("User signed up:", userCredential.user);
+      // Redirect or hide/show stuff as needed
+      window.location.href = "index.html";
+    })
+    .catch((error) => {
+      errorMessage.textContent = error.message;
+      console.error("Signup error:", error);
     });
 });
 
