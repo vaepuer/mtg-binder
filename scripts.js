@@ -17,19 +17,8 @@ import {
   getApps
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 
-// ✅ Firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSyAia2iO0Qx7AmJxXlbG5BK60VRJSZ2Srh8",
-  authDomain: "tgbinder-8e3c6.firebaseapp.com",
-  databaseURL: "https://tgbinder-8e3c6-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "tgbinder-8e3c6",
-  storageBucket: "tgbinder-8e3c6.appspot.com",
-  messagingSenderId: "903450561301",
-  appId: "1:903450561301:web:df2407af369db0895bb71c",
-};
-
 // ✅ Initialize Firebase
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const app = getApps().length === 0 ? initializeApp("./firebaseConfig") : getApps()[0];
 const db = getDatabase(app);
 const auth = getAuth(app);
 
@@ -72,6 +61,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // ✅ Add card event listener
     addCardForm.addEventListener('submit', (event) => {
       event.preventDefault();
+
+      console.log("Form submitted");
 
       const cardName = document.getElementById('cardNameInput')?.value.trim();
       const cardQuantity = parseInt(document.getElementById('cardQuantityInput')?.value || "1", 10);
