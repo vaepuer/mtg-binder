@@ -88,15 +88,17 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log("Sending this card to Firebase:", newCard); // Debugging line to check the card object
 
       // Add the card to Firebase
-      const newCardRef = push(cardsRef); // This should add a new card to the cards collection
       set(newCardRef, newCard)
-        .then(() => {
-          console.log("✅ Card added successfully!");
-          addCardForm.reset();
-        })
-        .catch((error) => {
-          console.error("❌ Error adding card:", error);
-        });
+
+
+      .then(() => {
+      console.log("✅ Card added successfully!");
+      addCardForm.reset();  // Reset the form
+      })
+      .catch((error) => {
+      console.error("❌ Error adding card:", error);  // Log any error that occurs
+      });
+
     });
 
     // ✅ Fetch and display the cards
