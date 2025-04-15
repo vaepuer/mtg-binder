@@ -84,6 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      // Prepare the new card object
       const newCard = {
         name: cardName,
         quantity: cardQuantity,
@@ -93,7 +94,10 @@ document.addEventListener('DOMContentLoaded', () => {
         userId: user.uid
       };
 
-      const newCardRef = push(cardsRef);
+      console.log("Sending this card to Firebase:", newCard); // Debugging line to check the card object
+
+      // Add the card to Firebase
+      const newCardRef = push(cardsRef); // This should add a new card to the cards collection
       set(newCardRef, newCard)
         .then(() => {
           console.log("✅ Card added successfully!");
