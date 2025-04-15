@@ -1,19 +1,7 @@
 // scripts.js
-import {
-  getDatabase,
-  ref,
-  push,
-  set,
-  remove
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-import {
-  getAuth,
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import {
-  initializeApp,
-  getApps
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import {  getDatabase,  ref,  push,  set,  remove} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import {  getAuth,  onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import {  initializeApp,  getApps} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 
 // Firebase config
 const firebaseConfig = {
@@ -34,9 +22,12 @@ const auth = getAuth(app);
 // Wait for auth state
 onAuthStateChanged(auth, (user) => {
   if (!user) {
-    // Not logged in, redirect to login page
-    window.location.href = "login.html"; // or whatever your login page is
-    return;
+    // Not logged in
+    window.location.href = "login.html"; // Or your login page
+  } else {
+    // Logged in
+    console.log("User is logged in:", user.uid);
+    window.location.href = "index.html"; // Redirect to your app
   }
 
   const cardsRef = ref(db, 'cards');
