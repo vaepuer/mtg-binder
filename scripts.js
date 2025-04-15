@@ -1,6 +1,6 @@
 // scripts.js
 import {  getDatabase,  ref,  push,  set,  remove} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-import {  getAuth,  onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import {  getAuth,  onAuthStateChanged, signOut} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import {  initializeApp,  getApps} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 
 // Firebase config
@@ -18,16 +18,27 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const db = getDatabase(app);
 const auth = getAuth(app);
+const logoutBtn = document.getElementById("logoutBtn");
+
+logoutBtn?.addEventListener("click", () => {
+  signOut(auth)
+    .then(() => {
+      console.log("User signed out.");
+      window.location.href = "login.html";
+    })
+    .catch((error) => {
+      console.error("Logout error:", error);
+    });
+});
 
 // Wait for auth state
 onAuthStateChanged(auth, (user) => {
-  if (!user) {
-    // Not logged in
-    window.location.href = "login.html"; // Or your login page
+  if (user) {
+    console.log("Logged in as:", user.uid);
+    window.location.href = "index.html";
   } else {
-    // Logged in
-    console.log("User is logged in:", user.uid);
-    window.location.href = "index.html"; // Redirect to your app
+    console.log("Not logged in. Staying on login page.");
+    // Stay on the login page
   }
 
   const cardsRef = ref(db, 'cards');
