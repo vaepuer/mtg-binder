@@ -8,21 +8,24 @@
   <link rel="icon" href="favicon.ico" type="image/x-icon" />
 </head>
 <body>
-  <h1>Card Inventory</h1>
-
-  <!-- Login Form -->
-  <div id="loginForm" class="form-container">
-    <h2>Login</h2>
-    <input type="email" id="email" placeholder="Email" required />
-    <input type="password" id="password" placeholder="Password" required />
-    <button id="loginButton">Login</button>
-    <p id="errorMessage">No Login</p>
+  <div id="header">
+    <div id="part1">
+      <h1>TGB</h1>
+    </div>
+    <div>
+      <h2>The Great Binder</h2>
+    </div>
+    
   </div>
 
   <!-- Content for authenticated users -->
   <div id="cardContent" class="container">
     <!-- Add this section inside the authenticated content (cardContent) -->
-    <a href="binder.html" class="button" id="openBinderButton"">Open Binder</a>
+     <div>
+      <button id="logoutBtn">Logout</button>
+      <a href="binder.html" class="button" id="openBinderButton"">Open Binder</a>
+     </div>
+    
 
     <div class="form-with-image">
       <div class="form-container">
