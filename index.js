@@ -25,6 +25,7 @@ const cardContent = document.getElementById('cardContent');
 const cardTable = document.getElementById('cardTable').getElementsByTagName('tbody')[0];
 const loginButton = document.getElementById('loginButton');
 const errorMessage = document.getElementById('errorMessage');
+const openBinderButton = document.getElementById('openBinderButton');
 
 // Login event listener
 loginButton.addEventListener('click', (e) => {
@@ -39,6 +40,7 @@ loginButton.addEventListener('click', (e) => {
       // Hide login form and show card content
       loginForm.style.display = 'none';
       cardContent.style.display = 'block';
+      openBinderButton.style.display = 'block';  // Show the "Go to Binder" button
 
       // Fetch cards
       fetchCards(user.uid);
@@ -55,11 +57,13 @@ onAuthStateChanged(auth, (user) => {
     // Hide login form and show card content
     loginForm.style.display = 'none';
     cardContent.style.display = 'block';
+    openBinderButton.style.display = 'block'; // Show the "Go to Binder" button
     fetchCards(user.uid);  // Pass the logged-in user's UID
   } else {
     console.log("No user logged in");
     loginForm.style.display = 'block';
     cardContent.style.display = 'none';
+    openBinderButton.style.display = 'none'; // Hide the "Go to Binder" button when logged out
   }
 });
 
@@ -69,10 +73,14 @@ function fetchCards(userId) {
     const data = snapshot.val();
     cardTable.innerHTML = ''; // Clear previous table
 
-    if (!data) return;
+    if (!data) {
+      console.log("No cards found for user:", userId);
+      return;
+    }
 
+    // Iterate over all cards and display those belonging to the logged-in user
     Object.entries(data).forEach(([cardId, card]) => {
-      if (card.userId === userId) { // Check if the card belongs to the logged-in user
+      if (card.userId === userId) { // Only show the logged-in user's cards
         const row = cardTable.insertRow();
 
         row.innerHTML = `
