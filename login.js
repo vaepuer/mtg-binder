@@ -8,7 +8,7 @@ import {
   
   // Firebase config
   const firebaseConfig = {
-    apiKey: "AIzaSyAia2iO0Qx7AmXlbG5BK60VRJSZ2Srh8",
+    apiKey: "AIzaSyAia2iO0Qx7AmJxXlbG5BK60VRJSZ2Srh8",
     authDomain: "tgbinder-8e3c6.firebaseapp.com",
     databaseURL: "https://tgbinder-8e3c6-default-rtdb.europe-west1.firebasedatabase.app",
     projectId: "tgbinder-8e3c6",
