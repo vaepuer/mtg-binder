@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const cardsRef = ref(db, 'cards');
     const addCardForm = document.getElementById('cardForm');
-    const cardTableBody = document.getElementById('cardTable').getElementsByTagName('tbody')[0];
+    const cardTableBody = document.getElementById('cardTable')?.getElementsByTagName('tbody')[0];
 
     if (!addCardForm) {
       console.warn('Card form not found.');
@@ -107,11 +107,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // ✅ Fetch and display the cards
     onValue(cardsRef, (snapshot) => {
       const data = snapshot.val();
+      if (!cardTableBody) {
+        console.error('Table body not found!');
+        return;
+      }
+      
       cardTableBody.innerHTML = ""; // Clear the current table data
 
       if (data) {
         // Loop through each card and render it in the table
         Object.entries(data).forEach(([cardId, card]) => {
+          console.log('Card Data:', card); // Log card data to the console
+          
           if (card.userId === user.uid) {  // Show only cards belonging to the logged-in user
             const row = cardTableBody.insertRow();
             row.innerHTML = `
