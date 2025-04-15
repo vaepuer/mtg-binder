@@ -17,9 +17,9 @@ import { firebaseConfig } from "./firebaseConfig.js";
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const auth = getAuth(app);
 const db = getDatabase(app);
-const cardsRef = ref(db, 'cards');
+const cardsRef = ref(db, "cards");
 
-// Auth state check
+// 🔐 Auth state check
 onAuthStateChanged(auth, (user) => {
   if (!user) {
     window.location.href = "login.html";
@@ -28,36 +28,61 @@ onAuthStateChanged(auth, (user) => {
 
   fetchCards(user.uid);
   setupCardForm(user.uid);
+
+  const logoutBtn = document.getElementById("logoutButton");
+  if (logoutBtn) {
+    logoutBtn.style.display = "inline-block"; // optional
+    logoutBtn.addEventListener("click", () => {
+      signOut(auth)
+        .then(() => {
+          window.location.href = "login.html";
+        })
+        .catch((err) => console.error("Logout failed:", err));
+    });
+  }
 });
 
-// Handle logout
-document.getElementById("logoutButton")?.addEventListener("click", () => {
-  signOut(auth).then(() => window.location.href = "login.html");
-});
-
-// Setup card form
+// 🧾 Setup card form submission
 function setupCardForm(uid) {
   const form = document.getElementById("cardForm");
   if (!form) return;
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
-    const name = document.getElementById("cardNameInput").value;
-    const quantity = parseInt(document.getElementById("cardQuantityInput").value) || 1;
+
+    const name = document.getElementById("cardNameInput")?.value.trim();
+    const quantity = parseInt(document.getElementById("cardQuantityInput")?.value || "1", 10);
     const treatment = document.getElementById("treatmentSelect")?.value || "";
     const setCode = document.getElementById("setCodeInput")?.value || "";
     const collectorNumber = document.getElementById("collectorNumberInput")?.value || "";
 
-    const newCard = { name, quantity, treatment, setCode, collectorNumber, userId: uid };
-    const newCardRef = push(cardsRef);
+    if (!name || isNaN(quantity)) {
+      alert("Please enter a valid card name and quantity.");
+      return;
+    }
 
+    const newCard = {
+      name,
+      quantity,
+      treatment,
+      setCode,
+      collectorNumber,
+      userId: uid
+    };
+
+    const newCardRef = push(cardsRef);
     set(newCardRef, newCard)
-      .then(() => form.reset())
-      .catch((err) => console.error("Failed to add card", err));
+      .then(() => {
+        console.log("✅ Card added:", newCard.name);
+        form.reset();
+      })
+      .catch((err) => {
+        console.error("❌ Failed to add card:", err);
+      });
   });
 }
 
-// Fetch & display cards
+// 📦 Fetch & render cards
 function fetchCards(uid) {
   const cardTable = document.getElementById("cardTable")?.getElementsByTagName("tbody")[0];
   if (!cardTable) return;
@@ -66,9 +91,16 @@ function fetchCards(uid) {
     const data = snapshot.val();
     cardTable.innerHTML = "";
 
-    Object.entries(data || {}).forEach(([cardId, card]) => {
+    if (!data) {
+      const row = cardTable.insertRow();
+      row.innerHTML = `<td colspan="6">No cards found.</td>`;
+      return;
+    }
+
+    Object.entries(data).forEach(([cardId, card]) => {
       if (card.userId === uid) {
         const row = cardTable.insertRow();
+
         row.innerHTML = `
           <td>${card.name}</td>
           <td>${card.setCode}</td>
@@ -78,8 +110,10 @@ function fetchCards(uid) {
           <td><button class="delete-button" data-id="${cardId}">Delete</button></td>
         `;
 
-        row.querySelector(".delete-button").addEventListener("click", () => {
-          remove(ref(db, `cards/${cardId}`));
+        row.querySelector(".delete-button")?.addEventListener("click", () => {
+          remove(ref(db, `cards/${cardId}`))
+            .then(() => console.log(`🗑️ Card ${card.name} deleted.`))
+            .catch((err) => console.error("Failed to delete card:", err));
         });
       }
     });
