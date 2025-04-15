@@ -1,122 +1,85 @@
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, createUserWithEmailAndPassword  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import {
+  getAuth,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import {
+  getDatabase,
+  ref,
+  push,
+  set,
+  onValue,
+  remove
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { firebaseConfig } from "./firebaseConfig.js";
 
-// Firebase config (same as scripts.js)
-const firebaseConfig = {
-  apiKey: "AIzaSyAia2iO0Qx7AmJxXlbG5BK60VRJSZ2Srh8",
-  authDomain: "tgbinder-8e3c6.firebaseapp.com",
-  databaseURL: "https://tgbinder-8e3c6-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "tgbinder-8e3c6",
-  storageBucket: "tgbinder-8e3c6.appspot.com",
-  messagingSenderId: "903450561301",
-  appId: "1:903450561301:web:df2407af369db0895bb71c",
-};
-
-// Initialize Firebase
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const db = getDatabase(app);
 const auth = getAuth(app);
+const db = getDatabase(app);
 const cardsRef = ref(db, 'cards');
 
-// DOM elements
-const loginForm = document.getElementById('loginForm');
-const cardContent = document.getElementById('cardContent');
-const cardTable = document.getElementById('cardTable').getElementsByTagName('tbody')[0];
-const loginButton = document.getElementById('loginButton');
-const errorMessage = document.getElementById('errorMessage');
-const openBinderButton = document.getElementById('openBinderButton');
-const signupButton = document.getElementById('signupButton');
-
-// Login event listener
-loginButton.addEventListener('click', (e) => {
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-
-  signInWithEmailAndPassword(auth, email, password)
-    .then((userCredential) => {
-      const user = userCredential.user;
-      console.log("Logged in as:", user.email);
-
-      // Hide login form and show card content
-      loginForm.style.display = 'none';
-      cardContent.style.display = 'block';
-      openBinderButton.style.display = 'block';  // Show the "Go to Binder" button
-
-      // Fetch cards
-      fetchCards(user.uid);
-    })
-    .catch((error) => {
-      errorMessage.textContent = error.message;
-    });
-});
-
-signupButton.addEventListener('click', (e) => {
-  e.preventDefault();
-
-  const email = document.getElementById("signup-username").value;
-  const password = document.getElementById("signup-password").value;
-
-  createUserWithEmailAndPassword(auth, email, password)
-    .then((userCredential) => {
-      console.log("User signed up:", userCredential.user);
-      // Redirect or hide/show stuff as needed
-      window.location.href = "index.html";
-    })
-    .catch((error) => {
-      errorMessage.textContent = error.message;
-      console.error("Signup error:", error);
-    });
-});
-
-// Handle authentication state change
+// Auth state check
 onAuthStateChanged(auth, (user) => {
-  if (user) {
-    console.log("User is logged in:", user.uid);
-    // Hide login form and show card content
-    loginForm.style.display = 'none';
-    cardContent.style.display = 'block';
-    openBinderButton.style.display = 'block'; // Show the "Go to Binder" button
-    fetchCards(user.uid);  // Pass the logged-in user's UID
-  } else {
-    console.log("No user logged in");
-    loginForm.style.display = 'block';
-    cardContent.style.display = 'none';
-    openBinderButton.style.display = 'none'; // Hide the "Go to Binder" button when logged out
+  if (!user) {
+    window.location.href = "login.html";
+    return;
   }
+
+  fetchCards(user.uid);
+  setupCardForm(user.uid);
 });
 
-// Fetch cards and display them
-function fetchCards(userId) {
+// Handle logout
+document.getElementById("logoutButton")?.addEventListener("click", () => {
+  signOut(auth).then(() => window.location.href = "login.html");
+});
+
+// Setup card form
+function setupCardForm(uid) {
+  const form = document.getElementById("cardForm");
+  if (!form) return;
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = document.getElementById("cardNameInput").value;
+    const quantity = parseInt(document.getElementById("cardQuantityInput").value) || 1;
+    const treatment = document.getElementById("treatmentSelect")?.value || "";
+    const setCode = document.getElementById("setCodeInput")?.value || "";
+    const collectorNumber = document.getElementById("collectorNumberInput")?.value || "";
+
+    const newCard = { name, quantity, treatment, setCode, collectorNumber, userId: uid };
+    const newCardRef = push(cardsRef);
+
+    set(newCardRef, newCard)
+      .then(() => form.reset())
+      .catch((err) => console.error("Failed to add card", err));
+  });
+}
+
+// Fetch & display cards
+function fetchCards(uid) {
+  const cardTable = document.getElementById("cardTable")?.getElementsByTagName("tbody")[0];
+  if (!cardTable) return;
+
   onValue(cardsRef, (snapshot) => {
     const data = snapshot.val();
-    cardTable.innerHTML = ''; // Clear previous table
+    cardTable.innerHTML = "";
 
-    if (!data) {
-      console.log("No cards found for user:", userId);
-      return;
-    }
-
-    // Iterate over all cards and display those belonging to the logged-in user
-    Object.entries(data).forEach(([cardId, card]) => {
-      if (card.userId === userId) { // Only show the logged-in user's cards
+    Object.entries(data || {}).forEach(([cardId, card]) => {
+      if (card.userId === uid) {
         const row = cardTable.insertRow();
-
         row.innerHTML = `
           <td>${card.name}</td>
           <td>${card.setCode}</td>
-          <td>${card.treatment || 'Non-Foil'}</td>
+          <td>${card.treatment || "Non-Foil"}</td>
           <td>${card.quantity}</td>
-          <td>${card.collectorNumber || 'N/A'}</td>
-          <td></td>
+          <td>${card.collectorNumber || "N/A"}</td>
           <td><button class="delete-button" data-id="${cardId}">Delete</button></td>
         `;
 
-        row.querySelector('.delete-button').addEventListener('click', () => {
-          const cardRef = ref(db, `cards/${cardId}`);
-          remove(cardRef)
-            .then(() => console.log(`Card ${cardId} deleted.`))
-            .catch((err) => console.error("Delete failed:", err));
+        row.querySelector(".delete-button").addEventListener("click", () => {
+          remove(ref(db, `cards/${cardId}`));
         });
       }
     });
