@@ -33,7 +33,7 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0
 const db = getDatabase(app);
 const auth = getAuth(app);
 
-// 🔁 Run when DOM is ready
+// 🔁 Wait for DOM to be ready
 document.addEventListener('DOMContentLoaded', () => {
   const logoutBtn = document.getElementById("logoutBtn");
 
@@ -107,18 +107,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // ✅ Fetch and display the cards
     onValue(cardsRef, (snapshot) => {
       const data = snapshot.val();
+      console.log('Fetched card data:', data); // Added to inspect fetched data
+
       if (!cardTableBody) {
         console.error('Table body not found!');
         return;
       }
-      
+
       cardTableBody.innerHTML = ""; // Clear the current table data
 
       if (data) {
         // Loop through each card and render it in the table
         Object.entries(data).forEach(([cardId, card]) => {
-          console.log('Card Data:', card); // Log card data to the console
-          
+          console.log('Card Data:', card); // Log each card data
+
           if (card.userId === user.uid) {  // Show only cards belonging to the logged-in user
             const row = cardTableBody.insertRow();
             row.innerHTML = `
