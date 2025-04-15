@@ -7,7 +7,8 @@ import {
   remove
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 import {
-  getAuth
+  getAuth,
+  onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import {
   initializeApp,
@@ -29,49 +30,57 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const db = getDatabase(app);
 const auth = getAuth(app);
-const cardsRef = ref(db, 'cards');
 
-document.addEventListener('DOMContentLoaded', () => {
-  const addCardForm = document.getElementById('cardForm');
-
-  if (!addCardForm) {
-    console.error('Form not found!');
+// Wait for auth state
+onAuthStateChanged(auth, (user) => {
+  if (!user) {
+    // Not logged in, redirect to login page
+    window.location.href = "login.html"; // or whatever your login page is
     return;
   }
 
-  addCardForm.addEventListener('submit', (event) => {
-    event.preventDefault();
+  const cardsRef = ref(db, 'cards');
 
-    const cardName = document.getElementById('cardNameInput').value.trim();
-    const cardQuantity = parseInt(document.getElementById('cardQuantityInput')?.value || "1", 10);
-    const cardTreatment = document.getElementById('treatmentSelect')?.value || "";
-    const cardSetCode = document.getElementById('setCodeInput')?.value || "";
-    const cardCollectorNumber = document.getElementById('collectorNumberInput')?.value || "";
+  document.addEventListener('DOMContentLoaded', () => {
+    const addCardForm = document.getElementById('cardForm');
 
-    const user = auth.currentUser;
-
-    if (!cardName || isNaN(cardQuantity)) {
-      alert('Please enter a valid card name and quantity.');
+    if (!addCardForm) {
+      console.error('Form not found!');
       return;
     }
 
-    const newCard = {
-      name: cardName,
-      quantity: cardQuantity,
-      treatment: cardTreatment,
-      setCode: cardSetCode,
-      collectorNumber: cardCollectorNumber,
-      userId: user?.uid || "anonymous"
-    };
+    addCardForm.addEventListener('submit', (event) => {
+      event.preventDefault();
 
-    const newCardRef = push(cardsRef);
-    set(newCardRef, newCard)
-      .then(() => {
-        console.log("Card added!");
-        addCardForm.reset();
-      })
-      .catch((error) => {
-        console.error("Error adding card:", error);
-      });
+      const cardName = document.getElementById('cardNameInput').value.trim();
+      const cardQuantity = parseInt(document.getElementById('cardQuantityInput')?.value || "1", 10);
+      const cardTreatment = document.getElementById('treatmentSelect')?.value || "";
+      const cardSetCode = document.getElementById('setCodeInput')?.value || "";
+      const cardCollectorNumber = document.getElementById('collectorNumberInput')?.value || "";
+
+      if (!cardName || isNaN(cardQuantity)) {
+        alert('Please enter a valid card name and quantity.');
+        return;
+      }
+
+      const newCard = {
+        name: cardName,
+        quantity: cardQuantity,
+        treatment: cardTreatment,
+        setCode: cardSetCode,
+        collectorNumber: cardCollectorNumber,
+        userId: user.uid
+      };
+
+      const newCardRef = push(cardsRef);
+      set(newCardRef, newCard)
+        .then(() => {
+          console.log("Card added!");
+          addCardForm.reset();
+        })
+        .catch((error) => {
+          console.error("Error adding card:", error);
+        });
+    });
   });
 });
