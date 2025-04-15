@@ -1,0 +1,66 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: hsl(0, 0%, 94%);
+    margin: auto;
+    padding: 0;
+    display: flex;
+    justify-content: center; /* Center content horizontally */
+    align-items: flex-start; /* Align content to the top */
+    height: 100vh; /* Full viewport height */
+    overflow: hidden; /* Prevent scrolling */
+    flex-direction: column; /* Stack elements vertically */
+  }
+  
+  h1, h2 {
+    padding: -5px;
+    text-align:center;
+    margin:auto;
+  
+  }
+  
+  #header{
+    max-width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  /* Container for Form and Table */
+  .container {
+    width: 90%; /* Fix the container width */
+    max-width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+    display: flex;
+    flex-direction: column; /* Stack form and table vertically */
+    align-items: center; /* Center content horizontally */
+    gap: 20px; /* Add spacing between the form and the table */
+  }
+  
+  input[type="text"], select {
+    width: 100%; /* Make form inputs take full width */
+    max-width: 400px; /* Limit the width of input fields */
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+  }
+  /* Button styling */
+  button, .button{
+    margin:auto;
+    background-color: #9e9e9e;
+    color: white;
+    padding: 8px 8px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+    text-decoration: none;
+  }
+  
+  button:hover, .button:hover {
+    background-color: #cccccc;
+  }
+  
+  button:focus, .button:focus {
+    outline: none;
+  }

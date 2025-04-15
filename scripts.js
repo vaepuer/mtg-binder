@@ -3,7 +3,7 @@ import {
   ref,
   push,
   set,
-  remove
+  onValue
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 import {
@@ -62,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const cardsRef = ref(db, 'cards');
     const addCardForm = document.getElementById('cardForm');
+    const cardTableBody = document.getElementById('cardTable').getElementsByTagName('tbody')[0];
 
     if (!addCardForm) {
       console.warn('Card form not found.');
@@ -101,6 +102,40 @@ document.addEventListener('DOMContentLoaded', () => {
         .catch((error) => {
           console.error("❌ Error adding card:", error);
         });
+    });
+
+    // ✅ Fetch and display the cards
+    onValue(cardsRef, (snapshot) => {
+      const data = snapshot.val();
+      cardTableBody.innerHTML = ""; // Clear the current table data
+
+      if (data) {
+        // Loop through each card and render it in the table
+        Object.entries(data).forEach(([cardId, card]) => {
+          if (card.userId === user.uid) {  // Show only cards belonging to the logged-in user
+            const row = cardTableBody.insertRow();
+            row.innerHTML = `
+              <td>${card.name}</td>
+              <td>${card.setCode}</td>
+              <td>${card.treatment || "Non-Foil"}</td>
+              <td>${card.quantity}</td>
+              <td>${card.collectorNumber || "N/A"}</td>
+              <td><button class="delete-button" data-id="${cardId}">Delete</button></td>
+            `;
+
+            // Add delete functionality
+            row.querySelector(".delete-button").addEventListener("click", () => {
+              remove(ref(db, `cards/${cardId}`))
+                .then(() => {
+                  console.log("✅ Card deleted successfully!");
+                })
+                .catch((error) => {
+                  console.error("❌ Error deleting card:", error);
+                });
+            });
+          }
+        });
+      }
     });
   });
 });

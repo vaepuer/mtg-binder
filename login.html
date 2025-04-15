@@ -4,12 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Login | Card Binder</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="index-style.css" />
   <script type="module" defer src="login.js"></script>
 </head>
 <body>
   <!-- Login Form -->
-  <div id="login-form">
+  <div id="login-form" class="container">
     <h2>Login</h2>
     <form id="login">
       <input type="email" id="login-email" placeholder="Email" required />
@@ -20,7 +20,7 @@
   </div>
 
   <!-- Signup Form -->
-  <div id="signup-form"">
+  <div id="signup-form" class="container">
     <h2>Signup</h2>
     <form id="signup">
       <input type="email" id="signup-email" placeholder="Email" required />
@@ -30,6 +30,6 @@
     <p>Already have an account? <a href="#" id="show-login">Login</a></p>
   </div>
 
-  <p id="errorMessage">Error</p>
+  <p id="errorMessage" class="container">Error</p>
 </body>
 </html>
