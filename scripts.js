@@ -17,7 +17,9 @@ import {
   getApps
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 
-
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const db = getDatabase(app);
+const auth = getAuth(app);
 
 document.addEventListener('DOMContentLoaded', () => {
   const addCardForm = document.getElementById('cardForm');
