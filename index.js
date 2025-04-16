@@ -3,7 +3,9 @@ import {
   ref,
   push,
   set,
-  onValue
+  onValue,
+  get,
+  child
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 import {
@@ -69,11 +71,7 @@ function setupAddCardForm(user) {
     return;
   }
 
-  // 🔒 Remove any existing listeners to prevent duplicates
-  const newForm = addCardForm.cloneNode(true);
-  addCardForm.parentNode.replaceChild(newForm, addCardForm);
-
-  newForm.addEventListener('submit', (event) => {
+  addCardForm.addEventListener('submit', async (event) => {
     event.preventDefault();
 
     const cardName = document.getElementById('cardNameInput')?.value.trim();
@@ -87,26 +85,61 @@ function setupAddCardForm(user) {
       return;
     }
 
-    const newCard = {
-      name: cardName,
-      quantity: cardQuantity,
-      treatment: cardTreatment,
-      setCode: cardSetCode,
-      collectorNumber: cardCollectorNumber,
-      userId: user.uid
-    };
+    try {
+      const snapshot = await get(cardsRef);
 
-    const newCardRef = push(cardsRef);
-    set(newCardRef, newCard)
-      .then(() => {
-        console.log("✅ Card added successfully!");
-        newForm.reset();
-      })
-      .catch((error) => {
-        console.error("❌ Error adding card:", error);
+      let matchedKey = null;
+      let matchedCard = null;
+
+      snapshot.forEach((childSnapshot) => {
+        const existing = childSnapshot.val();
+        const key = childSnapshot.key;
+
+        const isSameUser = existing.userId === user.uid;
+        const isSameCard =
+          existing.name === cardName &&
+          existing.setCode === cardSetCode &&
+          existing.collectorNumber === cardCollectorNumber;
+
+        if (isSameUser && isSameCard) {
+          matchedKey = key;
+          matchedCard = existing;
+        }
       });
+
+      if (matchedKey) {
+        // 🔁 Update quantity on existing card
+        const updatedQuantity = (parseInt(matchedCard.quantity) || 0) + cardQuantity;
+        const cardRef = ref(db, `cards/${matchedKey}`);
+
+        await set(cardRef, {
+          ...matchedCard,
+          quantity: updatedQuantity,
+        });
+
+        console.log("🟢 Updated existing card quantity!");
+      } else {
+        // ➕ Add as new card
+        const newCardRef = push(cardsRef);
+        await set(newCardRef, {
+          name: cardName,
+          quantity: cardQuantity,
+          treatment: cardTreatment,
+          setCode: cardSetCode,
+          collectorNumber: cardCollectorNumber,
+          userId: user.uid,
+        });
+
+        console.log("✅ Added new card!");
+      }
+
+      addCardForm.reset();
+    } catch (error) {
+      console.error("❌ Error processing card:", error);
+    }
   });
 }
+
 
 
 // ✅ Show user’s cards in the table
