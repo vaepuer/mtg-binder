@@ -69,7 +69,11 @@ function setupAddCardForm(user) {
     return;
   }
 
-  addCardForm.addEventListener('submit', (event) => {
+  // 🔒 Remove any existing listeners to prevent duplicates
+  const newForm = addCardForm.cloneNode(true);
+  addCardForm.parentNode.replaceChild(newForm, addCardForm);
+
+  newForm.addEventListener('submit', (event) => {
     event.preventDefault();
 
     const cardName = document.getElementById('cardNameInput')?.value.trim();
@@ -96,13 +100,14 @@ function setupAddCardForm(user) {
     set(newCardRef, newCard)
       .then(() => {
         console.log("✅ Card added successfully!");
-        addCardForm.reset();
+        newForm.reset();
       })
       .catch((error) => {
         console.error("❌ Error adding card:", error);
       });
   });
 }
+
 
 // ✅ Show user’s cards in the table
 function displayCards(userId) {
@@ -119,6 +124,7 @@ function displayCards(userId) {
 
     snapshot.forEach((childSnapshot) => {
       const card = childSnapshot.val();
+      const cardId = childSnapshot.key;
 
       if (card.userId === userId) {
         const row = document.createElement('tr');
@@ -129,12 +135,54 @@ function displayCards(userId) {
           <td>${card.treatment || ''}</td>
           <td>${card.setCode || ''}</td>
           <td>${card.collectorNumber || ''}</td>
+          <td>
+            <button class="search-btn" data-name="${card.name}" data-set="${card.setCode}" data-num="${card.collectorNumber}">
+              🔍
+            </button>
+          </td>
+          <td>
+            <button class="delete-btn" data-id="${cardId}">🗑️</button>
+          </td>
         `;
 
         tableBody.appendChild(row);
       }
     });
-  }, {
-    onlyOnce: false
+
+    // ✅ Attach event listeners after table is populated
+    attachDeleteHandlers();
+    attachSearchHandlers();
+  });
+}
+
+function attachDeleteHandlers() {
+  document.querySelectorAll('.delete-btn').forEach(button => {
+    button.addEventListener('click', () => {
+      const cardId = button.getAttribute('data-id');
+      if (confirm("Delete this card?")) {
+        const cardRef = ref(db, `cards/${cardId}`);
+        set(cardRef, null)
+          .then(() => console.log("Card deleted"))
+          .catch(err => console.error("Delete failed:", err));
+      }
+    });
+  });
+}
+
+
+function attachSearchHandlers() {
+  document.querySelectorAll('.search-btn').forEach(button => {
+    button.addEventListener('click', () => {
+      const name = button.getAttribute('data-name');
+      const set = button.getAttribute('data-set');
+
+      if (!name || !set) {
+        console.error("Missing card name or setCode for search.");
+        return;
+      }
+
+      const url = `https://www.cardmarket.com/en/Magic/Products/Search?searchString=${encodeURIComponent(name)}&setName=${encodeURIComponent(set)}`;
+      window.open(url, '_blank');
+    });
   });
 }
