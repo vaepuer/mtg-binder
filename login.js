@@ -1,10 +1,17 @@
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import {
-    getAuth,
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    onAuthStateChanged,
-  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import {
+  getDatabase,
+  ref,
+  set
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+import { firebaseConfig } from "./firebaseConfig.js";;
+  
   
   // Init Firebase
   const app = getApps().length === 0 ? initializeApp("./firebaseConfig.js") : getApps()[0];
