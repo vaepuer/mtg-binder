@@ -1,20 +1,13 @@
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import {
-  getAuth,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import {
-  getDatabase,
-  ref,
-  set
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getDatabase, ref, set} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { firebaseConfig } from "./firebaseConfig.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-import { firebaseConfig } from "./firebaseConfig.js";;
   
   
   // Init Firebase
-  const app = getApps().length === 0 ? initializeApp("./firebaseConfig.js") : getApps()[0];
+  const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
   const db = getDatabase(app);
   const auth = getAuth(app);
   console.log("Firebase initialized:", app); // This will confirm if Firebase is initialized
