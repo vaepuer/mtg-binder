@@ -1,3 +1,24 @@
+import {
+  getDatabase,
+  ref,
+  push,
+  set,
+  remove
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+import {
+  getAuth,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+import {
+  initializeApp,
+  getApps
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+
+
+
 document.addEventListener('DOMContentLoaded', () => {
   const addCardForm = document.getElementById('cardForm');
   const logoutBtn = document.getElementById("logoutBtn");
