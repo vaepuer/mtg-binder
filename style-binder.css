@@ -169,12 +169,64 @@ body {
     font-family: monospace;
   }
 
+  #foot-notes{
+    color:white;
+    margin-left:1%;
+    margin-top: 1%;
+    float:right;
+  }
 
+  #ko-fi-footer{
+    float:left;
+  }
 
   @media (max-width: 768px) {
     .form-wrapper {
       flex-direction: column;
       align-items: center;
     }
+  
+    .site-logo {
+      width: 60%; /* Smaller logo */
+    }
+  
+    h1 {
+      font-size: 1.5rem; /* Smaller heading */
+    }
+  
+    .back-button,
+    button,
+    .button {
+      padding: 6px 6px;
+      font-size: 12px;
+    }
+  
+    .card-box {
+      width: 150px; /* Smaller card width */
+      padding: 8px;
+    }
+  
+    .card-box button {
+      font-size: 12px;
+      padding: 4px 10px;
+    }
+  
+    .card-box .quantity-badge,
+    .foil-badge {
+      font-size: 11px;
+      padding: 3px 6px;
+    }
+  
+    .collector-badge {
+      font-size: 10px;
+      padding: 2px 4px;
+    }
+    #foot-notes {
+      margin-left: auto;
+      margin-top: 40px;
+      text-align: right;
+      font-size: 12px;
+    }
   }
+  
   

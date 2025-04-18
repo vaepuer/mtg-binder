@@ -244,10 +244,73 @@ button:focus, .button:focus {
   outline: none;
 }
 
+#foot-notes{
+  color:white;
+  margin-left:85%;
+  margin-top: 1%;
+  float:left;
+}
+
+#ko-fi-footer{
+  float:right;
+}
+
 @media (max-width: 768px) {
-  .form-wrapper, .container {
+  .form-wrapper,
+  .container {
     flex-direction: column;
     align-items: center;
   }
+
+  .site-logo {
+    width: 60%;
+  }
+
+  h1, h2 {
+    font-size: 1.4rem;
+  }
+
+  #cardForm {
+    padding: 8px;
+  }
+
+  #cardForm input[type="text"],
+  #cardForm select {
+    width: 100%;
+    font-size: 14px;
+    padding: 6px;
+  }
+
+  #cardForm button {
+    font-size: 14px;
+    padding: 8px;
+  }
+
+  button, .button {
+    font-size: 13px;
+    padding: 6px 8px;
+  }
+
+  table {
+    font-size: 13px;
+    max-width: 100%;
+  }
+
+  table th, table td {
+    padding: 8px;
+    font-size: 13px;
+  }
+
+  #cardTableWrapper {
+    max-height: 300px;
+  }
+
+  #foot-notes {
+    margin-left: auto;
+    margin-top: 40px;
+    text-align: right;
+    font-size: 12px;
+  }
 }
+
 
