@@ -8,6 +8,14 @@ body {
   align-items: flex-start; /* Align content to the top */
   height: 100%; /* Full viewport height */
   flex-direction: column; /* Stack elements vertically */
+
+  background-image: repeating-linear-gradient(
+  45deg,
+  #15151b 0px,
+  #15151b 20px,
+  #1b1b24 20px,
+  #1b1b24 40px
+);
 }
 
 header {
@@ -115,7 +123,7 @@ input[type="text"], select {
 /* Table Styling */
 table {
   width: 100%;
-  max-width: 835px; /* Limit the width of the table */
+  max-width: 840px; /* Limit the width of the table */
   table-layout: fixed; /* Prevent the table from resizing */
   margin: 0 auto; /* Center the table */
   border-collapse:collapse;

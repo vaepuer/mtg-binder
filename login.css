@@ -96,6 +96,17 @@ select {
     border: 1px solid #ccc;
 }
 
+a{
+    color: white;
+    text-transform: uppercase;
+}
+a:link{
+    text-decoration: none;
+}
+a:hover{
+    font-weight:bold;
+}
+
 button, .button {
     background-color: #9e9e9e;
     color: white;
