@@ -108,20 +108,21 @@ a:hover{
 }
 
 button, .button {
-    background-color: #9e9e9e;
+    background-color: #1a1c2b;
     color: white;
     padding: 8px 8px;
-    border: none;
+    border: 1px solid white;
     cursor: pointer;
     border-radius: 5px;
     font-size: 14px;
     transition: background-color 0.3s ease;
     text-decoration: none;
-    width: 100%;
+    width: 50%;
 }
 
 button:hover, .button:hover {
-    background-color: #cccccc;
+    background-color: #3a3a4d;
+    border: 1px solid #868686;
 }
 
 button:focus, .button:focus {
