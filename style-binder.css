@@ -1,19 +1,62 @@
 body {
+    font-family: Arial, sans-serif;
     margin: 0;
     padding: 20px;
-    font-family: Arial, sans-serif;
-    background-color: #f5f5f5;
+    background-image: repeating-linear-gradient(
+    45deg,
+    #15151b 0px,
+    #15151b 20px,
+    #1b1b24 20px,
+    #1b1b24 40px
+    );
   }
   
+  header {
+    width: 100%; /* Full width so content can center */
+  display: flex;
+  align-items: center;
+  justify-content: center; /* This centers the child elements horizontally */
+  margin-top: 20px;
+  text-align: center;
+  }
+  
+  .site-logo {
+    width: 30%;
+    max-width: 200%;
+    height: auto;
+  }
+
+  .container {
+    justify-content: center;
+
+  }
+
   h1 {
     text-align: center;
+    color:white;
   }
   
+  .back-button{
+    background-color: #9e9e9e;
+    color: white;
+    border: none;
+    padding: 8px 8px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+    text-decoration: none;
+    display: block;
+    margin: 1% auto;
+    text-align: center;
+    width:fit-content;
+  }
+
   button, .button{
     background-color: #9e9e9e;
     color: white;
-    padding: 8px 8px;
     border: none;
+    padding: 8px 8px;
     cursor: pointer;
     border-radius: 5px;
     font-size: 14px;
@@ -21,11 +64,11 @@ body {
     text-decoration: none;
   }
   
-  button:hover, .button:hover {
+  button:hover, .button:hover, .back-button:hover {
     background-color: #cccccc;
   }
   
-  button:focus, .button:focus {
+  button:focus, .button:focus, .back-button:focus {
     outline: none;
   }
 
@@ -40,24 +83,30 @@ body {
   
   .card-box {
     position: relative;
-    background-color: white;
+    background-image: linear-gradient(
+    #15151b 10%,
+    #2e2e3d 50%
+    );
     border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 40px 50px black;
     padding: 10px;
     width: 200px;
     text-align: center;
+    border: 1px solid white;
   }
   
   .card-box img {
     width: 100%;
     border-radius: 8px;
+    border: 1px solid #52526d;
+    
   }
   
   .card-box .quantity-badge {
     position: absolute;
     top: 10px;
     right: 10px;
-    background: #222;
+    background: #22222271;
     color: white;
     border-radius: 12px;
     padding: 5px 10px;
@@ -91,7 +140,7 @@ body {
   .foil-badge {
     top: 8px;
     left: 8px;
-    background-color: #0077cc;
+    background-color: #0077ccab;
   }
   
   .foil-badge::before {
@@ -99,11 +148,11 @@ body {
   }
 
   .foil-badge.f {
-    background-color: #4c6ef5; /* Blue */
+    background-color: #4c6ef5ab; /* Blue */
   }
   
   .foil-badge.pf {
-    background-color: #d4af37; /* Gold */
+    background-color: #d4af37ab; /* Gold */
   }
 
   .collector-badge {
@@ -116,5 +165,14 @@ body {
     font-size: 12px;
     border-radius: 6px;
     font-family: monospace;
+  }
+
+
+
+  @media (max-width: 768px) {
+    .form-wrapper {
+      flex-direction: column;
+      align-items: center;
+    }
   }
   

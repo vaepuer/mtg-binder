@@ -25,7 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   console.log('binderContainer found!', container); // Debugging log
 
-  // Continue with the Firebase code here...
 
 
   // Listen for card data from Firebase

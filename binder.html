@@ -8,10 +8,29 @@
   <link rel="icon" href="favicon.ico" type="image/x-icon" />
 </head>
 <body>
-    <a href="index.html" class="button">Go Back to Index</a>
-    <h1>Binder View</h1>
+  <header>
+    <div class="container">
+      <img src="Credits.png" alt="logo" class="site-logo">
+    </div>
+  </header>
+    
+    <h1>Browse your Collection :)</h1>
+    <a href="index.html" class="back-button">Go Back to Index</a>
     <div class="binder-container" id="binderContainer"></div>
-
+  
     <script type="module" src="binder.js"></script>
 </body>
+<footer><div>
+  <script src='https://storage.ko-fi.com/cdn/scripts/overlay-widget.js'></script>
+  <script  class="ko-fi">
+    kofiWidgetOverlay.draw('vaemtg', {
+      'type': 'floating-chat',
+      'floating-chat.donateButton.text': 'Donate',
+      'floating-chat.donateButton.background-color': '#323842',
+      'floating-chat.donateButton.text-color': '#fff'
+    });
+  </script>
+</div>
+  
+</footer>
 </html>
