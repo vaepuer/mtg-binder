@@ -1,14 +1,26 @@
+html, body {
+    height: 100%;
+  }
+
 body {
     font-family: Arial, sans-serif;
-    background-color: hsl(0, 0%, 94%);
-    margin: 0;
+    margin: auto;
     padding: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-height: 100vh;
+    height: 100%;
     overflow-x: hidden;
-}
+  
+    background-image: repeating-linear-gradient(
+  45deg,
+  #15151b 0px,
+  #15151b 20px,
+  #1b1b24 20px,
+  #1b1b24 40px
+);
+  }
+  
 
 header {
     width: 100%;
@@ -25,6 +37,7 @@ header {
 
 h1, h2 {
     text-align: center;
+    color:white;
     margin: 10px 0;
 }
 
@@ -55,11 +68,13 @@ h1, h2 {
     flex: 1; /* Makes both forms equal width */
     max-width: 400px;
     min-width: 300px;
-    background-color: white;
+    background-color: #1a1c2b;
+    color: white;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     text-align: center;
+    border: 2px solid white;
 }
 
 form {
@@ -68,6 +83,7 @@ form {
     flex-direction: column;
     align-items: center;
     gap: 10px;
+    
 }
 
 input[type="text"],
