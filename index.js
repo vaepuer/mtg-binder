@@ -150,17 +150,16 @@ function displayCards(userId) {
     });
 
     // ✅ Attach event listeners after table is populated
-    attachDeleteHandlers();
+    attachDeleteHandlers(userId);
     attachSearchHandlers();
   });
 }
 
-function attachDeleteHandlers() {
+function attachDeleteHandlers(userId) {
   document.querySelectorAll('.delete-btn').forEach(button => {
     button.addEventListener('click', () => {
       const cardId = button.getAttribute('data-id');
       if (confirm("Delete this card?")) {
-        const userId = auth.currentUser?.uid;
         const cardRef = ref(db, `cards/${userId}/${cardId}`);
         set(cardRef, null)
           .then(() => console.log("Card deleted"))
@@ -169,6 +168,7 @@ function attachDeleteHandlers() {
     });
   });
 }
+
 
 
 function attachSearchHandlers() {
