@@ -111,7 +111,7 @@ function setupAddCardForm(user) {
 
 // ✅ Show user’s cards in the table
 function displayCards(userId) {
-  const cardsRef = ref(db, `cards/${user.uid}`);
+  const cardsRef = ref(db, `cards/${userId}`); // 🔥 Only get this user's cards
   const tableBody = document.getElementById('cardTableBody');
 
   if (!tableBody) {
@@ -126,34 +126,31 @@ function displayCards(userId) {
       const card = childSnapshot.val();
       const cardId = childSnapshot.key;
 
-      if (card.userId === userId) {
-        const row = document.createElement('tr');
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${card.name}</td>
+        <td>${card.quantity}</td>
+        <td>${card.treatment || ''}</td>
+        <td>${card.setCode || ''}</td>
+        <td>${card.collectorNumber || ''}</td>
+        <td>
+          <button class="search-btn" data-name="${card.name}" data-set="${card.setCode}" data-num="${card.collectorNumber}">
+            🔍
+          </button>
+        </td>
+        <td>
+          <button class="delete-btn" data-id="${cardId}">🗑️</button>
+        </td>
+      `;
 
-        row.innerHTML = `
-          <td>${card.name}</td>
-          <td>${card.quantity}</td>
-          <td>${card.treatment || ''}</td>
-          <td>${card.setCode || ''}</td>
-          <td>${card.collectorNumber || ''}</td>
-          <td>
-            <button class="search-btn" data-name="${card.name}" data-set="${card.setCode}" data-num="${card.collectorNumber}">
-              🔍
-            </button>
-          </td>
-          <td>
-            <button class="delete-btn" data-id="${cardId}">🗑️</button>
-          </td>
-        `;
-
-        tableBody.appendChild(row);
-      }
+      tableBody.appendChild(row);
     });
 
-    // ✅ Attach event listeners after table is populated
-    attachDeleteHandlers(userId);
+    attachDeleteHandlers(userId); // ✅ pass UID to delete
     attachSearchHandlers();
   });
 }
+
 
 function attachDeleteHandlers(userId) {
   document.querySelectorAll('.delete-btn').forEach(button => {
