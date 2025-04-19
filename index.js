@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ✅ Add card form logic
 function setupAddCardForm(user) {
-  const cardsRef = ref(db, 'cards');
+  const cardsRef = ref(db, `cards/${user.uid}`);
   const addCardForm = document.getElementById('cardForm');
 
   if (!addCardForm) {
