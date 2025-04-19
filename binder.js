@@ -14,7 +14,7 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-const cardsRef = ref(db, 'cards');
+const cardsRef = ref(db, `cards/${user.uid}`);
 
 document.addEventListener('DOMContentLoaded', () => {
   const container = document.getElementById('binderContainer');

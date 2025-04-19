@@ -111,7 +111,7 @@ function setupAddCardForm(user) {
 
 // ✅ Show user’s cards in the table
 function displayCards(userId) {
-  const cardsRef = ref(db, 'cards');
+  const cardsRef = ref(db, `cards/${user.uid}`);
   const tableBody = document.getElementById('cardTableBody');
 
   if (!tableBody) {
@@ -160,7 +160,8 @@ function attachDeleteHandlers() {
     button.addEventListener('click', () => {
       const cardId = button.getAttribute('data-id');
       if (confirm("Delete this card?")) {
-        const cardRef = ref(db, `cards/${cardId}`);
+        const userId = auth.currentUser?.uid;
+        const cardRef = ref(db, `cards/${userId}/${cardId}`);
         set(cardRef, null)
           .then(() => console.log("Card deleted"))
           .catch(err => console.error("Delete failed:", err));
