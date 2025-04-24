@@ -76,8 +76,17 @@ function setupAddCardForm(user) {
   newForm.addEventListener('submit', (event) => {
     event.preventDefault();
 
-    const cardName = document.getElementById('cardNameInput')?.value.trim();
-    const cardQuantity = parseInt(document.getElementById('cardQuantityInput')?.value || "1", 10);
+    const rawInput = document.getElementById('cardNameInput')?.value.trim();
+    let cardName = rawInput;
+    let cardQuantity = 1;
+
+    // Parse quantity from beginning of input like "3 Sol Ring"
+    const match = rawInput.match(/^(\d+)\s+(.+)/);
+    if (match) {
+      cardQuantity = parseInt(match[1], 10);
+      cardName = match[2];
+    }
+
     const cardTreatment = document.getElementById('treatmentSelect')?.value || "";
     const cardSetCode = document.getElementById('setCodeInput')?.value || "";
     const cardCollectorNumber = document.getElementById('collectorNumberInput')?.value || "";
@@ -87,26 +96,63 @@ function setupAddCardForm(user) {
       return;
     }
 
-    const newCard = {
-      name: cardName,
-      quantity: cardQuantity,
-      treatment: cardTreatment,
-      setCode: cardSetCode,
-      collectorNumber: cardCollectorNumber,
-      userId: user.uid
-    };
+    // 🔍 Check for existing card before adding new
+    onValue(cardsRef, (snapshot) => {
+      let found = false;
 
-    const newCardRef = push(cardsRef);
-    set(newCardRef, newCard)
-      .then(() => {
-        console.log("✅ Card added successfully!");
-        newForm.reset();
-      })
-      .catch((error) => {
-        console.error("❌ Error adding card:", error);
+      snapshot.forEach((childSnapshot) => {
+        const card = childSnapshot.val();
+        const cardId = childSnapshot.key;
+
+        const isSameCard =
+          card.name === cardName &&
+          card.setCode === cardSetCode &&
+          card.treatment === cardTreatment &&
+          card.collectorNumber === cardCollectorNumber;
+
+        if (isSameCard) {
+          found = true;
+          const newQty = (parseInt(card.quantity) || 0) + cardQuantity;
+          const cardRef = ref(db, `cards/${user.uid}/${cardId}`);
+
+          set(cardRef, {
+            ...card,
+            quantity: newQty
+          }).then(() => {
+            console.log("✅ Quantity updated!");
+            newForm.reset();
+          }).catch((error) => {
+            console.error("❌ Error updating card:", error);
+          });
+
+          return true; // exit early
+        }
       });
+
+      if (!found) {
+        const newCardRef = push(cardsRef);
+        const newCard = {
+          name: cardName,
+          quantity: cardQuantity,
+          treatment: cardTreatment,
+          setCode: cardSetCode,
+          collectorNumber: cardCollectorNumber,
+          userId: user.uid
+        };
+
+        set(newCardRef, newCard)
+          .then(() => {
+            console.log("✅ New card added!");
+            newForm.reset();
+          })
+          .catch((error) => {
+            console.error("❌ Error adding card:", error);
+          });
+      }
+    }, { onlyOnce: true }); // only grab the data once
   });
 }
+
 
 
 // ✅ Show user’s cards in the table
