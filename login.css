@@ -188,52 +188,68 @@ button:focus, .button:focus {
   }
 
   .patchnotes-window {
-    order: -1; /* ✅ This moves patch notes to the top on mobile */
-    width: 100%;
-    max-width: 100%;
-    min-width: unset;
-    height: auto;
-    max-height: none;
-    overflow-y: visible;
-    margin-bottom: 20px;
-  }
-
-  .form-container {
-    max-width: 90%;
-    min-width: unset;
+    flex: 0 0 300px;
+    max-height: 700px;
+    max-width: 350px;
+    min-width: 250px;
+    background-color: #222430;
+    color: white;
     padding: 15px;
+    border-radius: 10px;
+    border: 2px solid white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    height: 100%;
+    
+    /* Force content to break when it exceeds the box */
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
-
-  .site-logo {
-    width: 60%;
-    max-width: 180px;
+  
+  .patchnotes-window h2 {
+    margin-top: 0;
+    font-size: 1.2rem;
+    word-wrap: break-word; /* Make sure the title also breaks if it's long */
+    overflow-wrap: break-word; /* Prevents overflow */
+    -webkit-hyphens: auto;
+    hyphens: auto; /* Try to hyphenate long words if they overflow */
   }
-
-  h1, h2 {
-    font-size: 1.5rem;
-    margin: 8px 0;
+  
+  .patchnotes-window ul {
+    list-style-type: none;
+    padding: 0;
   }
-
-  button, .button {
-    width: 100%;
-    font-size: 13px;
-    padding: 10px;
-  }
-
-  input[type="text"],
-  input[type="email"],
-  input[type="password"],
-  select {
+  
+  .patchnotes-window li {
+    margin-bottom: 15px;
     font-size: 14px;
-    padding: 8px;
+    line-height: 1.4;
+    word-wrap: break-word;    /* Ensure long words in the list break */
+    overflow-wrap: break-word; /* Same as above for individual list items */
+    -webkit-hyphens: auto;
+    hyphens: auto;           /* Enable hyphenation */
   }
-
-  #foot-notes {
-    margin-left: auto;
-    margin-top: 40px;
-    text-align: right;
-    font-size: 12px;
+  
+  @media (max-width: 768px) {
+    .patchnotes-window {
+      font-size: 14px;
+      max-width: 81%;
+      padding: 10px;
+    }
+  
+    .patchnotes-window h2 {
+      font-size: 1rem; /* Smaller titles on mobile */
+      word-wrap: break-word; /* Ensure titles break if they're too long */
+    }
+  
+    .patchnotes-window li {
+      word-wrap: break-word;    /* Ensure list items also break */
+      overflow-wrap: break-word;
+      -webkit-hyphens: auto;
+      hyphens: auto;
+    }
   }
+  
 }
 
   
