@@ -24,36 +24,47 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log("User not logged in.");
       return;
     }
-
+  
+    // ✅ SHARE BUTTON LOGIC
+    const shareBtn = document.getElementById("shareBinderBtn");
+    if (shareBtn) {
+      shareBtn.addEventListener("click", () => {
+        const shareUrl = `${window.location.origin}/public-binder.html?uid=${user.uid}`;
+        navigator.clipboard.writeText(shareUrl)
+          .then(() => alert("📎 Shareable binder link copied to clipboard!"))
+          .catch(() => alert("❌ Could not copy link"));
+      });
+    }
+  
     const cardsRef = ref(db, `cards/${user.uid}`);
     const container = document.getElementById('binderContainer');
-
+  
     if (!container) {
       console.error('binderContainer not found!');
       return;
     }
-
+  
     console.log('binderContainer found!', container);
-
-    // ✅ Listen for card data from Firebase
+  
+    // ✅ Firebase onValue listener
     onValue(cardsRef, (snapshot) => {
       const data = snapshot.val();
-      container.innerHTML = ''; // clear previous cards
+      container.innerHTML = '';
       console.log('Firebase data:', data);
-
+  
       if (!data) {
         container.innerHTML = 'No cards found.';
         return;
       }
-
+  
       Object.entries(data).forEach(([cardId, card]) => {
         const cardBox = document.createElement('div');
         cardBox.className = 'card-box';
-
+  
         const quantity = document.createElement('div');
         quantity.className = 'quantity-badge';
         quantity.textContent = `x${card.quantity}`;
-
+  
         const treatment = document.createElement('div');
         treatment.className = 'foil-badge';
         if (card.treatment === 'F') {
@@ -65,21 +76,21 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
           treatment.textContent = 'Non-Foil';
         }
-
+  
         if (card.collectorNumber) {
           const collectorBadge = document.createElement('div');
           collectorBadge.className = 'collector-badge';
           collectorBadge.textContent = `#${card.collectorNumber}`;
           cardBox.appendChild(collectorBadge);
         }
-
+  
         const img = document.createElement('img');
         const name = card.name;
         const set = card.setCode?.toLowerCase();
         const rawCollector = card.collectorNumber;
         const normalizedCollector = rawCollector ? rawCollector.toString().replace(/^0+/, '') : null;
         const fallbackUrl = `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(name)}&set=${set}`;
-
+  
         const fetchCardImage = () => {
           if (normalizedCollector && set) {
             const url = `https://api.scryfall.com/cards/${set}/${normalizedCollector}`;
@@ -106,10 +117,10 @@ document.addEventListener('DOMContentLoaded', () => {
               });
           }
         };
-
+  
         fetchCardImage();
         img.alt = name;
-
+  
         const button = document.createElement('button');
         button.textContent = 'Search';
         button.classList.add('button');
@@ -117,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const url = `https://www.cardmarket.com/en/Magic/Products/Search?searchString=${encodeURIComponent(name)}&setName=${encodeURIComponent(card.setCode)}`;
           window.open(url, '_blank');
         };
-
+  
         cardBox.appendChild(quantity);
         cardBox.appendChild(treatment);
         cardBox.appendChild(img);
@@ -126,4 +137,5 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   });
+  
 });
