@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Patch Notes</title>
+    <link rel="stylesheet" href="admin.css">
+    <script type="module" src="admin.js" defer></script>
+</head>
+<body>
+    <header>
+        <h1>Admin Panel</h1>
+    </header>
+
+    <div id="adminContent">
+        <section>
+            <h2>Patch Notes</h2>
+            <ul id="adminPatchList">
+                <!-- Patch notes will be dynamically loaded here -->
+            </ul>
+        </section>
+
+        <section>
+            <h2>Add a New Patch Note</h2>
+            <form id="newPatchForm">
+                <input type="text" id="patchTitle" placeholder="Patch Title" required>
+                <textarea id="patchBody" placeholder="Patch Body" required></textarea>
+                <button type="submit">Add Patch Note</button>
+            </form>
+        </section>
+
+        <p id="errorMessage"></p>
+    </div>
+
+    <footer>
+        <p>© 2025 TGBinder</p>
+    </footer>
+</body>
+</html>

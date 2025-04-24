@@ -5,10 +5,10 @@ import {
   signInWithEmailAndPassword,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getDatabase } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 import { firebaseConfig } from "./firebaseConfig.js";
 
-// Init Firebase
+// Initialize Firebase
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const db = getDatabase(app);
 const auth = getAuth(app);
@@ -22,8 +22,38 @@ const signup = document.getElementById("signup");
 const showSignup = document.getElementById("show-signup");
 const showLogin = document.getElementById("show-login");
 const errorMessage = document.getElementById("errorMessage");
+const patchList = document.getElementById("patchList");
 
-// Hash-based toggle logic
+// Load Patch Notes
+async function loadPatchNotes() {
+  try {
+    const notesRef = ref(db, "patchnotes");
+    const snapshot = await get(notesRef);
+    if (snapshot.exists()) {
+      const notes = snapshot.val();
+      const sorted = Object.entries(notes).sort((a, b) => b[0].localeCompare(a[0]));
+
+      patchList.innerHTML = ""; // Clear list before appending
+      for (const [id, note] of sorted) {
+        const { title, body, date } = note;
+        const displayDate = date || new Date(parseInt(id)).toISOString().split("T")[0];
+
+        const li = document.createElement("li");
+        li.innerHTML = `<strong>${displayDate} - ${title}</strong><br>${body}`;
+        patchList.appendChild(li);
+      }
+    } else {
+      patchList.innerHTML = "<li>No patch notes yet.</li>";
+    }
+  } catch (err) {
+    console.error("Error loading patch notes:", err);
+    patchList.innerHTML = "<li>Error loading patch notes.</li>";
+  }
+}
+
+loadPatchNotes();
+
+// Toggle Login/Signup forms based on hash
 function toggleFormsByHash() {
   const hash = window.location.hash;
   if (hash === "#signup") {
@@ -35,15 +65,9 @@ function toggleFormsByHash() {
   }
 }
 
-// On DOM load, check hash
-document.addEventListener("DOMContentLoaded", () => {
-  toggleFormsByHash(); // Check on page load
-});
-
-// On hash change (e.g., clicking links)
+document.addEventListener("DOMContentLoaded", toggleFormsByHash);
 window.addEventListener("hashchange", toggleFormsByHash);
 
-// Toggle via in-page links
 showSignup.addEventListener("click", (e) => {
   e.preventDefault();
   window.location.hash = "#signup";
@@ -54,7 +78,7 @@ showLogin.addEventListener("click", (e) => {
   window.location.hash = "#login";
 });
 
-// Signup handler
+// Signup Handler
 signup?.addEventListener("submit", (e) => {
   e.preventDefault();
   const email = document.getElementById("signup-email").value;
@@ -71,7 +95,7 @@ signup?.addEventListener("submit", (e) => {
     });
 });
 
-// Login handler
+// Login Handler
 login?.addEventListener("submit", (e) => {
   e.preventDefault();
   const email = document.getElementById("login-email").value;
@@ -88,11 +112,10 @@ login?.addEventListener("submit", (e) => {
     });
 });
 
-// Auto-redirect if already logged in
+// Redirect if already logged in
 onAuthStateChanged(auth, (user) => {
   if (user) {
     console.log("Already logged in, redirecting...");
-    console.log("User is authenticated:", user.uid);
     window.location.href = "index.html";
   } else {
     console.log("No user authenticated, staying on login page.");

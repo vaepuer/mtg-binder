@@ -1,0 +1,22 @@
+body {
+    background: #15151b;
+    color: white;
+    font-family: Arial, sans-serif;
+    padding: 20px;
+  }
+  textarea, input {
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    background: #222430;
+    border: 1px solid #555;
+    color: white;
+  }
+  button {
+    margin-top: 15px;
+    padding: 10px;
+    background: #1a1c2b;
+    border: 1px solid white;
+    color: white;
+    cursor: pointer;
+  }

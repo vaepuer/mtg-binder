@@ -43,26 +43,28 @@ h1, h2 {
 
 /* General container */
 .container {
-    width: 100%;
-    max-width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin: 0 auto;
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: row; /* changed from column */
+  align-items: flex-start;
+  justify-content: center;
+  gap: 40px;
+  margin: 0 auto;
+  padding-top: 30px;
 }
+
 
 /* This is the key: flex row for forms */
 .form-wrapper {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: flex-start;
-    gap: 40px;
-    margin-top: 30px;
-    flex-wrap: nowrap; /* Prevent wrapping */
-    max-width: 900px;
-    width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 20px;
+  flex-wrap: nowrap;
 }
+
 
 .form-container {
     flex: 1; /* Makes both forms equal width */
@@ -140,57 +142,99 @@ button:focus, .button:focus {
     margin-top: 12%;
   }
 
+.patchnotes-window {
+  flex: 0 0 300px;
+  max-height: 700px;
+  max-width: 350px;
+  min-width: 250px;
+  background-color: #222430;
+  color: white;
+  padding: 15px;
+  border-radius: 10px;
+  border: 2px solid white;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  height: 100%;
+}
 
-  @media (max-width: 768px) {
-    html, body {
-      height: auto;
-      overflow-x: hidden;
-    }
-  
-    .form-wrapper {
-      flex-direction: column;
-      align-items: center;
-      gap: 20px;
-      padding: 0 10px;
-      margin-top: 20px;
-    }
-  
-    .form-container {
-      max-width: 90%;
-      min-width: unset;
-      padding: 15px;
-    }
-  
-    .site-logo {
-      width: 60%;
-      max-width: 180px;
-    }
-  
-    h1, h2 {
-      font-size: 1.5rem;
-      margin: 8px 0;
-    }
-  
-    button, .button {
-      width: 100%;
-      font-size: 13px;
-      padding: 10px;
-    }
-  
-    input[type="text"],
-    input[type="email"],
-    input[type="password"],
-    select {
-      font-size: 14px;
-      padding: 8px;
-    }
-  
-    #foot-notes {
-      margin-left: auto;
-      margin-top: 40px;
-      text-align: right;
-      font-size: 12px;
-    }
+.patchnotes-window h2 {
+  margin-top: 0;
+  font-size: 1.2rem;
+}
+
+.patchnotes-window ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.patchnotes-window li {
+  margin-bottom: 15px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+  html, body {
+    height: auto;
+    overflow-x: hidden;
   }
+
+  .form-wrapper {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 0 10px;
+    margin-top: 20px;
+  }
+
+  .patchnotes-window {
+    order: -1; /* ✅ This moves patch notes to the top on mobile */
+    width: 100%;
+    max-width: 100%;
+    min-width: unset;
+    height: auto;
+    max-height: none;
+    overflow-y: visible;
+    margin-bottom: 20px;
+  }
+
+  .form-container {
+    max-width: 90%;
+    min-width: unset;
+    padding: 15px;
+  }
+
+  .site-logo {
+    width: 60%;
+    max-width: 180px;
+  }
+
+  h1, h2 {
+    font-size: 1.5rem;
+    margin: 8px 0;
+  }
+
+  button, .button {
+    width: 100%;
+    font-size: 13px;
+    padding: 10px;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  select {
+    font-size: 14px;
+    padding: 8px;
+  }
+
+  #foot-notes {
+    margin-left: auto;
+    margin-top: 40px;
+    text-align: right;
+    font-size: 12px;
+  }
+}
+
   
   
