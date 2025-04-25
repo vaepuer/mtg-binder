@@ -11,7 +11,7 @@ body {
     align-items: center;
     height: 100%;
     overflow-x: hidden;
-  
+    overflow-y: hidden;
     background-image: repeating-linear-gradient(
   45deg,
   #15151b 0px,
@@ -67,7 +67,7 @@ h1, h2 {
 
 
 .form-container {
-    flex: 1; /* Makes both forms equal width */
+    flex: 1;
     max-width: 400px;
     min-width: 300px;
     background-color: #1a1c2b;
@@ -143,18 +143,20 @@ button:focus, .button:focus {
   }
 
 .patchnotes-window {
-  flex: 0 0 300px;
-  max-height: 700px;
-  max-width: 350px;
-  min-width: 250px;
+  flex: 2;
+  min-width: 350px;
+  max-width: 600px;
+  max-height: 600px; /* This sets the vertical limit */
+  overflow-y: auto;  /* Enables vertical scrolling */
+  overflow-x: hidden;
   background-color: #222430;
   color: white;
-  padding: 15px;
+  padding: 20px;
   border-radius: 10px;
   border: 2px solid white;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  overflow-y: auto;
-  height: 100%;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .patchnotes-window h2 {
@@ -171,6 +173,20 @@ button:focus, .button:focus {
   margin-bottom: 15px;
   font-size: 14px;
   line-height: 1.4;
+}
+
+.patchnotes-window::-webkit-scrollbar {
+  width: 8px;
+}
+
+.patchnotes-window::-webkit-scrollbar-track {
+  background: #1a1c2b;
+  border-radius: 10px;
+}
+
+.patchnotes-window::-webkit-scrollbar-thumb {
+  background-color: #555;
+  border-radius: 10px;
 }
 
 @media (max-width: 768px) {

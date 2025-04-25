@@ -24,33 +24,72 @@ const showLogin = document.getElementById("show-login");
 const errorMessage = document.getElementById("errorMessage");
 const patchList = document.getElementById("patchList");
 
+// Utility function to convert newlines to <br> tags and handle paragraphs and lists
+function formatPatchNoteBody(body) {
+  const formattedBody = body
+    .split('\n')  // Split content by newline characters
+    .map(line => {
+      if (line.startsWith('-')) {
+        // Convert lines starting with "-" into list items
+        return `<li>${line.slice(1).trim()}</li>`;
+      }
+      return line.trim() ? `<p>${line}</p>` : ''; // Wrap non-empty lines in <p> tags
+    })
+    .join('<br>');  // Join all pieces back together with <br> tags
+
+  return formattedBody;
+}
+
+function formatDate(epoch) {
+  // Check if the epoch time is in seconds (Firebase default), multiply by 1000 to convert to milliseconds
+  if (epoch.toString().length === 10) {
+    epoch = epoch * 1000;
+  }
+
+  const date = new Date(epoch);  // Convert epoch time to a Date object
+
+  // Check if the date is valid
+  if (isNaN(date)) {
+    return 'Invalid Date';
+  }
+
+  return date.toLocaleDateString('en-GB');  // Format to YYYY-MM-DD
+}
+
 // Load Patch Notes
 async function loadPatchNotes() {
   try {
-    const notesRef = ref(db, "patchnotes");
-    const snapshot = await get(notesRef);
+    const notesRef = ref(db, "patchnotes"); // Reference to the patchnotes data in Firebase
+    const snapshot = await get(notesRef);  // Get data from the Firebase reference
+
     if (snapshot.exists()) {
-      const notes = snapshot.val();
-      const sorted = Object.entries(notes).sort((a, b) => b[0].localeCompare(a[0]));
+      const notes = snapshot.val();  // If data exists, get the notes
+      const sorted = Object.entries(notes).sort((a, b) => b[0].localeCompare(a[0]));  // Sort notes by date (descending)
 
-      patchList.innerHTML = ""; // Clear list before appending
-      for (const [id, note] of sorted) {
-        const { title, body, date } = note;
-        const displayDate = date || new Date(parseInt(id)).toISOString().split("T")[0];
-
+      // Loop through each note and render it on the page
+      for (const [epochTime, { title, body }] of sorted) {
         const li = document.createElement("li");
-        li.innerHTML = `<strong>${displayDate} - ${title}</strong><br>${body}`;
+      
+        const formattedDate = formatDate(Number(epochTime));  // Convert string key to number
+        const formattedBody = formatPatchNoteBody(body);
+      
+        li.innerHTML = `
+          <strong>${formattedDate} - ${title}</strong><br>
+          ${formattedBody}
+        `;
+      
         patchList.appendChild(li);
       }
     } else {
-      patchList.innerHTML = "<li>No patch notes yet.</li>";
+      patchList.innerHTML = "<li>No patch notes yet.</li>";  // If no patch notes exist, show a message
     }
   } catch (err) {
-    console.error("Error loading patch notes:", err);
-    patchList.innerHTML = "<li>Error loading patch notes.</li>";
+    console.error("Error loading patch notes:", err);  // Catch and log any errors
+    patchList.innerHTML = "<li>Error loading patch notes.</li>";  // Show error message if there is a problem
   }
 }
 
+// Call the function to load patch notes when the page loads
 loadPatchNotes();
 
 // Toggle Login/Signup forms based on hash
