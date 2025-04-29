@@ -3,6 +3,7 @@ import {
   getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  sendEmailVerification,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -24,75 +25,64 @@ const showLogin = document.getElementById("show-login");
 const errorMessage = document.getElementById("errorMessage");
 const patchList = document.getElementById("patchList");
 
-// Utility function to convert newlines to <br> tags and handle paragraphs and lists
+// Utility functions
 function formatPatchNoteBody(body) {
   const formattedBody = body
-    .split('\n')  // Split content by newline characters
+    .split('\n')
     .map(line => {
       if (line.startsWith('-')) {
-        // Convert lines starting with "-" into list items
         return `<li>${line.slice(1).trim()}</li>`;
       }
-      return line.trim() ? `<p>${line}</p>` : ''; // Wrap non-empty lines in <p> tags
+      return line.trim() ? `<p>${line}</p>` : '';
     })
-    .join('<br>');  // Join all pieces back together with <br> tags
-
+    .join('<br>');
   return formattedBody;
 }
 
 function formatDate(epoch) {
-  // Check if the epoch time is in seconds (Firebase default), multiply by 1000 to convert to milliseconds
   if (epoch.toString().length === 10) {
     epoch = epoch * 1000;
   }
-
-  const date = new Date(epoch);  // Convert epoch time to a Date object
-
-  // Check if the date is valid
+  const date = new Date(epoch);
   if (isNaN(date)) {
     return 'Invalid Date';
   }
-
-  return date.toLocaleDateString('en-GB');  // Format to YYYY-MM-DD
+  return date.toLocaleDateString('en-GB');
 }
 
 // Load Patch Notes
 async function loadPatchNotes() {
   try {
-    const notesRef = ref(db, "patchnotes"); // Reference to the patchnotes data in Firebase
-    const snapshot = await get(notesRef);  // Get data from the Firebase reference
+    const notesRef = ref(db, "patchnotes");
+    const snapshot = await get(notesRef);
 
     if (snapshot.exists()) {
-      const notes = snapshot.val();  // If data exists, get the notes
-      const sorted = Object.entries(notes).sort((a, b) => b[0].localeCompare(a[0]));  // Sort notes by date (descending)
+      const notes = snapshot.val();
+      const sorted = Object.entries(notes).sort((a, b) => b[0].localeCompare(a[0]));
 
-      // Loop through each note and render it on the page
       for (const [epochTime, { title, body }] of sorted) {
         const li = document.createElement("li");
-      
-        const formattedDate = formatDate(Number(epochTime));  // Convert string key to number
+        const formattedDate = formatDate(Number(epochTime));
         const formattedBody = formatPatchNoteBody(body);
-      
         li.innerHTML = `
           <strong>${formattedDate} - ${title}</strong><br>
           ${formattedBody}
         `;
-      
         patchList.appendChild(li);
       }
     } else {
-      patchList.innerHTML = "<li>No patch notes yet.</li>";  // If no patch notes exist, show a message
+      patchList.innerHTML = "<li>No patch notes yet.</li>";
     }
   } catch (err) {
-    console.error("Error loading patch notes:", err);  // Catch and log any errors
-    patchList.innerHTML = "<li>Error loading patch notes.</li>";  // Show error message if there is a problem
+    console.error("Error loading patch notes:", err);
+    patchList.innerHTML = "<li>Error loading patch notes.</li>";
   }
 }
 
-// Call the function to load patch notes when the page loads
+// Call the function to load patch notes
 loadPatchNotes();
 
-// Toggle Login/Signup forms based on hash
+// Toggle Login/Signup forms
 function toggleFormsByHash() {
   const hash = window.location.hash;
   if (hash === "#signup") {
@@ -124,9 +114,20 @@ signup?.addEventListener("submit", (e) => {
   const password = document.getElementById("signup-password").value;
 
   createUserWithEmailAndPassword(auth, email, password)
-    .then(() => {
+    .then((userCredential) => {
       console.log("Account created!");
-      window.location.href = "index.html";
+
+      // Send verification email
+      sendEmailVerification(userCredential.user)
+        .then(() => {
+          console.log("Verification email sent.");
+          alert("Signup successful! Please check your email to verify your account before logging in.");
+          window.location.href = "login.html"; // Send them back to login screen
+        })
+        .catch((error) => {
+          console.error("Error sending verification email:", error);
+          errorMessage.textContent = "Error sending verification email. Please contact support.";
+        });
     })
     .catch((error) => {
       console.error("Signup failed:", error);
@@ -141,9 +142,16 @@ login?.addEventListener("submit", (e) => {
   const password = document.getElementById("login-password").value;
 
   signInWithEmailAndPassword(auth, email, password)
-    .then(() => {
-      console.log("Logged in!");
-      window.location.href = "index.html";
+    .then((userCredential) => {
+      const user = userCredential.user;
+      if (user.emailVerified) {
+        console.log("Logged in and verified!");
+        window.location.href = "index.html";
+      } else {
+        console.warn("Email not verified.");
+        errorMessage.textContent = "Please verify your email before logging in.";
+        auth.signOut(); // Sign out unverified users immediately
+      }
     })
     .catch((error) => {
       console.error("Login failed:", error);
@@ -151,11 +159,16 @@ login?.addEventListener("submit", (e) => {
     });
 });
 
-// Redirect if already logged in
+// Redirect if already logged in and verified
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    console.log("Already logged in, redirecting...");
-    window.location.href = "index.html";
+    if (user.emailVerified) {
+      console.log("Already logged in and verified, redirecting...");
+      window.location.href = "index.html";
+    } else {
+      console.warn("Logged in but email not verified. Signing out...");
+      auth.signOut(); // Don't let unverified users linger
+    }
   } else {
     console.log("No user authenticated, staying on login page.");
   }
