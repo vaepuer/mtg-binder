@@ -1,25 +1,27 @@
 html, body {
-    height: 100%;
-  }
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden; /* Keeps horizontal scrolling disabled */
+  overflow-y: auto; /* Enables vertical scrolling */
+}
 
 body {
-    font-family: Arial, sans-serif;
-    margin: auto;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    height: 100%;
-    overflow-x: hidden;
-    overflow-y: hidden;
-    background-image: repeating-linear-gradient(
-  45deg,
-  #15151b 0px,
-  #15151b 20px,
-  #1b1b24 20px,
-  #1b1b24 40px
-);
-  }
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-image: repeating-linear-gradient(
+      45deg,
+      #15151b 0px,
+      #15151b 20px,
+      #1b1b24 20px,
+      #1b1b24 40px
+  );
+}
+
   
 
 header {
