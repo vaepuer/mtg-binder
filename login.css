@@ -191,6 +191,7 @@ button:focus, .button:focus {
   border-radius: 10px;
 }
 
+
 @media (max-width: 768px) {
   html, body {
     height: auto;
