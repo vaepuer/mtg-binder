@@ -1,0 +1,53 @@
+html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    color: white;
+    overflow-x: hidden;
+    overflow-y: auto; /* Allow vertical scroll */
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-image: repeating-linear-gradient(
+      45deg,
+      #15151b 0px,
+      #15151b 20px,
+      #1b1b24 20px,
+      #1b1b24 40px
+    );
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Changed from center to allow scroll */
+    padding: 40px 1%;
+    box-sizing: border-box;
+}
+
+/* Main content container */
+.container {
+    flex: 1;
+    max-width: 70%;
+    min-width: 300px;
+    background-color: #1a1c2b;
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    border: 2px solid white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transform: scale(0.95); /* Slight zoom-out effect */
+    transform-origin: top center;
+}
+
+/* Optional: make text slightly smaller for zoomed-out effect */
+.container p,
+.container ul,
+.container li {
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+a{
+    color:rgb(151, 151, 151);
+    text-transform: capitalize;
+}
