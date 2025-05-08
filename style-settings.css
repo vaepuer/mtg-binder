@@ -13,7 +13,7 @@ body {
     #1b1b24 20px,
     #1b1b24 40px
     );
-    
+    color:white;
   }
   
   header {
@@ -93,11 +93,21 @@ body {
     outline: none;
   }
 
-  #foot-notes{
-    color:white;
-    margin-left:1%;
-    margin-top: 1%;
-    float:right;
+  #foot-notes {
+    color: white;
+    position: fixed; /* Keep it at the bottom of the screen */
+    bottom: 0;
+    width: 100%;
+    text-align: center; /* Center the footer text */
+    padding: 10px 0; /* Add padding to give it space */
+    background-color: #222430; /* Dark background for footer */
+  }
+  
+  @media (max-width: 768px) {
+    #foot-notes {
+      padding: 15px 0; /* Add more space for small screens */
+      font-size: 14px; /* Smaller font size for mobile */
+    }
   }
 
   #ko-fi-footer{

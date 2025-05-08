@@ -21,15 +21,35 @@ body {
   }
   
   .site-logo {
-    width: 30%;
+    width: 18%;
     max-width: 200%;
     height: auto;
   }
 
+  .user-container {
+    justify-content: center;       /* Centers the buttons horizontally */
+    display: flex;
+    flex-direction: row;           /* Places the buttons side by side */
+    flex-wrap: wrap;
+    align-items: center;           /* Centers buttons vertically (if needed) */
+    padding: 20px;
+    gap: 10px;                      /* Reduce gap to make the buttons closer */
+  }
+
+
   .container {
     justify-content: center;
+    display: flex;
+    flex-direction: column; /* Stack form and table vertically */
+    flex-wrap: wrap;
+    justify-content: center;  
+    align-items: center; /* Center content horizontally */
+    width: 100%;  
+    padding:20px;
+    gap: 20px; /* Add spacing between the form and the table */    
 
   }
+  
 
   h1 {
     text-align: center;
@@ -37,19 +57,18 @@ body {
   }
   
   .back-button{
-    background-color: #1a1c2b;
-    color: white;
-    border: 1px solid white;
-    padding: 8px 8px;
-    cursor: pointer;
-    border-radius: 5px;
-    font-size: 14px;
-    transition: background-color 0.3s ease;
-    text-decoration: none;
-    display: block;
-    margin: 1% auto;
-    text-align: center;
-    width:fit-content;
+  background-color: #1a1c2b;
+  color: white;
+  border: 1px solid white;
+  padding: 8px 8px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+  text-decoration: none;
+  display: block;
+  text-align: center;
+  width:fit-content;
   }
 
   button, .button{

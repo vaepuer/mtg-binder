@@ -4,6 +4,9 @@ html, body {
   padding: 0;
   overflow-x: hidden; /* Keeps horizontal scrolling disabled */
   overflow-y: auto; /* Enables vertical scrolling */
+  
+  display: flex;
+  flex-direction: column; /* Stack body content vertically */
 }
 
 body {
@@ -22,29 +25,29 @@ body {
   );
 }
 
-  
-
 header {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
 }
 
 .site-logo {
-    width: 80%;
-    max-width: 250px;
-    height: auto;
+  width: 80%;
+  max-width: 250px;
+  height: auto;
 }
 
 h1, h2 {
-    text-align: center;
-    color:white;
-    margin: 10px 0;
+  text-align: center;
+  color: white;
+  margin: 10px 0;
 }
 
 /* General container */
 .container {
+  
+  flex: 1; /* Allow the container to take up all available space */
   width: 100%;
   max-width: 100%;
   display: flex;
@@ -55,9 +58,24 @@ h1, h2 {
   margin: 0 auto;
   padding-top: 30px;
 }
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column; /* Stack logos vertically on small screens */
+    align-items: center; /* Ensure items are centered horizontally */
+    justify-content: center; /* Ensure vertical centering */
+    gap: 20px; /* Optional: reduce the gap between logos */
+    padding: 0 10px;
+  }
+}
 
+.form-and-extra {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
 
-/* This is the key: flex row for forms */
 .form-wrapper {
   display: flex;
   flex-direction: row;
@@ -67,82 +85,170 @@ h1, h2 {
   flex-wrap: nowrap;
 }
 
+/* Updated dual link box styles */
+.dual-link-box {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 0;
+  flex-wrap: nowrap; /* Prevent wrapping */
+  max-width: 100%; /* Ensure the width fills the container */
+  width: 50%;
+}
+
+.dice-saloon-window, .partner-windows {
+  display: flex;
+  flex-direction: row; /* side by side layout */
+  justify-content: space-between;
+  gap: 20px;
+  flex: 1;
+  max-width: 400px;
+  min-width: 300px;
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 10px;
+  border: 2px solid white;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Center the logo and the link within the boxes */
+.partner-link {
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s ease;
+}
+
+.partner-link:hover {
+  transform: scale(1.02);
+}
+
+.partner-link .dice-saloon-window {
+  cursor: pointer;
+}
+
+.half-box {
+  flex: 1;
+  background-color: #ffffff;
+  padding: 20px;
+  text-align: center;
+  border-radius: 10px;
+  text-decoration: none;
+  color: #1a1c2b;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid #ccc;
+}
+
+.half-box:hover {
+  background-color: #f5f5f5;
+  transform: scale(1.02);
+}
+
+.dice-saloon-logo-singles {
+  max-width: 100px;
+  height: auto;
+  margin-bottom: 10px;
+}
+.dice-saloon-logo-shop {
+  max-width: 100px;
+  height: auto;
+  margin-top: 10px;
+  margin-bottom: 17px;
+}
 
 .form-container {
-    flex: 1;
-    max-width: 400px;
-    min-width: 300px;
-    background-color: #1a1c2b;
-    color: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    border: 2px solid white;
+  flex: 1;
+  max-width: 400px;
+  min-width: 300px;
+  background-color: #1a1c2b;
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  border: 2px solid white;
 }
 
 form {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
 }
 
 input[type="text"],
 input[type="email"],
 input[type="password"],
 select {
-    width: 100%;
-    padding: 8px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
+  width: 100%;
+  padding: 8px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
 }
 
-a{
-    color: white;
-    text-transform: uppercase;
+a {
+  color: white;
+  text-transform: uppercase;
 }
-a:link{
-    text-decoration: none;
+
+a:link {
+  text-decoration: none;
 }
-a:hover{
-    font-weight:bold;
+
+a:hover {
+  font-weight: bold;
 }
 
 button, .button {
-    background-color: #1a1c2b;
-    color: white;
-    padding: 8px 8px;
-    border: 1px solid white;
-    cursor: pointer;
-    border-radius: 5px;
-    font-size: 14px;
-    transition: background-color 0.3s ease;
-    text-decoration: none;
-    width: 50%;
+  background-color: #1a1c2b;
+  color: white;
+  padding: 8px 8px;
+  border: 1px solid white;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+  text-decoration: none;
+  width: 50%;
 }
 
 button:hover, .button:hover {
-    background-color: #3a3a4d;
-    border: 1px solid #868686;
+  background-color: #3a3a4d;
+  border: 1px solid #868686;
 }
 
 button:focus, .button:focus {
-    outline: none;
+  outline: none;
 }
 
 #errorMessage {
-    color: red;
-    margin-top: 20px;
+  color: red;
+  margin-top: 20px;
 }
 
-#foot-notes{
-    color:white;
-    margin-left:85%;
-    margin-top: 12%;
+#foot-notes {
+  color: white;
+  position: relative; /* Changed from fixed to relative to avoid overlapping */
+  bottom: 0;
+  width: 100%;
+  text-align: center; /* Center the footer text */
+  padding: 15px;
+  background-color: #222430; /* Dark background for footer */
+  z-index: 10;
+}
+
+/* Ensure the footer looks good on small screens */
+@media (max-width: 768px) {
+  #foot-notes {
+    padding: 15px 10px; /* Add padding for small screens */
+    font-size: 14px; /* Smaller font size */
   }
+}
 
 .patchnotes-window {
   flex: 2;
@@ -191,7 +297,6 @@ button:focus, .button:focus {
   border-radius: 10px;
 }
 
-
 @media (max-width: 768px) {
   html, body {
     height: auto;
@@ -219,12 +324,10 @@ button:focus, .button:focus {
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     overflow-y: auto;
     height: 100%;
-    
-    /* Force content to break when it exceeds the box */
     word-wrap: break-word;
     overflow-wrap: break-word;
   }
-  
+
   .patchnotes-window h2 {
     margin-top: 0;
     font-size: 1.2rem;
@@ -233,12 +336,12 @@ button:focus, .button:focus {
     -webkit-hyphens: auto;
     hyphens: auto; /* Try to hyphenate long words if they overflow */
   }
-  
+
   .patchnotes-window ul {
     list-style-type: none;
     padding: 0;
   }
-  
+
   .patchnotes-window li {
     margin-bottom: 15px;
     font-size: 14px;
@@ -248,19 +351,19 @@ button:focus, .button:focus {
     -webkit-hyphens: auto;
     hyphens: auto;           /* Enable hyphenation */
   }
-  
+
   @media (max-width: 768px) {
     .patchnotes-window {
       font-size: 14px;
       max-width: 81%;
       padding: 10px;
     }
-  
+
     .patchnotes-window h2 {
       font-size: 1rem; /* Smaller titles on mobile */
       word-wrap: break-word; /* Ensure titles break if they're too long */
     }
-  
+
     .patchnotes-window li {
       word-wrap: break-word;    /* Ensure list items also break */
       overflow-wrap: break-word;
@@ -268,8 +371,4 @@ button:focus, .button:focus {
       hyphens: auto;
     }
   }
-  
 }
-
-  
-  

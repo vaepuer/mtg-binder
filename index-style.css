@@ -26,8 +26,8 @@ header {
 }
 
 .site-logo {
-  width: 30%;
-  min-width: 30%;
+  width: 18%;
+  min-width: 10%;
   max-width: 200%;
   height: auto;
 
@@ -94,6 +94,22 @@ input::placeholder, select::placeholder{
   color: #afafaf; 
 }
 
+.back-button{
+  background-color: #1a1c2b;
+  color: white;
+  border: 1px solid white;
+  padding: 8px 8px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+  text-decoration: none;
+  display: block;
+  margin: 1% auto;
+  text-align: center;
+  width:fit-content;
+}
+
 /* Adjust button to take full width when stacked */
 #cardForm button {
   background-color: #1a1c2b;
@@ -144,7 +160,7 @@ input[type="text"], select {
 
 /* Wrapper for the table body to enable scrolling */
 #cardTableWrapper {
-  max-height: 400px; /* Adjust this height as needed */
+  max-height: 600px; /* Adjust this height as needed */
   overflow-y: auto;  /* Enable vertical scrolling */
   margin-top: 10px;
   border-radius: 4px;
@@ -205,7 +221,7 @@ table th, table td {
   padding: 10px;
   text-align: left;
   white-space: nowrap;
-  overflow:auto;
+  overflow:fit-content;
   text-overflow: auto;
   word-wrap: break-word;
   color: white;
