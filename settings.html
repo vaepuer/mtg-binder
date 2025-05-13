@@ -1,15 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>User Settings | Card Binder</title>
   <link rel="stylesheet" href="style-settings.css" />
-  
+
 
 </head>
+
 <body>
-    
+
   <header>
     <div class="header-container">
       <h1>User Settings</h1>
@@ -18,21 +20,24 @@
     </div>
   </header>
   <h2 id="greeting">Hello!</h2>
-
   <main class="container">
     <div class="settings-form">
       <label for="usernameInput">Create Username:</label>
       <input type="text" id="usernameInput" placeholder="min 3 chars, letters/numbers/_" />
       <button id="saveUsernameBtn">Save Username</button>
-      
+
     </div>
+    <label>
+      <input type="checkbox" id="publicToggle" />
+      Make my binder public
+    </label>
     <div id="spinner" class="hidden">
-        <div class="loader"></div>
+      <div class="loader"></div>
     </div>
     <p id="settingsMessage"></p>
   </main>
-  
-  
+
+
   <script type="module" src="settings.js"></script>
 </body>
 <footer>
@@ -40,4 +45,5 @@
     <p>&copy; 2025 TGBinder. All rights reserved. | <a href="/mtg-binder/privacy.html">[Privacy Policy]</a></p>
   </div>
 </footer>
+
 </html>

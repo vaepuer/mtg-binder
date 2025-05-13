@@ -96,6 +96,21 @@ saveBtn.addEventListener("click", async () => {
       msg.textContent = "❌ Failed to save. Try again.";
     }
   });
+const publicToggle = document.getElementById("publicToggle");
+
+// Load current public state
+onAuthStateChanged(auth, async (user) => {
+  if (!user) return;
+
+  const publicRef = ref(db, `users/${user.uid}/public`);
+  const snap = await get(publicRef);
+  publicToggle.checked = !!snap.val();
+
+  publicToggle.addEventListener('change', async () => {
+    await set(publicRef, publicToggle.checked);
+    alert(`Binder is now ${publicToggle.checked ? "public" : "private"}`);
+  });
+});
   
   
   
