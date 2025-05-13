@@ -43,20 +43,42 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   resolveUid().then((targetUid) => {
-    // ✅ Load and display cards
-    loadBinderForUser(targetUid);
+  // Fetch the username for display in the banner
+  let usernameToDisplay = queryUsername; // Fallback to username from URL if provided
 
-    // ✅ If logged in and viewing own binder, enable share functionality
-    onAuthStateChanged(auth, (user) => {
-      if (user && user.uid === targetUid) {
-        enableShareControls(user);
+  if (!usernameToDisplay) {
+    // Fetch the username if the user is logged in
+    get(ref(db, `users/${targetUid}/username`)).then((snapshot) => {
+      if (snapshot.exists()) {
+        usernameToDisplay = snapshot.val();
+      } else {
+        console.error("Username not found in database.");
       }
+
+      // Update the banner
+      document.getElementById('username').textContent = usernameToDisplay;
+    }).catch(err => {
+      console.error("Error fetching username:", err);
     });
-  }).catch((err) => {
-    console.warn("Redirecting to login due to:", err);
-    location.href = `${basePath}/login.html`;
+  } else {
+    // If username was passed in URL, update banner directly
+    document.getElementById('username').textContent = usernameToDisplay;
+  }
+
+  // Load and display cards
+  loadBinderForUser(targetUid);
+
+  // If logged in and viewing own binder, enable share functionality
+  onAuthStateChanged(auth, (user) => {
+    if (user && user.uid === targetUid) {
+      enableShareControls(user);
+    }
   });
+}).catch((err) => {
+  console.warn("Redirecting to login due to:", err);
+  location.href = `${basePath}/login.html`;
 });
+
 
 // Load user's binder data from Firebase
 function loadBinderForUser(uid) {
@@ -167,4 +189,4 @@ function enableShareControls(user) {
     }
     document.body.removeChild(textarea);
   }
-}
+}})
