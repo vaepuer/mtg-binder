@@ -9,12 +9,23 @@ const params = new URLSearchParams(window.location.search);
 const username = params.get('username');
 const uid = params.get('uid');
 
+// Log the URL parameters
+console.log("URL Parameters:", params.toString());
+console.log("Username from URL:", username);
+console.log("UID from URL:", uid);
+
 async function resolveUid() {
-  if (uid) return uid;
+  if (uid) {
+    console.log('Resolved UID directly from URL:', uid);
+    return uid;
+  }
+
   if (username) {
     const snap = await get(ref(db, `usernames/${username.toLowerCase()}`));
+    console.log('Username resolution snapshot:', snap.exists() ? snap.val() : 'Username not found');
     return snap.exists() ? snap.val() : null;
   }
+
   return null;
 }
 
