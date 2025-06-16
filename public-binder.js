@@ -20,6 +20,8 @@ async function resolveUid() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   const resolvedUid = await resolveUid();
+  console.log('Resolved UID:', resolvedUid);  // Debugging the resolved UID
+  
   if (!resolvedUid) {
     document.body.innerHTML = "<p>User not found.</p>";
     return;
@@ -27,9 +29,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Debugging: Check if the resolved user is public
   const publicRef = ref(db, `users/${resolvedUid}/public`);
-  const publicSnap = await get(publicRef);
-  console.log('Public Binder for UID', resolvedUid, ':', publicSnap.val());  // Debugging the public flag
+  console.log('Fetching public field for UID:', resolvedUid);
 
+  const publicSnap = await get(publicRef);
+  console.log('Public Binder Snapshot:', publicSnap.val());  // Debugging the public flag
+  
   // If the binder is private, show an error
   if (publicSnap.exists() && !publicSnap.val()) {
     document.body.innerHTML = "<p>This binder is private and cannot be viewed.</p>";
