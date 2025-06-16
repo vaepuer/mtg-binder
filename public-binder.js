@@ -25,6 +25,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
+  // Debugging: Check if the resolved user is public
+  const publicRef = ref(db, `users/${resolvedUid}/public`);
+  const publicSnap = await get(publicRef);
+  console.log('Public Binder for UID', resolvedUid, ':', publicSnap.val());  // Debugging the public flag
+
+  // If the binder is private, show an error
+  if (publicSnap.exists() && !publicSnap.val()) {
+    document.body.innerHTML = "<p>This binder is private and cannot be viewed.</p>";
+    return;
+  }
+
+  // Continue with loading cards if the binder is public
   const cardsSnap = await get(ref(db, `cards/${resolvedUid}`));
   if (!cardsSnap.exists()) {
     document.body.innerHTML = "<p>No cards found.</p>";
