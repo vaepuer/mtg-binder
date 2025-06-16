@@ -21,7 +21,7 @@ async function resolveUid() {
   }
 
   if (username) {
-    const snap = await get(ref(db, `usernames/${username.toLowerCase()}`));
+    const snap = await get(ref(db, `usernames/${username}`));  // Removed .toLowerCase()
     console.log('Username resolution snapshot:', snap.exists() ? snap.val() : 'Username not found');
     return snap.exists() ? snap.val() : null;
   }
