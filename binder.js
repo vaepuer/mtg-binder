@@ -43,42 +43,36 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   resolveUid().then((targetUid) => {
-  // Fetch the username for display in the banner
-  let usernameToDisplay = queryUsername; // Fallback to username from URL if provided
+    let usernameToDisplay = queryUsername;
 
-  if (!usernameToDisplay) {
-    // Fetch the username if the user is logged in
-    get(ref(db, `users/${targetUid}/username`)).then((snapshot) => {
-      if (snapshot.exists()) {
-        usernameToDisplay = snapshot.val();
-      } else {
-        console.error("Username not found in database.");
-      }
+    if (!usernameToDisplay) {
+      get(ref(db, `users/${targetUid}/username`)).then((snapshot) => {
+        if (snapshot.exists()) {
+          usernameToDisplay = snapshot.val();
+        } else {
+          console.error("Username not found in database.");
+        }
 
-      // Update the banner
+        document.getElementById('username').textContent = usernameToDisplay;
+      }).catch(err => {
+        console.error("Error fetching username:", err);
+      });
+    } else {
       document.getElementById('username').textContent = usernameToDisplay;
-    }).catch(err => {
-      console.error("Error fetching username:", err);
-    });
-  } else {
-    // If username was passed in URL, update banner directly
-    document.getElementById('username').textContent = usernameToDisplay;
-  }
-
-  // Load and display cards
-  loadBinderForUser(targetUid);
-
-  // If logged in and viewing own binder, enable share functionality
-  onAuthStateChanged(auth, (user) => {
-    if (user && user.uid === targetUid) {
-      enableShareControls(user);
     }
-  });
-}).catch((err) => {
-  console.warn("Redirecting to login due to:", err);
-  location.href = `${basePath}/login.html`;
-});
 
+    loadBinderForUser(targetUid);
+
+    onAuthStateChanged(auth, (user) => {
+      if (user && user.uid === targetUid) {
+        enableShareControls(user);
+      }
+    });
+  }).catch((err) => {
+    console.warn("Redirecting to login due to:", err);
+    location.href = `${basePath}/login.html`;
+  });
+});
 
 // Load user's binder data from Firebase
 function loadBinderForUser(uid) {
@@ -109,12 +103,115 @@ function loadBinderForUser(uid) {
       quantity.className = 'quantity-badge';
       quantity.textContent = `x${card.quantity}`;
 
+      // Treatment display logic with dynamic class addition based on treatment type
       const treatment = document.createElement('div');
       treatment.className = 'foil-badge';
-      treatment.textContent = card.treatment === 'F' ? 'Foil' :
-                              card.treatment === 'PF' ? 'Piss Foil' : 'Non-Foil';
-      if (card.treatment === 'F') treatment.classList.add('f');
-      if (card.treatment === 'PF') treatment.classList.add('pf');
+      let treatmentText = 'Non-Foil';
+      let treatmentClass = '';
+      let treatmentDisplay = true;  // A flag to control whether we show the treatment or not
+
+      // Map treatment to class and text
+      switch (card.treatment) {
+        case 'PRM':
+          treatmentText = 'Pre-Modern';
+          treatmentClass = 'PRM';
+          break;
+        case 'TRA':
+          treatmentText = 'Traditional';
+          treatmentClass = 'TRA';
+          break;
+        case 'FTV':
+          treatmentText = 'From the Vault';
+          treatmentClass = 'FTV';
+          break;
+        case 'FET':
+          treatmentText = 'Foil-Etched';
+          treatmentClass = 'FET';
+          break;
+        case 'GET':
+          treatmentText = 'Gold-Etched';
+          treatmentClass = 'GET';
+          break;
+        case 'TEX':
+          treatmentText = 'Textured Foil';
+          treatmentClass = 'TEX';
+          break;
+        case 'AMP':
+          treatmentText = 'Ampersand Foil';
+          treatmentClass = 'AMP';
+          break;
+        case 'SIL':
+          treatmentText = 'Silverscreen Foil';
+          treatmentClass = 'SIL';
+          break;
+        case 'NEON':
+          treatmentText = 'Neon Ink';
+          treatmentClass = 'NEON';
+          break;
+        case 'GIL':
+          treatmentText = 'Gilded Foil';
+          treatmentClass = 'GIL';
+          break;
+        case 'GAL':
+          treatmentText = 'Galaxy Foil';
+          treatmentClass = 'GAL';
+          break;
+        case 'SUR':
+          treatmentText = 'Surge Foil';
+          treatmentClass = 'SUR';
+          break;
+        case 'DBR':
+          treatmentText = 'Double Rainbow';
+          treatmentClass = 'DBR';
+          break;
+        case 'SCT':
+          treatmentText = 'Step-and-Compleat Foil';
+          treatmentClass = 'SCT';
+          break;
+        case 'OSR':
+          treatmentText = 'Oil Slick Raised Foil';
+          treatmentClass = 'OSR';
+          break;
+        case 'HAL':
+          treatmentText = 'Halo Foil';
+          treatmentClass = 'HAL';
+          break;
+        case 'RAI':
+          treatmentText = 'Rainbow Foil';
+          treatmentClass = 'RAI';
+          break;
+        case 'RIP':
+          treatmentText = 'Ripple Foil';
+          treatmentClass = 'RIP';
+          break;
+        case 'FRA':
+          treatmentText = 'Fracture Foil';
+          treatmentClass = 'FRA';
+          break;
+        case 'MAN':
+          treatmentText = 'Mana Foil';
+          treatmentClass = 'MAN';
+          break;
+        case 'FIR':
+          treatmentText = 'First Place Foil';
+          treatmentClass = 'FIR';
+          break;
+        default:
+          treatmentText = 'Non-Foil';
+          treatmentClass = '';
+          treatmentDisplay = false;  // Hide Non-Foil badge
+          break;
+      }
+
+      treatment.textContent = treatmentText;
+      if (treatmentClass) {
+        treatment.classList.add(treatmentClass);
+      }
+
+      // If the treatment is Non-Foil, don't add it to the card display
+      if (treatmentDisplay) {
+        cardBox.appendChild(treatment);
+      }
 
       const img = document.createElement('img');
       const name = card.name;
@@ -145,7 +242,6 @@ function loadBinderForUser(uid) {
       };
 
       cardBox.appendChild(quantity);
-      cardBox.appendChild(treatment);
       cardBox.appendChild(img);
       cardBox.appendChild(button);
       container.appendChild(cardBox);
@@ -189,4 +285,4 @@ function enableShareControls(user) {
     }
     document.body.removeChild(textarea);
   }
-}})
+}

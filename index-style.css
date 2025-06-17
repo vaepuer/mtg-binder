@@ -10,14 +10,13 @@ body {
   flex-direction: column; /* Stack elements vertically */
 
   background-image: repeating-linear-gradient(
-  45deg,
-  #15151b 0px,
-  #15151b 20px,
-  #1b1b24 20px,
-  #1b1b24 40px
-);
+    45deg,
+    #15151b 0px,
+    #15151b 20px,
+    #1b1b24 20px,
+    #1b1b24 40px
+  );
 }
-
 
 header {
   width: 100%;  
@@ -30,7 +29,6 @@ header {
   min-width: 10%;
   max-width: 200%;
   height: auto;
-
 }
 
 h1, h2 {
@@ -38,7 +36,7 @@ h1, h2 {
   color:white;
 }
 
-#header{
+#header {
   max-width: fit-content;
   margin-left: auto;
   margin-right: auto;
@@ -52,7 +50,7 @@ h1, h2 {
   justify-content: center;  
   align-items: center; /* Center content horizontally */
   width: 100%;  
-  padding:20px;
+  padding: 20px;
   gap: 20px; /* Add spacing between the form and the table */
 }
 
@@ -69,32 +67,29 @@ h1, h2 {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 
   border: 1px solid white;
-  padding:10px;
-  
-  
+  padding: 10px;
 }
 
 /* Form fields styling */
-#cardForm input[type="text"],  select
-{
+#cardForm input[type="text"], select {
   flex: 1;
   width: calc(50% - 10px); /* Each input takes up 50% minus a little gap */
   padding: 8px;
-  margin:2px;
+  margin: 2px;
   border-radius: 5px;
   border: 1px solid #ccc;
   margin-bottom: 10px; /* Add space between rows */
   background-color: #665c6b;
   text-align: center;
-  font-weight:bold;
+  font-weight: bold;
   color: white;  
 }
 
-input::placeholder, select::placeholder{
+input::placeholder, select::placeholder {
   color: #afafaf; 
 }
 
-.back-button{
+.back-button {
   background-color: #1a1c2b;
   color: white;
   border: 1px solid white;
@@ -107,7 +102,7 @@ input::placeholder, select::placeholder{
   display: block;
   margin: 1% auto;
   text-align: center;
-  width:fit-content;
+  width: fit-content;
 }
 
 /* Adjust button to take full width when stacked */
@@ -122,7 +117,7 @@ input::placeholder, select::placeholder{
   transition: background-color 0.3s ease;
 }
 
-#cardForm button:hover{
+#cardForm button:hover {
   background-color: #3a3a4d;
   border: 1px solid #868686;
 }
@@ -135,10 +130,32 @@ input[type="text"], select {
   border: 1px solid #ccc;
 }
 
+.suggestions-container {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  position: absolute;
+  width: 100%;
+  z-index: 10;
+  display: none; /* Hidden by default */
+}
+
+.suggestions-container div {
+  padding: 8px;
+  cursor: pointer;
+}
+
+.suggestions-container div:hover {
+  background-color: #f0f0f0;
+}
+
+
+
 #treatmentSelect option:nth-child(odd) {
   background-color: #2c2f49; /* Darker */
   color: white;
-  font-weight:bold;
+  font-weight: bold;
   text-transform: uppercase;
   outline: none;
   -webkit-appearance: none;
@@ -149,7 +166,7 @@ input[type="text"], select {
 #treatmentSelect option:nth-child(even) {
   background-color: #2b2635; /* Lighter */
   color: white;
-  font-weight:bold;
+  font-weight: bold;
   text-transform: uppercase;
   outline: none;
   -webkit-appearance: none;
@@ -165,7 +182,7 @@ input[type="text"], select {
   margin-top: 10px;
   border-radius: 4px;
   border: 1px solid white;
-  display: flex;
+  display: block; /* Make sure table is block level to allow scrolling */
 }
 
 /* Hide scrollbar gutter and style thumb */
@@ -192,40 +209,39 @@ input[type="text"], select {
   scrollbar-color: rgba(255,255,255,0.4) transparent; /* thumb and track */
 }
 
-
-
 /* Table Styling */
 table {
   width: 100%;
-  max-width: 840px; /* Limit the width of the table */
+  max-width: 990px; /* Limit the width of the table */
   table-layout: fixed; /* Prevent the table from resizing */
   margin: 0 auto; /* Center the table */
-  border-collapse:collapse;
+  border-collapse: collapse;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-table th{
+table th {
   border-width: 0px 0px 1px 0px; /* top, right, bottom, left */
   border-style: solid;
   border-color: white;
   background-color: #1a1c2b;
   font-weight: bold;
 }
-table td{
-  border: none;
-}
 
+table td {
+  border: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;  /* or any preferred width */
+  width: 150px;  /* or any preferred width */
+}
 
 /* Table header and cell styling */
 table th, table td {
   padding: 10px;
   text-align: left;
-  white-space: nowrap;
-  overflow:fit-content;
-  text-overflow: auto;
-  word-wrap: break-word;
   color: white;
-  text-align:center;
+  text-align: center;
 }
 
 table tbody tr:nth-child(even) {
@@ -236,10 +252,9 @@ table tbody tr:nth-child(odd) {
   background-color: #46394d; /* Keep this as the base */
 }
 
-
 /* Button styling */
-button, .button{
-  margin:auto;
+button, .button {
+  margin: auto;
   background-color: #1a1c2b;
   color: white;
   padding: 8px 8px;
@@ -260,16 +275,53 @@ button:focus, .button:focus {
   outline: none;
 }
 
-#foot-notes{
-  color:white;
-  margin-left:85%;
+#foot-notes {
+  color: white;
+  margin-left: 85%;
   margin-top: 1%;
-  float:left;
+  float: left;
 }
 
-#ko-fi-footer{
-  float:right;
+#ko-fi-footer {
+  float: right;
 }
+
+/* Modal styling */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-content {
+  background-color: #fefefe;
+  margin: 15% auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;
+  max-width: 500px;
+}
+
+.close-btn {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close-btn:hover,
+.close-btn:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+
 
 @media (max-width: 768px) {
   .form-wrapper,
@@ -328,5 +380,3 @@ button:focus, .button:focus {
     font-size: 12px;
   }
 }
-
-

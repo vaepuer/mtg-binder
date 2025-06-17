@@ -1,62 +1,31 @@
+/* Global Styles */
 body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 20px;
-    background-image: repeating-linear-gradient(
-    45deg,
-    #15151b 0px,
-    #15151b 20px,
-    #1b1b24 20px,
-    #1b1b24 40px
-    );
-  }
-  
-  header {
-    width: 100%; /* Full width so content can center */
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 20px;
+  background-image: repeating-linear-gradient(45deg, #15151b 0px, #15151b 20px, #1b1b24 20px, #1b1b24 40px);
+}
+
+header {
+  width: 100%;
   display: flex;
   align-items: center;
-  justify-content: center; /* This centers the child elements horizontally */
+  justify-content: center;
   margin-top: 20px;
   text-align: center;
-  }
-  
-  .site-logo {
-    width: 18%;
-    max-width: 200%;
-    height: auto;
-  }
+}
 
-  .user-container {
-    justify-content: center;       /* Centers the buttons horizontally */
-    display: flex;
-    flex-direction: row;           /* Places the buttons side by side */
-    flex-wrap: wrap;
-    align-items: center;           /* Centers buttons vertically (if needed) */
-    padding: 20px;
-    gap: 10px;                      /* Reduce gap to make the buttons closer */
-  }
+.site-logo {
+  width: 18%;
+  max-width: 200%;
+  height: auto;
+}
 
+h1, h2 {
+  text-align: center;
+  color: white;
+}
 
-  .container {
-    justify-content: center;
-    display: flex;
-    flex-direction: column; /* Stack form and table vertically */
-    flex-wrap: wrap;
-    justify-content: center;  
-    align-items: center; /* Center content horizontally */
-    width: 100%;  
-    padding:20px;
-    gap: 20px; /* Add spacing between the form and the table */    
-
-  }
-  
-
-  h1 {
-    text-align: center;
-    color:white;
-  }
-  
-  /* Banner Styles */
 /* Banner Styles */
 .banner {
   background-color: #1a1c2b;
@@ -72,19 +41,17 @@ body {
   position: sticky;
   top: 0;
   z-index: 10;
-
-  /* Set a custom width, e.g., 80% of the screen width */
   width: 80%;
   margin-left: auto;
-  margin-right: auto; /* This will center the banner */
+  margin-right: auto;
 }
 
 .banner span {
-  color: #ff9b00; /* Highlight username in a different color */
+  color: #ff9b00;
 }
 
-
-  .back-button{
+/* Buttons and User Container */
+.back-button, button, .button {
   background-color: #1a1c2b;
   color: white;
   border: 1px solid white;
@@ -94,186 +61,242 @@ body {
   font-size: 14px;
   transition: background-color 0.3s ease;
   text-decoration: none;
+}
+
+.back-button {
   display: block;
   text-align: center;
-  width:fit-content;
-  }
+  width: fit-content;
+}
 
-  button, .button{
-    background-color: #1a1c2b;
-    color: white;
-    border: 1px solid white;
-    padding: 8px 8px;
-    cursor: pointer;
-    border-radius: 5px;
-    font-size: 14px;
-    transition: background-color 0.3s ease;
-    text-decoration: none;
-  }
-  
-  button:hover, .button:hover, .back-button:hover {
-    background-color:#3a3a4d;
-    border: 1px solid #868686; 
-  }
-  
-  button:focus, .button:focus, .back-button:focus {
-    outline: none;
-  }
+button:hover, .button:hover, .back-button:hover {
+  background-color: #3a3a4d;
+  border: 1px solid #868686;
+}
 
+button:focus, .button:focus, .back-button:focus {
+  outline: none;
+}
 
+.user-container {
+  justify-content: center;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 20px;
+  gap: 10px;
+}
 
-  .binder-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 16px;
-  }
-  
+/* Binder container styling */
+.binder-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+}
+
+/* Card Box Styling */
+.card-box {
+  position: relative;
+  background-image: linear-gradient(#15151b 10%, #2e2e3d 50%);
+  border-radius: 10px;
+  box-shadow: 0 40px 50px black;
+  padding: 10px;
+  width: 200px;
+  text-align: center;
+  border: 1px solid white;
+}
+
+.card-box img {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #52526d;
+}
+
+.card-box .quantity-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #22222271;
+  color: white;
+  border-radius: 12px;
+  padding: 5px 10px;
+  font-size: 14px;
+}
+
+.card-box button {
+  margin-top: 8px;
+  padding: 6px 12px;
+  font-size: 14px;
+  border: 1px solid white;
+  background-color: #1a1c2b;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+/* Badge Styling for Treatments */
+.quantity-badge, .foil-badge {
+  position: absolute;
+  padding: 4px 8px;
+  font-size: 13px;
+  border-radius: 8px;
+  color: white;
+}
+
+.quantity-badge {
+  top: 8px;
+  right: 8px;
+  background-color: #222;
+}
+
+.foil-badge {
+  top: 8px;
+  left: 8px;
+  background-color: #0077ccab; /* Default Foil */
+}
+
+/* Dynamic Classes for Treatments */
+.foil-badge::before {
+  content: "✨ ";
+}
+
+.foil-badge.PRM {
+  background-color: #8e3b3b; /* Pre-Modern */
+}
+
+.foil-badge.TRA {
+  background-color: #ff8a3d; /* Traditional */
+}
+
+.foil-badge.FTV {
+  background-color: #9c7c49ab; /* From the Vault */
+}
+
+.foil-badge.FET {
+  background-color: #9c7c49ab; /* Foil-Etched */
+}
+
+.foil-badge.GET {
+  background-color: #d4af37ab; /* Gold-Etched */
+}
+
+.foil-badge.TEX {
+  background-color: #0f7b6f; /* Textured Foil */
+}
+
+.foil-badge.AMP {
+  background-color: #f1c40f; /* Ampersand Foil */
+}
+
+.foil-badge.SIL {
+  background-color: #b5b5b5; /* Silverscreen Foil */
+}
+
+.foil-badge.NEON {
+  background-color: #f5bc00; /* Neon Ink */
+}
+
+.foil-badge.GIL {
+  background-color: #c2b3f0; /* Gilded Foil */
+}
+
+.foil-badge.GAL {
+  background-color: #6a5acd; /* Galaxy Foil */
+}
+
+.foil-badge.SUR {
+  background-color: #4e56f7; /* Surge Foil */
+}
+
+.foil-badge.DBR {
+  background-color: #ff69b4; /* Double Rainbow */
+}
+
+.foil-badge.SCT {
+  background-color: #d18792; /* Step-and-Compleat Foil */
+}
+
+.foil-badge.OSR {
+  background-color: #006f52; /* Oil Slick Raised Foil */
+}
+
+.foil-badge.HAL {
+  background-color: #ffe13d; /* Halo Foil */
+}
+
+.foil-badge.RAI {
+  background-color: #f404ff; /* Rainbow Foil */
+}
+
+.foil-badge.RIP {
+  background-color: #76d1c5; /* Ripple Foil */
+}
+
+.foil-badge.FRA {
+  background-color: #9eac55; /* Fracture Foil */
+}
+
+.foil-badge.MAN {
+  background-color: #ff5f57; /* Mana Foil */
+}
+
+.foil-badge.FIR {
+  background-color: #ff5f57; /* First Place Foil */
+}
+
+/* Collector Badge Styling */
+.collector-badge {
+  position: absolute;
+  bottom: 30px;
+  left: 12px;
+  background-color: #000000;
+  color: white;
+  padding: 2px 6px;
+  font-size: 12px;
+  border-radius: 6px;
+  font-family: monospace;
+}
+
+#foot-notes {
+  color: white;
+  margin-left: 1%;
+  margin-top: 1%;
+  float: right;
+}
+
+#ko-fi-footer {
+  float: left;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
   .card-box {
-    position: relative;
-    background-image: linear-gradient(
-    #15151b 10%,
-    #2e2e3d 50%
-    );
-    border-radius: 10px;
-    box-shadow: 0 40px 50px black;
-    padding: 10px;
-    width: 200px;
-    text-align: center;
-    border: 1px solid white;
-  }
-  
-  .card-box img {
-    width: 100%;
-    border-radius: 8px;
-    border: 1px solid #52526d;
-    
-  }
-  
-  .card-box .quantity-badge {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: #22222271;
-    color: white;
-    border-radius: 12px;
-    padding: 5px 10px;
-    font-size: 14px;
-  }
-  
-  .card-box button {
-    margin-top: 8px;
-    padding: 6px 12px;
-    font-size: 14px;
-    border: 1px solid white;
-    background-color: #1a1c2b;
-    color: white;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  .quantity-badge, .foil-badge {
-    position: absolute;
-    padding: 4px 8px;
-    font-size: 13px;
-    border-radius: 8px;
-    color: white;
-  }
-  
-  .quantity-badge {
-    top: 8px;
-    right: 8px;
-    background-color: #222;
-  }
-  
-  .foil-badge {
-    top: 8px;
-    left: 8px;
-    background-color: #0077ccab;
-  }
-  
-  .foil-badge::before {
-    content: "✨ ";
+    width: 150px;
+    padding: 8px;
   }
 
-  .foil-badge.f {
-    background-color: #4c6ef5ab; /* Blue */
+  .card-box button {
+    font-size: 12px;
+    padding: 4px 10px;
   }
-  
-  .foil-badge.pf {
-    background-color: #d4af37ab; /* Gold */
+
+  .card-box .quantity-badge, .foil-badge {
+    font-size: 11px;
+    padding: 3px 6px;
   }
 
   .collector-badge {
-    position: absolute;
-    bottom: 30px;
-    left: 12px;
-    background-color: #000000;
-    color: white;
-    padding: 2px 6px;
+    font-size: 10px;
+    padding: 2px 4px;
+  }
+
+  #foot-notes {
+    margin-left: auto;
+    margin-top: 40px;
+    text-align: right;
     font-size: 12px;
-    border-radius: 6px;
-    font-family: monospace;
   }
-
-  #foot-notes{
-    color:white;
-    margin-left:1%;
-    margin-top: 1%;
-    float:right;
-  }
-
-  #ko-fi-footer{
-    float:left;
-  }
-
-  @media (max-width: 768px) {
-    .form-wrapper {
-      flex-direction: column;
-      align-items: center;
-    }
-  
-    .site-logo {
-      width: 60%; /* Smaller logo */
-    }
-  
-    h1 {
-      font-size: 1.5rem; /* Smaller heading */
-    }
-  
-    .back-button,
-    button,
-    .button {
-      padding: 6px 6px;
-      font-size: 12px;
-    }
-  
-    .card-box {
-      width: 150px; /* Smaller card width */
-      padding: 8px;
-    }
-  
-    .card-box button {
-      font-size: 12px;
-      padding: 4px 10px;
-    }
-  
-    .card-box .quantity-badge,
-    .foil-badge {
-      font-size: 11px;
-      padding: 3px 6px;
-    }
-  
-    .collector-badge {
-      font-size: 10px;
-      padding: 2px 4px;
-    }
-    #foot-notes {
-      margin-left: auto;
-      margin-top: 40px;
-      text-align: right;
-      font-size: 12px;
-    }
-  }
-  
-  
+}

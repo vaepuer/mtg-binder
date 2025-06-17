@@ -3,7 +3,8 @@ import {
   ref,
   push,
   set,
-  onValue
+  onValue,
+  get,
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 import {
@@ -153,8 +154,6 @@ function setupAddCardForm(user) {
   });
 }
 
-
-
 // ✅ Show user’s cards in the table
 function displayCards(userId) {
   const cardsRef = ref(db, `cards/${userId}`); // 🔥 Only get this user's cards
@@ -175,14 +174,21 @@ function displayCards(userId) {
       const row = document.createElement('tr');
       row.innerHTML = `
         <td>${card.name}</td>
-        <td>${card.quantity}</td>
+        <td>
+          <div class="qty-control">
+            <button class="minus-btn" data-id="${cardId}">-</button>
+            <span class="qty-label">${card.quantity}</span>
+            <button class="plus-btn" data-id="${cardId}">+</button>
+          </div>
+        </td>
         <td>${card.treatment || ''}</td>
         <td>${card.setCode || ''}</td>
         <td>${card.collectorNumber || ''}</td>
         <td>
-          <button class="search-btn" data-name="${card.name}" data-set="${card.setCode}" data-num="${card.collectorNumber}">
-            🔍
-          </button>
+          <button class="search-btn" data-name="${card.name}" data-set="${card.setCode}" data-num="${card.collectorNumber}">🔍</button>
+        </td>
+        <td>
+          <button class="edit-btn" data-id="${cardId}">✏️</button>
         </td>
         <td>
           <button class="delete-btn" data-id="${cardId}">🗑️</button>
@@ -194,26 +200,139 @@ function displayCards(userId) {
 
     attachDeleteHandlers(userId); // ✅ pass UID to delete
     attachSearchHandlers();
+    attachEditHandlers(userId);
+    attachQuantityHandlers(userId);
   });
 }
 
-
+// Function to handle delete button
 function attachDeleteHandlers(userId) {
   document.querySelectorAll('.delete-btn').forEach(button => {
-    button.addEventListener('click', () => {
-      const cardId = button.getAttribute('data-id');
-      if (confirm("Delete this card?")) {
+    button.addEventListener('click', (e) => {
+      const cardId = e.target.getAttribute('data-id');
+      if (confirm("Are you sure you want to delete this card?")) {
         const cardRef = ref(db, `cards/${userId}/${cardId}`);
-        set(cardRef, null)
-          .then(() => console.log("Card deleted"))
-          .catch(err => console.error("Delete failed:", err));
+        set(cardRef, null).then(() => {
+          console.log("✅ Card deleted");
+          displayCards(userId); // Refresh the table
+        }).catch(err => console.error("❌ Error deleting card", err));
       }
+    });
+  });
+}
+
+// Function to handle edit button
+function attachEditHandlers(userId) {
+  document.querySelectorAll('.edit-btn').forEach(button => {
+    button.addEventListener('click', (e) => {
+      const cardId = e.target.getAttribute('data-id');
+      const cardRef = ref(db, `cards/${userId}/${cardId}`);
+      
+      // Show overlay modal for editing
+      const modal = document.getElementById('editModal');
+      const modalCardNameInput = document.getElementById('modalCardNameInput');
+      const modalSetCodeInput = document.getElementById('modalSetCodeInput');
+      const modalCollectorNumberInput = document.getElementById('modalCollectorNumberInput');
+      const modalTreatmentSelect = document.getElementById('modalTreatmentSelect');
+      const modalQuantityInput = document.getElementById('modalQuantityInput'); // Quantity input
+
+      // Get card data from Firebase
+      get(cardRef).then(snapshot => {
+        const card = snapshot.val();
+        if (card) {
+          // Pre-fill modal with current card details
+          modalCardNameInput.value = card.name;
+          modalSetCodeInput.value = card.setCode;
+          modalCollectorNumberInput.value = card.collectorNumber;
+          modalTreatmentSelect.value = card.treatment;
+          modalQuantityInput.value = card.quantity; // Set current quantity value
+
+          // Open modal
+          modal.style.display = 'block';
+
+          // Handle save changes in the modal
+          document.getElementById('saveEditBtn').addEventListener('click', () => {
+            let updatedQuantity = parseInt(modalQuantityInput.value, 10);
+
+            // Validate quantity: Ensure it is a number and at least 1
+            if (isNaN(updatedQuantity) || updatedQuantity < 1) {
+              alert("Quantity must be a valid number and at least 1.");
+              modalQuantityInput.value = 1; // Reset to minimum value
+              updatedQuantity = 1; // Ensure that the quantity is set to 1 if invalid
+            }
+
+            const updatedCard = {
+              name: modalCardNameInput.value,
+              setCode: modalSetCodeInput.value,
+              collectorNumber: modalCollectorNumberInput.value,
+              treatment: modalTreatmentSelect.value,
+              quantity: updatedQuantity // Save updated quantity
+            };
+            
+            set(cardRef, updatedCard)
+              .then(() => {
+                console.log("✅ Card updated!");
+                modal.style.display = 'none';
+                displayCards(userId); // Refresh the table
+              })
+              .catch(error => {
+                console.error("❌ Error updating card:", error);
+              });
+          });
+        }
+      });
     });
   });
 }
 
 
 
+// Function to close the edit modal
+document.getElementById('closeModalBtn').addEventListener('click', () => {
+  const modal = document.getElementById('editModal');
+  modal.style.display = 'none';
+});
+
+// Function to handle quantity increase and decrease
+function attachQuantityHandlers(userId) {
+  document.querySelectorAll('.minus-btn').forEach(button => {
+    button.addEventListener('click', (e) => {
+      const cardId = e.target.getAttribute('data-id');
+      const qtyLabel = e.target.nextElementSibling;
+
+      // Decrease quantity
+      updateQuantity(userId, cardId, -1, qtyLabel);
+    });
+  });
+
+  document.querySelectorAll('.plus-btn').forEach(button => {
+    button.addEventListener('click', (e) => {
+      const cardId = e.target.getAttribute('data-id');
+      const qtyLabel = e.target.previousElementSibling;
+
+      // Increase quantity
+      updateQuantity(userId, cardId, 1, qtyLabel);
+    });
+  });
+}
+
+// Function to update quantity in Firebase
+function updateQuantity(userId, cardId, delta, qtyLabel) {
+  const cardRef = ref(db, `cards/${userId}/${cardId}`);
+
+  get(cardRef).then(snapshot => {
+    const card = snapshot.val();
+    const newQuantity = card.quantity + delta;
+
+    if (newQuantity >= 0) { // Prevent negative quantities
+      set(cardRef, { ...card, quantity: newQuantity }).then(() => {
+        qtyLabel.textContent = newQuantity; // Update quantity in the table
+      });
+    }
+  });
+}
+
+// Function to attach search button functionality
 function attachSearchHandlers() {
   document.querySelectorAll('.search-btn').forEach(button => {
     button.addEventListener('click', () => {

@@ -35,12 +35,35 @@
         <!-- Form to add cards -->
         <form id="cardForm">
           <input type="text" id="cardNameInput" placeholder="Card Name or '2 Card Name" required />
+          <div id="cardNameSuggestions" class="suggestions-container"></div> <!-- Suggestions Container -->
+
           <input type="text" id="setCodeInput" placeholder="Set Code" required />
+          <div id="setCodeSuggestions" class="suggestions-container"></div> <!-- Suggestions Container -->
+          
           <input type="text" id="collectorNumberInput" placeholder="Collector #" />
           <select id="treatmentSelect" title="Card Finish Type">
             <option value="">Non-Foil</option>
-            <option value="F">Foil</option>
-            <option value="PF">Piss Foil</option>
+            <option value="PRM">Pre-Modern</option>
+            <option value="TRA">Traditional</option>
+            <option value="FTV">From the Vault</option>
+            <option value="FET">Foil-Etched</option>
+            <option value="GET">Gold-Etched</option>
+            <option value="TEX">Textured Foil</option>
+            <option value="AMP">Ampersand Foil</option>
+            <option value="SIL">Silverscreen Foil</option>
+            <option value="NEON">Neon Ink</option>
+            <option value="GIL">Gilded Foil</option>
+            <option value="GAL">Galaxy Foil</option>
+            <option value="SUR">Surge Foil</option>
+            <option value="DBR">Double Rainbow</option>
+            <option value="SCT">Step-and-Compleat Foil</option>
+            <option value="OSR">Oil Slick Raised Foil</option>
+            <option value="HAL">Halo Foil</option>
+            <option value="RAI">Rainbow Foil</option>
+            <option value="RIP">Ripple Foil</option>
+            <option value="FRA">Fracture Foil</option>
+            <option value="MAN">Mana Foil</option>
+            <option value="FIR">First Place Foil</option>
           </select>
           <button type="submit">Add Card</button>
         </form>
@@ -56,6 +79,7 @@
                 <th>Set</th>
                 <th>Collector</th>
                 <th>Search</th>
+                <th>Edit</th> <!-- Add an Edit column -->
                 <th>Delete</th>
               </tr>
             </thead>
@@ -68,9 +92,47 @@
     </div>
   </div>
 
+  <div id="editModal" class="modal">
+  <div class="modal-content">
+    <span id="closeModalBtn" class="close-btn">×</span>
+    <h2>Edit Card</h2>
+    <form id="modalCardForm">
+      <input type="text" id="modalCardNameInput" placeholder="Card Name" required />
+      <input type="text" id="modalSetCodeInput" placeholder="Set Code" />
+      <input type="text" id="modalCollectorNumberInput" placeholder="Collector #" />
+      <input type="number" id="modalQuantityInput" placeholder="Quantity" required />
+      <label for="modalTreatmentSelect">Treatment</label>
+        <select id="modalTreatmentSelect">
+          <option value="">Non-Foil</option>
+          <option value="PRM">Pre-Modern</option>
+          <option value="TRA">Traditional</option>
+          <option value="FTV">From the Vault</option>
+          <option value="FET">Foil-Etched</option>
+          <option value="GET">Gold-Etched</option>
+          <option value="TEX">Textured Foil</option>
+          <option value="AMP">Ampersand Foil</option>
+          <option value="SIL">Silverscreen Foil</option>
+          <option value="NEON">Neon Ink</option>
+          <option value="GIL">Gilded Foil</option>
+          <option value="GAL">Galaxy Foil</option>
+          <option value="SUR">Surge Foil</option>
+          <option value="DBR">Double Rainbow</option>
+          <option value="SCT">Step-and-Compleat Foil</option>
+          <option value="OSR">Oil Slick Raised Foil</option>
+          <option value="HAL">Halo Foil</option>
+          <option value="RAI">Rainbow Foil</option>
+          <option value="RIP">Ripple Foil</option>
+          <option value="FRA">Fracture Foil</option>
+          <option value="MAN">Mana Foil</option>
+          <option value="FIR">First Place Foil</option>
+        </select>
+      <button type="button" id="saveEditBtn">Save Changes</button>
+    </form>
+  </div>
+</div>
+
   
   <script type="module" src="index.js"></script>
-  <script type="module" src="scripts.js"></script>
 </body>
 <footer id="foot-notes">
   <div id="ko-fi-footer">

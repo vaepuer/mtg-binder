@@ -68,10 +68,112 @@ function loadBinderForUser(uid) {
 
       const treatment = document.createElement('div');
       treatment.className = 'foil-badge';
-      treatment.textContent = card.treatment === 'F' ? 'Foil' :
-                              card.treatment === 'PF' ? 'Piss Foil' : 'Non-Foil';
-      if (card.treatment === 'F') treatment.classList.add('f');
-      if (card.treatment === 'PF') treatment.classList.add('pf');
+      let treatmentText = 'Non-Foil';
+      let treatmentClass = '';
+      let treatmentDisplay = true;  // A flag to control whether we show the treatment or not
+
+      // Map treatment to class and text
+      switch (card.treatment) {
+        case 'PRM':
+          treatmentText = 'Pre-Modern';
+          treatmentClass = 'PRM';
+          break;
+        case 'TRA':
+          treatmentText = 'Traditional';
+          treatmentClass = 'TRA';
+          break;
+        case 'FTV':
+          treatmentText = 'From the Vault';
+          treatmentClass = 'FTV';
+          break;
+        case 'FET':
+          treatmentText = 'Foil-Etched';
+          treatmentClass = 'FET';
+          break;
+        case 'GET':
+          treatmentText = 'Gold-Etched';
+          treatmentClass = 'GET';
+          break;
+        case 'TEX':
+          treatmentText = 'Textured Foil';
+          treatmentClass = 'TEX';
+          break;
+        case 'AMP':
+          treatmentText = 'Ampersand Foil';
+          treatmentClass = 'AMP';
+          break;
+        case 'SIL':
+          treatmentText = 'Silverscreen Foil';
+          treatmentClass = 'SIL';
+          break;
+        case 'NEON':
+          treatmentText = 'Neon Ink';
+          treatmentClass = 'NEON';
+          break;
+        case 'GIL':
+          treatmentText = 'Gilded Foil';
+          treatmentClass = 'GIL';
+          break;
+        case 'GAL':
+          treatmentText = 'Galaxy Foil';
+          treatmentClass = 'GAL';
+          break;
+        case 'SUR':
+          treatmentText = 'Surge Foil';
+          treatmentClass = 'SUR';
+          break;
+        case 'DBR':
+          treatmentText = 'Double Rainbow';
+          treatmentClass = 'DBR';
+          break;
+        case 'SCT':
+          treatmentText = 'Step-and-Compleat Foil';
+          treatmentClass = 'SCT';
+          break;
+        case 'OSR':
+          treatmentText = 'Oil Slick Raised Foil';
+          treatmentClass = 'OSR';
+          break;
+        case 'HAL':
+          treatmentText = 'Halo Foil';
+          treatmentClass = 'HAL';
+          break;
+        case 'RAI':
+          treatmentText = 'Rainbow Foil';
+          treatmentClass = 'RAI';
+          break;
+        case 'RIP':
+          treatmentText = 'Ripple Foil';
+          treatmentClass = 'RIP';
+          break;
+        case 'FRA':
+          treatmentText = 'Fracture Foil';
+          treatmentClass = 'FRA';
+          break;
+        case 'MAN':
+          treatmentText = 'Mana Foil';
+          treatmentClass = 'MAN';
+          break;
+        case 'FIR':
+          treatmentText = 'First Place Foil';
+          treatmentClass = 'FIR';
+          break;
+        default:
+          treatmentText = 'Non-Foil';
+          treatmentClass = '';
+          treatmentDisplay = false;  // Hide Non-Foil badge
+          break;
+      }
+
+      treatment.textContent = treatmentText;
+      if (treatmentClass) {
+        treatment.classList.add(treatmentClass);
+      }
+
+      // If the treatment is Non-Foil, don't add it to the card display
+      if (treatmentDisplay) {
+        cardBox.appendChild(treatment);
+      }
 
       const img = document.createElement('img');
       const name = card.name;
@@ -106,7 +208,6 @@ function loadBinderForUser(uid) {
 
       // Append the search button to the card
       cardBox.appendChild(quantity);
-      cardBox.appendChild(treatment);
       cardBox.appendChild(img);
       cardBox.appendChild(searchButton);
 
