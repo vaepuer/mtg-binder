@@ -122,6 +122,7 @@ function setupAddCardForm(user) {
           }).then(() => {
             console.log("✅ Quantity updated!");
             newForm.reset();
+            displayCards(user.uid); // Refresh the table after update
           }).catch((error) => {
             console.error("❌ Error updating card:", error);
           });
@@ -145,6 +146,7 @@ function setupAddCardForm(user) {
           .then(() => {
             console.log("✅ New card added!");
             newForm.reset();
+            displayCards(user.uid); // Refresh the table after adding new card
           })
           .catch((error) => {
             console.error("❌ Error adding card:", error);
@@ -188,6 +190,9 @@ function displayCards(userId) {
           <button class="search-btn" data-name="${card.name}" data-set="${card.setCode}" data-num="${card.collectorNumber}">🔍</button>
         </td>
         <td>
+          <button class="edit-btn" data-id="${cardId}">✏️</button>
+        </td>
+        <td>
           <button class="delete-btn" data-id="${cardId}">🗑️</button>
         </td>
       `;
@@ -196,6 +201,8 @@ function displayCards(userId) {
     });
 
     attachDeleteHandlers(userId); // ✅ pass UID to delete
+    attachSearchHandlers();
+    attachEditHandlers(userId);
     attachQuantityHandlers(userId);
   });
 }
@@ -215,6 +222,82 @@ function attachDeleteHandlers(userId) {
     });
   });
 }
+
+// Function to handle edit button
+function attachEditHandlers(userId) {
+  document.querySelectorAll('.edit-btn').forEach(button => {
+    button.addEventListener('click', (e) => {
+      const cardId = e.target.getAttribute('data-id');
+      const cardRef = ref(db, `cards/${userId}/${cardId}`);
+      
+      // Show overlay modal for editing
+      const modal = document.getElementById('editModal');
+      const modalCardNameInput = document.getElementById('modalCardNameInput');
+      const modalSetCodeInput = document.getElementById('modalSetCodeInput');
+      const modalCollectorNumberInput = document.getElementById('modalCollectorNumberInput');
+      const modalTreatmentSelect = document.getElementById('modalTreatmentSelect');
+      const modalQuantityInput = document.getElementById('modalQuantityInput'); // Quantity input
+
+      // Get card data from Firebase
+      get(cardRef).then(snapshot => {
+        const card = snapshot.val();
+        if (card) {
+          // Pre-fill modal with current card details
+          modalCardNameInput.value = card.name;
+          modalSetCodeInput.value = card.setCode;
+          modalCollectorNumberInput.value = card.collectorNumber;
+          modalTreatmentSelect.value = card.treatment;
+          modalQuantityInput.value = card.quantity; // Set current quantity value
+
+          // Open modal
+          modal.style.display = 'block';
+
+          // Handle save changes in the modal
+		  // ~~~ Edited Code: detach any previous click listener on the Save button before attaching a new one.
+		  const oldSaveBtn = document.getElementById('saveEditBtn');
+		  const newSaveBtn = oldSaveBtn.cloneNode(true);
+		  oldSaveBtn.replaceWith(newSaveBtn);
+		  
+		  // ~~ and line below
+          newSaveBtn.addEventListener('click', () => {
+            let updatedQuantity = parseInt(modalQuantityInput.value, 10);
+
+            // Validate quantity: Ensure it is a number and at least 1
+            if (isNaN(updatedQuantity) || updatedQuantity < 1) {
+              alert("Quantity must be a valid number and at least 1.");
+              modalQuantityInput.value = 1; // Reset to minimum value
+              updatedQuantity = 1; // Ensure that the quantity is set to 1 if invalid
+            }
+
+            const updatedCard = {
+              name: modalCardNameInput.value,
+              setCode: modalSetCodeInput.value,
+              collectorNumber: modalCollectorNumberInput.value,
+              treatment: modalTreatmentSelect.value,
+              quantity: updatedQuantity // Save updated quantity
+            };
+            
+            set(cardRef, updatedCard)
+              .then(() => {
+                console.log("✅ Card updated!");
+                modal.style.display = 'none';
+                displayCards(userId); // Refresh the table
+              })
+              .catch(error => {
+                console.error("❌ Error updating card:", error);
+              });
+          });
+        }
+      });
+    });
+  });
+}
+
+// Function to close the edit modal
+document.getElementById('closeModalBtn').addEventListener('click', () => {
+  const modal = document.getElementById('editModal');
+  modal.style.display = 'none';
+});
 
 // Function to handle quantity increase and decrease
 function attachQuantityHandlers(userId) {
