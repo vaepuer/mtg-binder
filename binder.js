@@ -1,288 +1,371 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAia2iO0Qx7AmJxXlbG5BK60VRJSZ2Srh8",
-  authDomain: "tgbinder-8e3c6.firebaseapp.com",
-  databaseURL: "https://tgbinder-8e3c6-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "tgbinder-8e3c6",
-  storageBucket: "tgbinder-8e3c6.appspot.com",
-  messagingSenderId: "903450561301",
-  appId: "1:903450561301:web:df2407af369db0895bb71c",
-};
+  // ---------------- Firebase Imports ----------------
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-// ✅ Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const auth = getAuth(app);
-
-document.addEventListener('DOMContentLoaded', () => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const queryUsername = urlParams.get('username');
-  const queryUid = urlParams.get('uid');
-
-  const basePath = `${window.location.origin}/mtg-binder`;
-
-  const resolveUid = () => {
-    if (queryUsername) {
-      return get(ref(db, `usernames/${queryUsername}`)).then(snap => {
-        if (!snap.exists()) throw new Error("Username not found.");
-        return snap.val();
-      });
-    } else if (queryUid) {
-      return Promise.resolve(queryUid);
-    } else {
-      return new Promise((resolve, reject) => {
-        onAuthStateChanged(auth, (user) => {
-          if (user) return resolve(user.uid);
-          reject("Not logged in, and no username or uid provided.");
-        });
-      });
-    }
+  // ---------------- Firebase Config ----------------
+  const firebaseConfig = {
+    apiKey: "AIzaSyAia2iO0Qx7AmJxXlbG5BK60VRJSZ2Srh8",
+    authDomain: "tgbinder-8e3c6.firebaseapp.com",
+    databaseURL: "https://tgbinder-8e3c6-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "tgbinder-8e3c6",
+    storageBucket: "tgbinder-8e3c6.appspot.com",
+    messagingSenderId: "903450561301",
+    appId: "1:903450561301:web:df2407af369db0895bb71c",
   };
 
-  resolveUid().then((targetUid) => {
-    let usernameToDisplay = queryUsername;
+  // ✅ Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const auth = getAuth(app);
 
-    if (!usernameToDisplay) {
-      get(ref(db, `users/${targetUid}/username`)).then((snapshot) => {
-        if (snapshot.exists()) {
-          usernameToDisplay = snapshot.val();
-        } else {
-          console.error("Username not found in database.");
-        }
+  // ---------------- Small Utilities ----------------
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-        document.getElementById('username').textContent = usernameToDisplay;
-      }).catch(err => {
-        console.error("Error fetching username:", err);
-      });
-    } else {
-      document.getElementById('username').textContent = usernameToDisplay;
-    }
-
-    loadBinderForUser(targetUid);
-
-    onAuthStateChanged(auth, (user) => {
-      if (user && user.uid === targetUid) {
-        enableShareControls(user);
-      }
-    });
-  }).catch((err) => {
-    console.warn("Redirecting to login due to:", err);
-    location.href = `${basePath}/login.html`;
-  });
-});
-
-// Load user's binder data from Firebase
-function loadBinderForUser(uid) {
-  const cardsRef = ref(db, `cards/${uid}`);
-  const container = document.getElementById('binderContainer');
-
-  if (!container) {
-    console.error('❌ binderContainer not found!');
-    return;
+  // map treatment codes → {text, class, show}
+  function mapTreatment(code) {
+    const map = {
+      PRM: ["Pre-Modern", "PRM"],
+      TRA: ["Traditional", "TRA"],
+      FTV: ["From the Vault", "FTV"],
+      FET: ["Foil-Etched", "FET"],
+      GET: ["Gold-Etched", "GET"],
+      TEX: ["Textured Foil", "TEX"],
+      AMP: ["Ampersand Foil", "AMP"],
+      SIL: ["Silverscreen Foil", "SIL"],
+      NEON: ["Neon Ink", "NEON"],
+      GIL: ["Gilded Foil", "GIL"],
+      GAL: ["Galaxy Foil", "GAL"],
+      SUR: ["Surge Foil", "SUR"],
+      DBR: ["Double Rainbow", "DBR"],
+      SCT: ["Step-and-Compleat Foil", "SCT"],
+      OSR: ["Oil Slick Raised Foil", "OSR"],
+      HAL: ["Halo Foil", "HAL"],
+      RAI: ["Rainbow Foil", "RAI"],
+      RIP: ["Ripple Foil", "RIP"],
+      FRA: ["Fracture Foil", "FRA"],
+      MAN: ["Mana Foil", "MAN"],
+      FIR: ["First Place Foil", "FIR"],
+    };
+    if (!code || !map[code]) return { text: "Non-Foil", className: "", show: false };
+    const [text, className] = map[code];
+    return { text, className, show: true };
   }
 
-  container.innerHTML = 'Loading cards...';
+  // Build a consistent cache key for a binder card entry
+  function cacheKeyFor(card) {
+    const set = (card.setCode || "").toLowerCase();
+    const number = card.collectorNumber ? String(card.collectorNumber).replace(/^0+/, "") : "";
+    return number && set ? `set:${set}|num:${number}` : `name:${card.name}|set:${set}`;
+  }
 
-  onValue(cardsRef, (snapshot) => {
-    const data = snapshot.val();
-    container.innerHTML = '';
+  // Build a Scryfall "identifier" for /cards/collection
+  function buildIdentifier(card) {
+    const set = (card.setCode || "").toLowerCase();
+    const number = card.collectorNumber ? String(card.collectorNumber).replace(/^0+/, "") : "";
+    if (set && number) return { set, number };      // precise print
+    const ident = { name: card.name };              // fallback
+    if (set) ident.set = set;
+    return ident;
+  }
 
-    if (!data) {
-      container.innerHTML = 'No cards found.';
+  function getBestImage(cardObj) {
+    return (
+      cardObj?.image_uris?.normal ||
+      cardObj?.card_faces?.[0]?.image_uris?.normal ||
+      cardObj?.image_uris?.large ||
+      cardObj?.card_faces?.[0]?.image_uris?.large ||
+      ""
+    );
+  }
+
+  // ---------------- Simple Cache (mem + localStorage) ----------------
+  const cardCacheMem = new Map();
+  function cacheGet(key) {
+    if (cardCacheMem.has(key)) return cardCacheMem.get(key);
+    try {
+      const raw = localStorage.getItem("scryfall:" + key);
+      if (raw) {
+        const val = JSON.parse(raw);
+        cardCacheMem.set(key, val);
+        return val;
+      }
+    } catch {}
+    return null;
+  }
+  function cacheSet(key, val) {
+    cardCacheMem.set(key, val);
+    try { localStorage.setItem("scryfall:" + key, JSON.stringify(val)); } catch {}
+  }
+
+  // ---------------- Batched Scryfall Fetcher ----------------
+  async function fetchScryfallBatches(identifiers) {
+    const CHUNK = 75;
+    const out = new Map();
+
+    const chunks = [];
+    for (let i = 0; i < identifiers.length; i += CHUNK) {
+      chunks.push(identifiers.slice(i, i + CHUNK));
+    }
+
+    for (let idx = 0; idx < chunks.length; idx++) {
+      const body = { identifiers: chunks[idx] };
+
+      // retry loop for this chunk on 429
+      while (true) {
+        const res = await fetch("https://api.scryfall.com/cards/collection", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+
+        if (res.status === 429) {
+          const retryAfter = Number(res.headers.get("Retry-After") || 1);
+          await sleep(retryAfter * 1000);
+          continue;
+        }
+
+        if (!res.ok) {
+          console.error("Scryfall error", res.status, await res.text());
+          break; // skip this chunk but continue others
+        }
+
+        const data = await res.json();
+        for (const card of data.data || []) {
+          const key =
+            card.collector_number && card.set
+              ? `set:${card.set}|num:${String(card.collector_number).replace(/^0+/, "")}`
+              : `name:${card.name}|set:${(card.set || "").toLowerCase()}`;
+          out.set(key, card);
+        }
+
+        // gentle pacing between chunks
+        await sleep(150);
+        break;
+      }
+    }
+
+    return out;
+  }
+
+  // ---------------- Main Page Flow ----------------
+  document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const queryUsername = urlParams.get('username');
+    const queryUid = urlParams.get('uid');
+
+    const basePath = `${window.location.origin}/mtg-binder`;
+
+    const resolveUid = () => {
+      if (queryUsername) {
+        return get(ref(db, `usernames/${queryUsername}`)).then(snap => {
+          if (!snap.exists()) throw new Error("Username not found.");
+          return snap.val();
+        });
+      } else if (queryUid) {
+        return Promise.resolve(queryUid);
+      } else {
+        return new Promise((resolve, reject) => {
+          onAuthStateChanged(auth, (user) => {
+            if (user) return resolve(user.uid);
+            reject("Not logged in, and no username or uid provided.");
+          });
+        });
+      }
+    };
+
+    resolveUid().then(async (targetUid) => {
+      // Display username
+      let usernameToDisplay = queryUsername;
+      if (!usernameToDisplay) {
+        try {
+          const snapshot = await get(ref(db, `users/${targetUid}/username`));
+          if (snapshot.exists()) {
+            usernameToDisplay = snapshot.val();
+          } else {
+            console.error("Username not found in database.");
+          }
+        } catch (err) {
+          console.error("Error fetching username:", err);
+        }
+      }
+      const usernameEl = document.getElementById('username');
+      if (usernameEl) usernameEl.textContent = usernameToDisplay || "";
+
+      // Load binder for this user
+      loadBinderForUser(targetUid);
+
+      // Enable share controls only if viewing your own binder
+      onAuthStateChanged(auth, (user) => {
+        if (user && user.uid === targetUid) {
+          enableShareControls(user);
+        }
+      });
+    }).catch((err) => {
+      console.warn("Redirecting to login due to:", err);
+      location.href = `${basePath}/login.html`;
+    });
+  });
+
+  // ---------------- Binder Rendering (BATCHED) ----------------
+  function loadBinderForUser(uid) {
+    const cardsRef = ref(db, `cards/${uid}`);
+    const container = document.getElementById('binderContainer');
+
+    if (!container) {
+      console.error('❌ binderContainer not found!');
       return;
     }
 
-    Object.entries(data).forEach(([cardId, card]) => {
-      const cardBox = document.createElement('div');
-      cardBox.className = 'card-box';
+    container.innerHTML = 'Loading cards...';
 
-      const quantity = document.createElement('div');
-      quantity.className = 'quantity-badge';
-      quantity.textContent = `x${card.quantity}`;
+    onValue(cardsRef, async (snapshot) => {
+      const data = snapshot.val();
+      container.innerHTML = '';
 
-      // Treatment display logic with dynamic class addition based on treatment type
-      const treatment = document.createElement('div');
-      treatment.className = 'foil-badge';
-      let treatmentText = 'Non-Foil';
-      let treatmentClass = '';
-      let treatmentDisplay = true;  // A flag to control whether we show the treatment or not
-
-      // Map treatment to class and text
-      switch (card.treatment) {
-        case 'PRM':
-          treatmentText = 'Pre-Modern';
-          treatmentClass = 'PRM';
-          break;
-        case 'TRA':
-          treatmentText = 'Traditional';
-          treatmentClass = 'TRA';
-          break;
-        case 'FTV':
-          treatmentText = 'From the Vault';
-          treatmentClass = 'FTV';
-          break;
-        case 'FET':
-          treatmentText = 'Foil-Etched';
-          treatmentClass = 'FET';
-          break;
-        case 'GET':
-          treatmentText = 'Gold-Etched';
-          treatmentClass = 'GET';
-          break;
-        case 'TEX':
-          treatmentText = 'Textured Foil';
-          treatmentClass = 'TEX';
-          break;
-        case 'AMP':
-          treatmentText = 'Ampersand Foil';
-          treatmentClass = 'AMP';
-          break;
-        case 'SIL':
-          treatmentText = 'Silverscreen Foil';
-          treatmentClass = 'SIL';
-          break;
-        case 'NEON':
-          treatmentText = 'Neon Ink';
-          treatmentClass = 'NEON';
-          break;
-        case 'GIL':
-          treatmentText = 'Gilded Foil';
-          treatmentClass = 'GIL';
-          break;
-        case 'GAL':
-          treatmentText = 'Galaxy Foil';
-          treatmentClass = 'GAL';
-          break;
-        case 'SUR':
-          treatmentText = 'Surge Foil';
-          treatmentClass = 'SUR';
-          break;
-        case 'DBR':
-          treatmentText = 'Double Rainbow';
-          treatmentClass = 'DBR';
-          break;
-        case 'SCT':
-          treatmentText = 'Step-and-Compleat Foil';
-          treatmentClass = 'SCT';
-          break;
-        case 'OSR':
-          treatmentText = 'Oil Slick Raised Foil';
-          treatmentClass = 'OSR';
-          break;
-        case 'HAL':
-          treatmentText = 'Halo Foil';
-          treatmentClass = 'HAL';
-          break;
-        case 'RAI':
-          treatmentText = 'Rainbow Foil';
-          treatmentClass = 'RAI';
-          break;
-        case 'RIP':
-          treatmentText = 'Ripple Foil';
-          treatmentClass = 'RIP';
-          break;
-        case 'FRA':
-          treatmentText = 'Fracture Foil';
-          treatmentClass = 'FRA';
-          break;
-        case 'MAN':
-          treatmentText = 'Mana Foil';
-          treatmentClass = 'MAN';
-          break;
-        case 'FIR':
-          treatmentText = 'First Place Foil';
-          treatmentClass = 'FIR';
-          break;
-        default:
-          treatmentText = 'Non-Foil';
-          treatmentClass = '';
-          treatmentDisplay = false;  // Hide Non-Foil badge
-          break;
+      if (!data) {
+        container.innerHTML = 'No cards found.';
+        return;
       }
 
-      treatment.textContent = treatmentText;
-      if (treatmentClass) {
-        treatment.classList.add(treatmentClass);
+      // Prepare identifiers & determine what we need to fetch
+      const entries = Object.entries(data);
+      const identifiers = [];
+      const keyForIndex = []; // ordered mapping for render
+
+      for (const [cardId, card] of entries) {
+        const key = cacheKeyFor(card);
+        keyForIndex.push({ cardId, card, key });
+        if (!cacheGet(key)) identifiers.push(buildIdentifier(card));
       }
 
-      // If the treatment is Non-Foil, don't add it to the card display
-      if (treatmentDisplay) {
-        cardBox.appendChild(treatment);
+      // Fetch batches for uncached ones
+      if (identifiers.length) {
+        try {
+          const fetchedMap = await fetchScryfallBatches(identifiers);
+          // Persist fetched into cache
+          for (const { key } of keyForIndex) {
+            if (!cacheGet(key) && fetchedMap.has(key)) {
+              cacheSet(key, fetchedMap.get(key));
+            }
+          }
+        } catch (e) {
+          console.error("Batch fetch failed", e);
+        }
       }
 
-      const img = document.createElement('img');
-      const name = card.name;
-      const set = card.setCode?.toLowerCase();
-      const collector = card.collectorNumber?.toString().replace(/^0+/, '');
-      const fallbackUrl = `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(name)}&set=${set}`;
+      // Render cards
+      for (const { card, key } of keyForIndex) {
+        const cardBox = document.createElement('div');
+        cardBox.className = 'card-box';
 
-      if (collector && set) {
-        fetch(`https://api.scryfall.com/cards/${set}/${collector}`)
-          .then(res => res.ok ? res.json() : fetch(fallbackUrl).then(r => r.json()))
-          .then(data => {
-            img.src = data.image_uris?.normal || data.card_faces?.[0]?.image_uris?.normal || '';
-          });
-      } else {
-        fetch(fallbackUrl).then(r => r.json()).then(data => {
-          img.src = data.image_uris?.normal || data.card_faces?.[0]?.image_uris?.normal || '';
-        });
+        const quantity = document.createElement('div');
+        quantity.className = 'quantity-badge';
+        quantity.textContent = `x${card.quantity ?? 1}`;
+
+        // treatment badge
+        const { text: tText, className: tClass, show } = mapTreatment(card.treatment);
+        if (show) {
+          const treatment = document.createElement('div');
+          treatment.className = 'foil-badge';
+          treatment.textContent = tText;
+          if (tClass) treatment.classList.add(tClass);
+          cardBox.appendChild(treatment);
+        }
+
+        // image
+        const img = document.createElement('img');
+        img.alt = card.name;
+
+        const sf = cacheGet(key);
+        if (sf) {
+          img.src = getBestImage(sf);
+        } else {
+          // Very rare fallback if batch missed
+          const set = (card.setCode || "").toLowerCase();
+          const number = card.collectorNumber ? String(card.collectorNumber).replace(/^0+/, "") : "";
+          const url = number && set
+            ? `https://api.scryfall.com/cards/${set}/${number}`
+            : (() => {
+                const u = new URL("https://api.scryfall.com/cards/named");
+                u.searchParams.set("exact", card.name);
+                if (set) u.searchParams.set("set", set);
+                return u.toString();
+              })();
+          try {
+            await sleep(120); // spacing
+            const res = await fetch(url);
+            if (res.status === 429) {
+              const retryAfter = Number(res.headers.get("Retry-After") || 1);
+              await sleep(retryAfter * 1000);
+              const res2 = await fetch(url);
+              if (res2.ok) {
+                const data2 = await res2.json();
+                img.src = getBestImage(data2);
+                cacheSet(key, data2);
+              }
+            } else if (res.ok) {
+              const data = await res.json();
+              img.src = getBestImage(data);
+              cacheSet(key, data);
+            }
+          } catch (e) {
+            console.warn("Fallback fetch failed", e);
+          }
+        }
+
+        // cardmarket button
+        const button = document.createElement('button');
+        button.textContent = 'Search';
+        button.classList.add('button');
+        button.onclick = () => {
+          const url = `https://www.cardmarket.com/en/Magic/Products/Search?searchString=${encodeURIComponent(card.name)}&setName=${encodeURIComponent(card.setCode || "")}`;
+          window.open(url, '_blank');
+        };
+
+        cardBox.appendChild(quantity);
+        cardBox.appendChild(img);
+        cardBox.appendChild(button);
+        container.appendChild(cardBox);
       }
-
-      img.alt = name;
-
-      const button = document.createElement('button');
-      button.textContent = 'Search';
-      button.classList.add('button');
-      button.onclick = () => {
-        const url = `https://www.cardmarket.com/en/Magic/Products/Search?searchString=${encodeURIComponent(name)}&setName=${encodeURIComponent(card.setCode)}`;
-        window.open(url, '_blank');
-      };
-
-      cardBox.appendChild(quantity);
-      cardBox.appendChild(img);
-      cardBox.appendChild(button);
-      container.appendChild(cardBox);
     });
-  });
-}
-
-// Enable share functionality for logged-in users
-function enableShareControls(user) {
-  const shareBtn = document.getElementById("shareBinderBtn");
-  if (!shareBtn) return;
-
-  shareBtn.addEventListener("click", async () => {
-    const usernameSnap = await get(ref(db, `users/${user.uid}/username`));
-    const basePath = `${window.location.origin}/mtg-binder`;
-    const shareUrl = usernameSnap.exists()
-      ? `${basePath}/public-binder.html?username=${usernameSnap.val()}`
-      : `${basePath}/public-binder.html?uid=${user.uid}`;
-
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      alert("📎 Shareable binder link copied to clipboard!");
-    } catch {
-      fallbackCopyToClipboard(shareUrl);
-    }
-  });
-
-  function fallbackCopyToClipboard(text) {
-    const textarea = document.createElement("textarea");
-    textarea.value = text;
-    textarea.setAttribute("readonly", "");
-    textarea.style.position = "fixed";
-    textarea.style.top = "-9999px";
-    document.body.appendChild(textarea);
-    textarea.select();
-    try {
-      const successful = document.execCommand("copy");
-      alert(successful ? "📎 Link copied (fallback)!" : "❌ Copy failed.");
-    } catch (err) {
-      alert("❌ Copy failed.");
-    }
-    document.body.removeChild(textarea);
   }
-}
+
+  // ---------------- Share Controls (unchanged) ----------------
+  function enableShareControls(user) {
+    const shareBtn = document.getElementById("shareBinderBtn");
+    if (!shareBtn) return;
+
+    shareBtn.addEventListener("click", async () => {
+      const usernameSnap = await get(ref(db, `users/${user.uid}/username`));
+      const basePath = `${window.location.origin}/mtg-binder`;
+      const shareUrl = usernameSnap.exists()
+        ? `${basePath}/public-binder.html?username=${usernameSnap.val()}`
+        : `${basePath}/public-binder.html?uid=${user.uid}`;
+
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        alert("📎 Shareable binder link copied to clipboard!");
+      } catch {
+        fallbackCopyToClipboard(shareUrl);
+      }
+    });
+
+    function fallbackCopyToClipboard(text) {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.top = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        const successful = document.execCommand("copy");
+        alert(successful ? "📎 Link copied (fallback)!" : "❌ Copy failed.");
+      } catch (err) {
+        alert("❌ Copy failed.");
+      }
+      document.body.removeChild(textarea);
+    }
+  }
