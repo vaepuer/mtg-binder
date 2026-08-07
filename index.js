@@ -207,6 +207,7 @@ function displayCards(userId) {
     });
 
     attachDeleteHandlers(userId); // ✅ pass UID to delete
+    attachSearchHandlers();
     attachEditHandlers(userId);
     attachQuantityHandlers(userId);
   });
