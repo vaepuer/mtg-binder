@@ -695,11 +695,7 @@ function loadBinderForUser(uid) {
         );
 
         if (!cached) {
-          const identifier = buildIdentifier(card);
-
-          if (identifier) {
-            identifiers.push(identifier);
-          }
+          identifiers.push(card);
         }
       }
 
