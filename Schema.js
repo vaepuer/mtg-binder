@@ -17,7 +17,6 @@ const userSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 
 const bcrypt = require('bcrypt');
-const User = require('./models/User');
 
 app.post('/signup', async (req, res) => {
     const { email, password } = req.body;
@@ -30,8 +29,6 @@ app.post('/signup', async (req, res) => {
 
     res.status(201).json({ message: 'User created' });
 });
-
-const bcrypt = require('bcrypt');
 
 app.post('/login', async (req, res) => {
     const { email, password } = req.body;
