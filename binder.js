@@ -2359,60 +2359,81 @@ function loadBinderForUser(
   }
 
 
-  // ==================================================
-  // ADD PAGE
-  // ==================================================
+  // ======================================================
+// ADD PAGE
+// ======================================================
 
-  async function addBinderPage() {
+async function addBinderPage() {
 
-    const nextPageCount =
-      getEffectivePageCount() +
-      1;
-
-
-    try {
-
-      const updates =
-        {};
+  const nextPageCount =
+    getEffectivePageCount() + 1;
 
 
-      updates[
-        `binderLayouts/${uid}/pageCount`
-      ] = nextPageCount;
+  try {
+
+    const updates = {};
 
 
-      await update(
-        ref(
-          db
-        ),
-        updates
-      );
+    updates[
+      `binderLayouts/${uid}/pageCount`
+    ] = nextPageCount;
 
 
-      currentPage =
-        nextPageCount -
-        1;
+    await update(
+      ref(db),
+      updates
+    );
 
 
-      setStatus(
-        `Page ${nextPageCount} added.`
-      );
+    /*
+     * IMPORTANT:
+     *
+     * Update our local copy immediately.
+     *
+     * Otherwise renderLayout() may still think
+     * the old page count is active until Firebase's
+     * onValue listener comes back.
+     */
 
-    } catch (
+    layout.pageCount =
+      nextPageCount;
+
+
+    /*
+     * Move directly onto the page we just created.
+     */
+
+    currentPage =
+      nextPageCount - 1;
+
+
+    /*
+     * Render immediately instead of waiting for
+     * the Firebase listener.
+     */
+
+    renderLayout();
+
+
+    setStatus(
+      `Page ${nextPageCount} added.`
+    );
+
+  } catch (
+    error
+  ) {
+
+    console.error(
+      "Could not add binder page:",
       error
-    ) {
-
-      console.error(
-        "Could not add binder page:",
-        error
-      );
+    );
 
 
-      setStatus(
-        "Could not add a binder page. Check Firebase permissions."
-      );
-    }
+    setStatus(
+      "Could not add a binder page. Check Firebase permissions."
+    );
   }
+}
 
 
   // ==================================================
