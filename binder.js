@@ -1717,6 +1717,12 @@ function loadBinderForUser(
       >
 
         <div class="binder-page-toolbar">
+          <button
+            type="button"
+            id="deletePageBtn"
+          >
+            🗑 Delete Page
+          </button>
 
           <button
             type="button"
@@ -1724,7 +1730,6 @@ function loadBinderForUser(
           >
             ◀ Previous
           </button>
-
 
           <div
             class="page-indicator"
@@ -1748,6 +1753,8 @@ function loadBinderForUser(
           >
             ＋ Add Page
           </button>
+
+          
 
         </div>
 
@@ -1835,6 +1842,10 @@ function loadBinderForUser(
       "addPageBtn"
     );
 
+  const deletePageBtn =
+  document.getElementById(
+    "deletePageBtn"
+  );
 
   const returnUnsortedBtn =
     document.getElementById(
@@ -2359,7 +2370,7 @@ function loadBinderForUser(
   }
 
 
-  // ======================================================
+// ======================================================
 // ADD PAGE
 // ======================================================
 
@@ -2431,6 +2442,356 @@ async function addBinderPage() {
 
     setStatus(
       "Could not add a binder page. Check Firebase permissions."
+    );
+  }
+}
+
+// ======================================================
+// DELETE PAGE
+// ======================================================
+
+async function deleteCurrentBinderPage() {
+
+  const pageCount =
+    getEffectivePageCount();
+
+
+  // ==================================================
+  // ALWAYS KEEP AT LEAST ONE PAGE
+  // ==================================================
+
+  if (
+    pageCount <= 1
+  ) {
+
+    setStatus(
+      "The binder must always have at least one page."
+    );
+
+
+    return;
+  }
+
+
+  const pageToDelete =
+    currentPage;
+
+
+  const pageNumber =
+    pageToDelete + 1;
+
+
+  const pageStart =
+    pageToDelete *
+    BINDER_SLOTS_PER_PAGE;
+
+
+  const pageEnd =
+    pageStart +
+    BINDER_SLOTS_PER_PAGE;
+
+
+  // ==================================================
+  // FIND CARDS CURRENTLY ON THIS PAGE
+  // ==================================================
+
+  const cardsOnDeletedPage =
+    [];
+
+
+  for (
+    const [
+      cardId,
+      card
+    ] of currentCards
+  ) {
+
+    const position =
+      getPosition(
+        cardId
+      );
+
+
+    if (
+      position !== null &&
+      position >= pageStart &&
+      position < pageEnd
+    ) {
+
+      cardsOnDeletedPage.push({
+        cardId,
+        card,
+        position
+      });
+    }
+  }
+
+
+  // ==================================================
+  // CONFIRM DELETION
+  // ==================================================
+
+  let confirmMessage =
+    `Delete Page ${pageNumber}?`;
+
+
+  if (
+    cardsOnDeletedPage.length >
+    0
+  ) {
+
+    confirmMessage +=
+      `\n\n${cardsOnDeletedPage.length} card${cardsOnDeletedPage.length === 1 ? "" : "s"} on this page will be returned to Cards to Place.`;
+  }
+
+
+  if (
+    pageToDelete <
+    pageCount - 1
+  ) {
+
+    confirmMessage +=
+      "\n\nPages after this one will move back by one page.";
+  }
+
+
+  if (
+    !window.confirm(
+      confirmMessage
+    )
+  ) {
+
+    return;
+  }
+
+
+  // ==================================================
+  // BUILD ONE FIREBASE UPDATE
+  // ==================================================
+
+  const updates =
+    {};
+
+
+  /*
+   * This becomes our local copy of the
+   * positions after deletion.
+   */
+
+  const nextPositions =
+    {};
+
+
+  // ==================================================
+  // PROCESS ALL SAVED POSITIONS
+  // ==================================================
+
+  for (
+    const [
+      cardId,
+      rawPosition
+    ] of Object.entries(
+      layout.positions ||
+      {}
+    )
+  ) {
+
+    const position =
+      Number(
+        rawPosition
+      );
+
+
+    if (
+      !Number.isInteger(
+        position
+      ) ||
+      position < 0
+    ) {
+
+      continue;
+    }
+
+
+    // ==================================================
+    // CARD IS ON THE PAGE BEING DELETED
+    //
+    // Remove its binder position.
+    // The card itself remains safely in cards/{uid}.
+    // ==================================================
+
+    if (
+      position >= pageStart &&
+      position < pageEnd
+    ) {
+
+      updates[
+        `binderLayouts/${uid}/positions/${cardId}`
+      ] = null;
+
+
+      continue;
+    }
+
+
+    // ==================================================
+    // CARD IS ON A LATER PAGE
+    //
+    // Move it backwards exactly one page.
+    //
+    // Example:
+    //
+    // Page 3 slot 1 = position 18
+    //
+    // Delete Page 2
+    //
+    // 18 - 9 = 9
+    //
+    // It is now Page 2 slot 1.
+    // ==================================================
+
+    if (
+      position >= pageEnd
+    ) {
+
+      const shiftedPosition =
+        position -
+        BINDER_SLOTS_PER_PAGE;
+
+
+      updates[
+        `binderLayouts/${uid}/positions/${cardId}`
+      ] = shiftedPosition;
+
+
+      nextPositions[
+        cardId
+      ] = shiftedPosition;
+
+
+      continue;
+    }
+
+
+    // ==================================================
+    // CARD IS BEFORE THE DELETED PAGE
+    //
+    // Leave it exactly where it is.
+    // ==================================================
+
+    nextPositions[
+      cardId
+    ] = position;
+  }
+
+
+  // ==================================================
+  // REDUCE PAGE COUNT
+  // ==================================================
+
+  const nextPageCount =
+    Math.max(
+      pageCount - 1,
+      1
+    );
+
+
+  updates[
+    `binderLayouts/${uid}/pageCount`
+  ] = nextPageCount;
+
+
+  // ==================================================
+  // SAVE
+  // ==================================================
+
+  try {
+
+    await update(
+      ref(db),
+      updates
+    );
+
+
+    // ==================================================
+    // UPDATE LOCAL STATE IMMEDIATELY
+    //
+    // Same principle as the Add Page fix:
+    // don't make the UI wait for Firebase's listener.
+    // ==================================================
+
+    layout.pageCount =
+      nextPageCount;
+
+
+    layout.positions =
+      nextPositions;
+
+
+    // ==================================================
+    // DECIDE WHICH PAGE TO SHOW NEXT
+    // ==================================================
+
+    /*
+     * If we deleted a middle page:
+     *
+     * Page 3 becomes Page 2, so remain on
+     * the same currentPage index.
+     *
+     * If we deleted the final page:
+     *
+     * Go backwards onto the new final page.
+     */
+
+    currentPage =
+      Math.min(
+        pageToDelete,
+        nextPageCount - 1
+      );
+
+
+    selectedCardId =
+      null;
+
+
+    refreshSelectionStyles();
+
+
+    renderLayout();
+
+
+    // ==================================================
+    // STATUS MESSAGE
+    // ==================================================
+
+    if (
+      cardsOnDeletedPage.length >
+      0
+    ) {
+
+      setStatus(
+        `Page ${pageNumber} deleted. ${cardsOnDeletedPage.length} card${cardsOnDeletedPage.length === 1 ? "" : "s"} returned to Cards to Place.`
+      );
+
+    } else {
+
+      setStatus(
+        `Page ${pageNumber} deleted.`
+      );
+    }
+
+  } catch (
+    error
+  ) {
+
+    console.error(
+      "Could not delete binder page:",
+      error
+    );
+
+
+    setStatus(
+      "Could not delete that binder page. Check the browser console for the Firebase error."
     );
   }
 }
@@ -2817,7 +3178,10 @@ async function addBinderPage() {
       currentPage >=
       pageCount - 1;
 
-
+    deletePageBtn.disabled =
+      pageCount <=
+      1;
+      
     refreshSelectionStyles();
   }
 
@@ -3357,6 +3721,11 @@ async function addBinderPage() {
   addPageBtn.addEventListener(
     "click",
     addBinderPage
+  );
+
+  deletePageBtn.addEventListener(
+  "click",
+  deleteCurrentBinderPage
   );
 
 
