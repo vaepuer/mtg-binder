@@ -100,54 +100,106 @@
   }
 
   // ---------------- Batched Scryfall Fetcher ----------------
-  async function fetchScryfallBatches(identifiers) {
-    const CHUNK = 75;
-    const out = new Map();
+async function fetchScryfallBatches(identifiers) {
+  const CHUNK = 75;
+  const out = new Map();
 
-    const chunks = [];
-    for (let i = 0; i < identifiers.length; i += CHUNK) {
-      chunks.push(identifiers.slice(i, i + CHUNK));
-    }
+  const chunks = [];
 
-    for (let idx = 0; idx < chunks.length; idx++) {
-      const body = { identifiers: chunks[idx] };
+  for (let i = 0; i < identifiers.length; i += CHUNK) {
+    chunks.push(identifiers.slice(i, i + CHUNK));
+  }
 
-      // retry loop for this chunk on 429
-      while (true) {
-        const res = await fetch("https://api.scryfall.com/cards/collection", {
+  for (let idx = 0; idx < chunks.length; idx++) {
+    const body = {
+      identifiers: chunks[idx]
+    };
+
+    while (true) {
+      const res = await fetch(
+        "https://api.scryfall.com/cards/collection",
+        {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-
-        if (res.status === 429) {
-          const retryAfter = Number(res.headers.get("Retry-After") || 1);
-          await sleep(retryAfter * 1000);
-          continue;
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(body)
         }
+      );
 
-        if (!res.ok) {
-          console.error("Scryfall error", res.status, await res.text());
-          break; // skip this chunk but continue others
-        }
+      // Rate limited
+      if (res.status === 429) {
+        const retryAfter = Number(
+          res.headers.get("Retry-After") || 1
+        );
 
-        const data = await res.json();
-        for (const card of data.data || []) {
-          const key =
-            card.collector_number && card.set
-              ? `set:${card.set}|num:${String(card.collector_number).replace(/^0+/, "")}`
-              : `name:${card.name}|set:${(card.set || "").toLowerCase()}`;
-          out.set(key, card);
-        }
+        await sleep(retryAfter * 1000);
+        continue;
+      }
 
-        // gentle pacing between chunks
-        await sleep(150);
+      // Other error
+      if (!res.ok) {
+        console.error(
+          "Scryfall error:",
+          res.status,
+          await res.text()
+        );
+
         break;
       }
-    }
 
-    return out;
+      const data = await res.json();
+
+      for (const card of data.data || []) {
+
+        // ---------------------------------------
+        // DEBUG: See exactly what Scryfall returns
+        // ---------------------------------------
+        console.log("SCRYFALL CARD:", {
+          id: card.id,
+          name: card.name,
+          set: card.set,
+          set_name: card.set_name,
+          collector_number: card.collector_number,
+          finishes: card.finishes,
+          promo: card.promo,
+          promo_types: card.promo_types,
+          frame_effects: card.frame_effects,
+          border_color: card.border_color
+        });
+
+        // Specifically highlight HOB 0297
+        if (
+          card.set?.toLowerCase() === "hob" &&
+          String(card.collector_number).replace(/^0+/, "") === "297"
+        ) {
+          console.log(
+            "FOUND HOB 0297:",
+            card
+          );
+        }
+
+        const key =
+          card.collector_number && card.set
+            ? `set:${card.set.toLowerCase()}|num:${String(
+                card.collector_number
+              ).replace(/^0+/, "")}`
+            : `name:${card.name}|set:${(
+                card.set || ""
+              ).toLowerCase()}`;
+
+        out.set(key, card);
+      }
+
+      // Gentle pacing between Scryfall requests
+      await sleep(150);
+
+      break;
+    }
   }
+
+  return out;
+}
 
   // ---------------- Main Page Flow ----------------
   document.addEventListener('DOMContentLoaded', () => {
@@ -315,15 +367,44 @@
           }
         }
 
-        // cardmarket button
-        const button = document.createElement('button');
-        button.textContent = 'Search';
-        button.classList.add('button');
-        button.onclick = () => {
-          const url = `https://www.cardmarket.com/en/Magic/Products/Search?searchString=${encodeURIComponent(card.name)}&setName=${encodeURIComponent(card.setCode || "")}`;
-          window.open(url, '_blank');
-        };
+      // cardmarket button
+const button = document.createElement('button');
+button.textContent = 'Search';
+button.classList.add('button');
 
+button.onclick = () => {
+  const sf = cacheGet(key);
+
+  if (!sf) {
+    console.warn("No Scryfall data available");
+    return;
+  }
+
+  const slugify = (text) =>
+    text
+      .replace(/'/g, "")
+      .replace(/,/g, "")
+      .replace(/[^a-zA-Z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
+
+  let cardmarketSet = slugify(sf.set_name);
+
+  // Cardmarket exceptions
+  if (
+    sf.set?.toLowerCase() === "hob" &&
+    Number(sf.collector_number) >= 200
+  ) {
+    cardmarketSet = "The-Hobbit-Extras";
+  }
+
+  const url =
+    `https://www.cardmarket.com/en/Magic/Products/Singles/${cardmarketSet}/${slugify(sf.name)}`;
+
+  console.log(url);
+
+  window.open(url, "_blank");
+};
+             
         cardBox.appendChild(quantity);
         cardBox.appendChild(img);
         cardBox.appendChild(button);
