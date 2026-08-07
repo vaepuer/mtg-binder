@@ -187,7 +187,13 @@ function displayCards(userId) {
         <td>${card.setCode || ''}</td>
         <td>${card.collectorNumber || ''}</td>
         <td>
-          <button class="search-btn" data-name="${card.name}" data-set="${card.setCode}" data-num="${card.collectorNumber}">🔍</button>
+          <button
+            class="search-btn"
+            data-name="${card.name}"
+            data-set="${card.setCode || ''}"
+            data-num="${card.collectorNumber || ''}"
+            data-treatment="${card.treatment || ''}">🔍
+          </button>
         </td>
         <td>
           <button class="edit-btn" data-id="${cardId}">✏️</button>
@@ -201,7 +207,6 @@ function displayCards(userId) {
     });
 
     attachDeleteHandlers(userId); // ✅ pass UID to delete
-    attachSearchHandlers();
     attachEditHandlers(userId);
     attachQuantityHandlers(userId);
   });
@@ -338,20 +343,642 @@ function updateQuantity(userId, cardId, delta, qtyLabel) {
   });
 }
 
-// Function to attach search button functionality
-function attachSearchHandlers() {
-  document.querySelectorAll('.search-btn').forEach(button => {
-    button.addEventListener('click', () => {
-      const name = button.getAttribute('data-name');
-      const set = button.getAttribute('data-set');
+// ======================================================
+// CARDMARKET SEARCH HELPERS
+// ======================================================
 
-      if (!name || !set) {
-        console.error("Missing card name or setCode for search.");
-        return;
+function normalizeCollectorNumber(value) {
+  return String(value || "")
+    .trim()
+    .replace(/^0+(?=\d)/, "");
+}
+
+
+function normalizeTreatment(value) {
+  return String(value || "")
+    .trim()
+    .toUpperCase();
+}
+
+
+function cardmarketSlug(text) {
+  if (!text) {
+    return "";
+  }
+
+  return String(text)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[’']/g, "")
+    .replace(/&/g, "and")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+
+// ======================================================
+// STRIXHAVEN MYSTICAL ARCHIVE VERSION HANDLING
+// ======================================================
+
+/*
+ * STA #1-63
+ *
+ * Non-Foil         -> V1
+ * Traditional Foil -> V1
+ * Foil-Etched      -> V3
+ *
+ *
+ * STA #64-126
+ *
+ * Non-Foil         -> V2
+ * Traditional Foil -> V2
+ * Foil-Etched      -> V4
+ */
+
+function getStaCardmarketVersion(
+  collectorNumber,
+  treatment
+) {
+  const number =
+    Number(
+      normalizeCollectorNumber(
+        collectorNumber
+      )
+    );
+
+
+  if (!Number.isFinite(number)) {
+    return null;
+  }
+
+
+  // Global artwork
+  if (
+    number >= 1 &&
+    number <= 63
+  ) {
+    if (treatment === "FET") {
+      return 3;
+    }
+
+    if (
+      treatment === "" ||
+      treatment === "TRA"
+    ) {
+      return 1;
+    }
+
+    return null;
+  }
+
+
+  // Japanese alternate artwork
+  if (
+    number >= 64 &&
+    number <= 126
+  ) {
+    if (treatment === "FET") {
+      return 4;
+    }
+
+    if (
+      treatment === "" ||
+      treatment === "TRA"
+    ) {
+      return 2;
+    }
+
+    return null;
+  }
+
+
+  return null;
+}
+
+
+// ======================================================
+// RESOLVE CARDMARKET URL
+// ======================================================
+
+function resolveCardmarketUrl(
+  scryfallCard,
+  firebaseCard
+) {
+  if (!scryfallCard) {
+    return null;
+  }
+
+
+  const setCode =
+    String(
+      scryfallCard.set ||
+      firebaseCard.setCode ||
+      ""
+    )
+      .trim()
+      .toLowerCase();
+
+
+  const collectorNumber =
+    normalizeCollectorNumber(
+      scryfallCard.collector_number ||
+      firebaseCard.collectorNumber
+    );
+
+
+  const treatment =
+    normalizeTreatment(
+      firebaseCard.treatment
+    );
+
+
+  console.log(
+    "Resolving Cardmarket:",
+    {
+      name:
+        scryfallCard.name,
+
+      set:
+        setCode,
+
+      collector:
+        collectorNumber,
+
+      treatment:
+        treatment || "NONFOIL",
+
+      finishes:
+        scryfallCard.finishes,
+
+      cardmarketId:
+        scryfallCard.cardmarket_id
+    }
+  );
+
+
+  // ==================================================
+  // SPECIAL CASE:
+  // STRIXHAVEN MYSTICAL ARCHIVE
+  // ==================================================
+
+  if (setCode === "sta") {
+    const version =
+      getStaCardmarketVersion(
+        collectorNumber,
+        treatment
+      );
+
+
+    if (version) {
+      const cardName =
+        cardmarketSlug(
+          scryfallCard.name
+        );
+
+
+      return (
+        `https://www.cardmarket.com/en/Magic/Products/Singles/Mystical-Archive/${cardName}-V${version}`
+      );
+    }
+  }
+
+
+  // ==================================================
+  // NORMAL CASE:
+  // USE SCRYFALL'S CARDMARKET PRODUCT ID
+  // ==================================================
+
+  if (scryfallCard.cardmarket_id) {
+    return (
+      `https://www.cardmarket.com/en/Magic/Products?idProduct=${encodeURIComponent(
+        scryfallCard.cardmarket_id
+      )}`
+    );
+  }
+
+
+  // ==================================================
+  // FALLBACK:
+  // SCRYFALL'S CARDMARKET PURCHASE URL
+  // ==================================================
+
+  const purchaseUrl =
+    scryfallCard
+      ?.purchase_uris
+      ?.cardmarket;
+
+
+  if (purchaseUrl) {
+    try {
+      const url =
+        new URL(purchaseUrl);
+
+
+      /*
+       * Prefer Cardmarket's actual idProduct
+       * and strip Scryfall tracking parameters.
+       */
+
+      const productId =
+        url.searchParams.get(
+          "idProduct"
+        );
+
+
+      if (productId) {
+        return (
+          `https://www.cardmarket.com/en/Magic/Products?idProduct=${encodeURIComponent(
+            productId
+          )}`
+        );
       }
 
-      const url = `https://www.cardmarket.com/en/Magic/Products/Search?searchString=${encodeURIComponent(name)}&setName=${encodeURIComponent(set)}`;
-      window.open(url, '_blank');
+
+      url.searchParams.delete(
+        "referrer"
+      );
+
+      url.searchParams.delete(
+        "utm_source"
+      );
+
+      url.searchParams.delete(
+        "utm_medium"
+      );
+
+      url.searchParams.delete(
+        "utm_campaign"
+      );
+
+
+      return url.toString();
+
+    } catch (error) {
+      console.warn(
+        "Could not parse Scryfall Cardmarket URL:",
+        error
+      );
+    }
+  }
+
+
+  return null;
+}
+
+
+// ======================================================
+// CARDMARKET SEARCH FALLBACK
+// ======================================================
+
+function buildCardmarketSearchUrl(
+  scryfallCard,
+  firebaseCard
+) {
+  const query = [
+    scryfallCard?.name ||
+      firebaseCard.name,
+
+    scryfallCard?.set ||
+      firebaseCard.setCode,
+
+    scryfallCard?.collector_number ||
+      firebaseCard.collectorNumber
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+
+  return (
+    `https://www.cardmarket.com/en/Magic/Products/Search?searchString=${encodeURIComponent(
+      query
+    )}`
+  );
+}
+
+
+// ======================================================
+// SCRYFALL LOOKUP
+// ======================================================
+
+async function getScryfallCardForSearch(
+  card
+) {
+  const name =
+    String(
+      card.name || ""
+    ).trim();
+
+
+  const set =
+    String(
+      card.setCode || ""
+    )
+      .trim()
+      .toLowerCase();
+
+
+  const collector =
+    normalizeCollectorNumber(
+      card.collectorNumber
+    );
+
+
+  // ==================================================
+  // BEST LOOKUP:
+  // EXACT SET + COLLECTOR NUMBER
+  // ==================================================
+
+  if (
+    set &&
+    collector
+  ) {
+    const exactUrl =
+      `https://api.scryfall.com/cards/${encodeURIComponent(
+        set
+      )}/${encodeURIComponent(
+        collector
+      )}`;
+
+
+    console.log(
+      "Search button Scryfall lookup:",
+      exactUrl
+    );
+
+
+    const response =
+      await fetch(
+        exactUrl,
+        {
+          headers: {
+            Accept:
+              "application/json;q=0.9,*/*;q=0.8"
+          }
+        }
+      );
+
+
+    if (response.ok) {
+      return response.json();
+    }
+
+
+    console.warn(
+      "Exact Scryfall lookup failed:",
+      response.status
+    );
+  }
+
+
+  // ==================================================
+  // FALLBACK:
+  // NAME + SET
+  // ==================================================
+
+  if (name) {
+    const fallbackUrl =
+      new URL(
+        "https://api.scryfall.com/cards/named"
+      );
+
+
+    fallbackUrl.searchParams.set(
+      "exact",
+      name
+    );
+
+
+    if (set) {
+      fallbackUrl.searchParams.set(
+        "set",
+        set
+      );
+    }
+
+
+    const response =
+      await fetch(
+        fallbackUrl.toString(),
+        {
+          headers: {
+            Accept:
+              "application/json;q=0.9,*/*;q=0.8"
+          }
+        }
+      );
+
+
+    if (response.ok) {
+      return response.json();
+    }
+
+
+    console.warn(
+      "Scryfall name fallback failed:",
+      response.status
+    );
+  }
+
+
+  return null;
+}
+
+
+// ======================================================
+// MAGNIFYING GLASS SEARCH BUTTON
+// ======================================================
+
+function attachSearchHandlers() {
+  document
+    .querySelectorAll(
+      '.search-btn'
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        'click',
+        async () => {
+
+          const card = {
+            name:
+              button.getAttribute(
+                'data-name'
+              ) || "",
+
+            setCode:
+              button.getAttribute(
+                'data-set'
+              ) || "",
+
+            collectorNumber:
+              button.getAttribute(
+                'data-num'
+              ) || "",
+
+            treatment:
+              button.getAttribute(
+                'data-treatment'
+              ) || ""
+          };
+
+
+          if (
+            !card.name ||
+            !card.setCode
+          ) {
+            console.error(
+              "Missing card name or setCode for search."
+            );
+
+            return;
+          }
+
+
+          /*
+           * Open a blank tab immediately.
+           *
+           * This keeps the browser from blocking the
+           * Cardmarket tab while we wait for Scryfall.
+           *
+           * about:blank does NOT contact Cardmarket.
+           */
+
+          const newTab =
+            window.open(
+              "about:blank",
+              "_blank"
+            );
+
+
+          try {
+
+            // ==========================================
+            // GET EXACT PRINTING FROM SCRYFALL
+            // ==========================================
+
+            const scryfallCard =
+              await getScryfallCardForSearch(
+                card
+              );
+
+
+            // ==========================================
+            // DIRECT CARDMARKET PRODUCT
+            // ==========================================
+
+            if (scryfallCard) {
+              const cardmarketUrl =
+                resolveCardmarketUrl(
+                  scryfallCard,
+                  card
+                );
+
+
+              if (cardmarketUrl) {
+
+                console.log(
+                  "INDEX SEARCH -> CARDMARKET:",
+                  {
+                    firebase: {
+                      name:
+                        card.name,
+
+                      set:
+                        card.setCode,
+
+                      collector:
+                        card.collectorNumber,
+
+                      treatment:
+                        card.treatment ||
+                        "NONFOIL"
+                    },
+
+                    scryfall: {
+                      name:
+                        scryfallCard.name,
+
+                      set:
+                        scryfallCard.set,
+
+                      setName:
+                        scryfallCard.set_name,
+
+                      collector:
+                        scryfallCard.collector_number,
+
+                      finishes:
+                        scryfallCard.finishes,
+
+                      cardmarketId:
+                        scryfallCard.cardmarket_id
+                    },
+
+                    url:
+                      cardmarketUrl
+                  }
+                );
+
+
+                if (newTab) {
+                  newTab.location.href =
+                    cardmarketUrl;
+                } else {
+                  window.location.href =
+                    cardmarketUrl;
+                }
+
+
+                return;
+              }
+            }
+
+
+            // ==========================================
+            // LAST RESORT:
+            // CARDMARKET SEARCH
+            // ==========================================
+
+            const searchUrl =
+              buildCardmarketSearchUrl(
+                scryfallCard,
+                card
+              );
+
+
+            console.warn(
+              "No direct Cardmarket product found. Using search:",
+              searchUrl
+            );
+
+
+            if (newTab) {
+              newTab.location.href =
+                searchUrl;
+            } else {
+              window.location.href =
+                searchUrl;
+            }
+
+
+          } catch (error) {
+
+            console.error(
+              "Cardmarket search failed:",
+              error
+            );
+
+
+            /*
+             * If something goes wrong, close the blank
+             * tab rather than leave it sitting there.
+             */
+
+            if (newTab) {
+              newTab.close();
+            }
+          }
+        }
+      );
     });
-  });
 }
