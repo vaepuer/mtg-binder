@@ -1928,7 +1928,7 @@ function loadBinderForUser(
 
 
         button.textContent =
-          "Cardmarket";
+          "Search";
 
 
         button.classList.add(
