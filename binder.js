@@ -1,6 +1,6 @@
 // ---------------- Firebase Imports ----------------
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 // ---------------- Firebase Config ----------------
@@ -22,7 +22,7 @@ const auth = getAuth(app);
 // ---------------- Small Utilities ----------------
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// map treatment codes → {text, class, show}
+// ---------------- Treatment Mapping ----------------
 function mapTreatment(code) {
   const map = {
     PRM: ["Pre-Modern", "PRM"],
@@ -67,25 +67,31 @@ function mapTreatment(code) {
 
 // ---------------- Cache Key ----------------
 function cacheKeyFor(card) {
-  const setCode = (card.setCode || "").toLowerCase();
+  const set = (card.setCode || "").toLowerCase();
 
-  const collectorNumber = card.collectorNumber
+  const number = card.collectorNumber
     ? String(card.collectorNumber).replace(/^0+/, "")
     : "";
 
-  return collectorNumber && setCode
-    ? `set:${setCode}|num:${collectorNumber}`
-    : `name:${card.name}|set:${setCode}`;
+  return number && set
+    ? `set:${set}|num:${number}`
+    : `name:${card.name}|set:${set}`;
 }
 
 // ---------------- Scryfall Identifier ----------------
 function buildIdentifier(card) {
-  const setCode = (card.setCode || "").toLowerCase();
+  const setCode = String(card?.setCode || "")
+    .trim()
+    .toLowerCase();
 
-  const collectorNumber = card.collectorNumber
-    ? String(card.collectorNumber).replace(/^0+/, "")
-    : "";
+  const collectorNumber = String(card?.collectorNumber || "")
+    .trim()
+    .replace(/^0+/, "");
 
+  const name = String(card?.name || "").trim();
+
+  // BEST OPTION:
+  // exact printing using set + collector number
   if (setCode && collectorNumber) {
     return {
       set: setCode,
@@ -93,18 +99,30 @@ function buildIdentifier(card) {
     };
   }
 
-  const identifier = {
-    name: card.name,
-  };
-
-  if (setCode) {
-    identifier.set = setCode;
+  // SECOND OPTION:
+  // name + set
+  if (name && setCode) {
+    return {
+      name: name,
+      set: setCode,
+    };
   }
 
-  return identifier;
+  // LAST OPTION:
+  // name only
+  if (name) {
+    return {
+      name: name,
+    };
+  }
+
+  // Invalid card - don't send it to Scryfall
+  console.warn("Cannot build Scryfall identifier:", card);
+
+  return null;
 }
 
-// ---------------- Scryfall Image ----------------
+// ---------------- Best Card Image ----------------
 function getBestImage(cardObj) {
   return (
     cardObj?.image_uris?.normal ||
@@ -115,49 +133,12 @@ function getBestImage(cardObj) {
   );
 }
 
-// ---------------- Cache ----------------
-const cardCacheMem = new Map();
+// ======================================================
+// CARDMARKET UTILITIES
+// ======================================================
 
-function cacheGet(key) {
-  if (cardCacheMem.has(key)) {
-    return cardCacheMem.get(key);
-  }
-
-  try {
-    const raw = localStorage.getItem("scryfall:" + key);
-
-    if (raw) {
-      const value = JSON.parse(raw);
-
-      cardCacheMem.set(key, value);
-
-      return value;
-    }
-  } catch (error) {
-    console.warn("Could not read Scryfall cache:", error);
-  }
-
-  return null;
-}
-
-function cacheSet(key, value) {
-  cardCacheMem.set(key, value);
-
-  try {
-    localStorage.setItem(
-      "scryfall:" + key,
-      JSON.stringify(value)
-    );
-  } catch (error) {
-    console.warn("Could not write Scryfall cache:", error);
-  }
-}
-
-// ---------------- Cardmarket Utilities ----------------
 function cardmarketSlug(text) {
-  if (!text) {
-    return "";
-  }
+  if (!text) return "";
 
   return text
     .normalize("NFD")
@@ -168,8 +149,52 @@ function cardmarketSlug(text) {
     .replace(/^-+|-+$/g, "");
 }
 
+/*
+ * Exact-print Cardmarket overrides.
+ *
+ * Only put entries here when a specific Scryfall printing
+ * maps to a differently named Cardmarket expansion.
+ *
+ * Key format:
+ *
+ *   "setcode:collectorNumber"
+ *
+ * Collector number is stored without leading zeroes.
+ */
+const CARDMARKET_PRINT_OVERRIDES = {
+  // Verified example:
+  //
+  // HOB 0297
+  // The Master of Lake-town
+  // Cardmarket expansion:
+  // The Hobbit Extras
+  "hob:297": "The-Hobbit-Extras",
+};
+
+/*
+ * Whole-set overrides.
+ *
+ * Only use this if EVERY printing in the Scryfall set
+ * maps to a differently named Cardmarket expansion.
+ */
+const CARDMARKET_SET_OVERRIDES = {
+  // Example:
+  //
+  // "abc": "Different-Cardmarket-Set-Name"
+};
+
+/*
+ * Determine the Cardmarket expansion name.
+ *
+ * Priority:
+ *
+ * 1. Exact printing override
+ * 2. Whole-set override
+ * 3. Scryfall set_name
+ * 4. No safe direct URL
+ */
 function getCardmarketSetName(sf, firebaseCard) {
-  const setCode = (
+  const setCode = String(
     sf?.set ||
     firebaseCard?.setCode ||
     ""
@@ -180,44 +205,138 @@ function getCardmarketSetName(sf, firebaseCard) {
     firebaseCard?.collectorNumber ||
     "";
 
-  const collectorNumber = parseInt(
-    String(rawCollector).replace(/^0+/, ""),
-    10
+  const collectorNumber =
+    String(rawCollector).replace(/^0+/, "") || "0";
+
+  const printKey =
+    `${setCode}:${collectorNumber}`;
+
+  // ---------------- Exact Print Override ----------------
+  if (
+    Object.prototype.hasOwnProperty.call(
+      CARDMARKET_PRINT_OVERRIDES,
+      printKey
+    )
+  ) {
+    const result =
+      CARDMARKET_PRINT_OVERRIDES[printKey];
+
+    console.log(
+      "Cardmarket exact print override:",
+      printKey,
+      "->",
+      result
+    );
+
+    return result;
+  }
+
+  // ---------------- Whole Set Override ----------------
+  if (
+    Object.prototype.hasOwnProperty.call(
+      CARDMARKET_SET_OVERRIDES,
+      setCode
+    )
+  ) {
+    const result =
+      CARDMARKET_SET_OVERRIDES[setCode];
+
+    console.log(
+      "Cardmarket whole-set override:",
+      setCode,
+      "->",
+      result
+    );
+
+    return result;
+  }
+
+  // ---------------- Default: Scryfall Set Name ----------------
+  if (sf?.set_name) {
+    const result =
+      cardmarketSlug(sf.set_name);
+
+    console.log(
+      "Using Scryfall set name:",
+      sf.set_name,
+      "->",
+      result
+    );
+
+    return result;
+  }
+
+  console.warn(
+    "Could not safely determine Cardmarket expansion:",
+    {
+      setCode,
+      collectorNumber,
+      scryfall: sf,
+      firebaseCard,
+    }
   );
 
-  /*
-    Cardmarket naming overrides.
-
-    HOB cards in the higher collector-number range
-    can belong to "The Hobbit Extras" on Cardmarket.
-
-    HOB 0297:
-    The Master of Lake-town
-    -> The-Hobbit-Extras
-  */
-  if (
-    setCode === "hob" &&
-    Number.isFinite(collectorNumber) &&
-    collectorNumber >= 200
-  ) {
-    return "The-Hobbit-Extras";
-  }
-
-  /*
-    Default:
-    use Scryfall set_name if available.
-  */
-  if (sf?.set_name) {
-    return cardmarketSlug(sf.set_name);
-  }
-
-  /*
-    Last-resort fallback.
-  */
-  return cardmarketSlug(firebaseCard?.setCode || "");
+  return null;
 }
 
-// ---------------- Batched Scryfall Fetcher ----------------
+// ======================================================
+// CACHE
+// ======================================================
+
+const cardCacheMem = new Map();
+
+function cacheGet(key) {
+  if (cardCacheMem.has(key)) {
+    return cardCacheMem.get(key);
+  }
+
+  try {
+    const raw =
+      localStorage.getItem("scryfall:" + key);
+
+    if (raw) {
+      const value = JSON.parse(raw);
+
+      cardCacheMem.set(
+        key,
+        value
+      );
+
+      return value;
+    }
+  } catch (error) {
+    console.warn(
+      "Could not read Scryfall cache:",
+      error
+    );
+  }
+
+  return null;
+}
+
+function cacheSet(key, value) {
+  cardCacheMem.set(
+    key,
+    value
+  );
+
+  try {
+    localStorage.setItem(
+      "scryfall:" + key,
+      JSON.stringify(value)
+    );
+  } catch (error) {
+    console.warn(
+      "Could not write Scryfall cache:",
+      error
+    );
+  }
+}
+
+// ======================================================
+// SCRYFALL BATCH FETCHER
+// ======================================================
+
 async function fetchScryfallBatches(identifiers) {
   const CHUNK = 75;
   const output = new Map();
@@ -235,14 +354,21 @@ async function fetchScryfallBatches(identifiers) {
       identifiers: chunks[index],
     };
 
+    console.log(
+      "SENDING TO SCRYFALL:",
+      JSON.stringify(body, null, 2)
+    );
+
     while (true) {
       const response = await fetch(
         "https://api.scryfall.com/cards/collection",
         {
           method: "POST",
+
           headers: {
             "Content-Type": "application/json",
           },
+
           body: JSON.stringify(body),
         }
       );
@@ -250,10 +376,6 @@ async function fetchScryfallBatches(identifiers) {
       if (response.status === 429) {
         const retryAfter = Number(
           response.headers.get("Retry-After") || 1
-        );
-
-        console.warn(
-          `Scryfall rate limited. Waiting ${retryAfter}s`
         );
 
         await sleep(retryAfter * 1000);
@@ -273,38 +395,10 @@ async function fetchScryfallBatches(identifiers) {
 
       const data = await response.json();
 
-      console.log(
-        "Full Scryfall batch response:",
-        data
-      );
-
       for (const card of data.data || []) {
-        console.log("SCRYFALL CARD:", {
-          id: card.id,
-          name: card.name,
-          set: card.set,
-          set_name: card.set_name,
-          collector_number: card.collector_number,
-          finishes: card.finishes,
-          promo: card.promo,
-          promo_types: card.promo_types,
-          frame_effects: card.frame_effects,
-          border_color: card.border_color,
-        });
-
-        const cleanCollector = String(
-          card.collector_number || ""
-        ).replace(/^0+/, "");
-
-        if (
-          card.set?.toLowerCase() === "hob" &&
-          cleanCollector === "297"
-        ) {
-          console.log(
-            "FOUND HOB 0297 FULL OBJECT:",
-            card
-          );
-        }
+        const cleanCollector =
+          String(card.collector_number || "")
+            .replace(/^0+/, "");
 
         const key =
           card.collector_number && card.set
@@ -325,49 +419,75 @@ async function fetchScryfallBatches(identifiers) {
   return output;
 }
 
-// ---------------- Main Page Flow ----------------
+// ======================================================
+// MAIN PAGE FLOW
+// ======================================================
+
 document.addEventListener(
   "DOMContentLoaded",
   () => {
-    const urlParams = new URLSearchParams(
-      window.location.search
-    );
+    const urlParams =
+      new URLSearchParams(
+        window.location.search
+      );
 
     const queryUsername =
-      urlParams.get("username");
+      urlParams.get(
+        "username"
+      );
 
     const queryUid =
-      urlParams.get("uid");
+      urlParams.get(
+        "uid"
+      );
 
     const basePath =
       `${window.location.origin}/mtg-binder`;
 
     const resolveUid = () => {
+      // ---------------- Username ----------------
       if (queryUsername) {
         return get(
-          ref(db, `usernames/${queryUsername}`)
-        ).then((snapshot) => {
-          if (!snapshot.exists()) {
-            throw new Error(
-              "Username not found."
-            );
+          ref(
+            db,
+            `usernames/${queryUsername}`
+          )
+        ).then(
+          (snapshot) => {
+            if (
+              !snapshot.exists()
+            ) {
+              throw new Error(
+                "Username not found."
+              );
+            }
+
+            return snapshot.val();
           }
-
-          return snapshot.val();
-        });
+        );
       }
 
+      // ---------------- UID ----------------
       if (queryUid) {
-        return Promise.resolve(queryUid);
+        return Promise.resolve(
+          queryUid
+        );
       }
 
+      // ---------------- Logged-in User ----------------
       return new Promise(
-        (resolve, reject) => {
+        (
+          resolve,
+          reject
+        ) => {
           onAuthStateChanged(
             auth,
             (user) => {
               if (user) {
-                resolve(user.uid);
+                resolve(
+                  user.uid
+                );
+
                 return;
               }
 
@@ -381,77 +501,106 @@ document.addEventListener(
     };
 
     resolveUid()
-      .then(async (targetUid) => {
-        let usernameToDisplay =
-          queryUsername;
+      .then(
+        async (
+          targetUid
+        ) => {
+          let usernameToDisplay =
+            queryUsername;
 
-        if (!usernameToDisplay) {
-          try {
-            const snapshot = await get(
-              ref(
-                db,
-                `users/${targetUid}/username`
-              )
-            );
+          // ---------------- Resolve username from UID ----------------
+          if (
+            !usernameToDisplay
+          ) {
+            try {
+              const snapshot =
+                await get(
+                  ref(
+                    db,
+                    `users/${targetUid}/username`
+                  )
+                );
 
-            if (snapshot.exists()) {
-              usernameToDisplay =
-                snapshot.val();
-            } else {
+              if (
+                snapshot.exists()
+              ) {
+                usernameToDisplay =
+                  snapshot.val();
+              } else {
+                console.error(
+                  "Username not found in database."
+                );
+              }
+            } catch (
+              error
+            ) {
               console.error(
-                "Username not found in database."
+                "Error fetching username:",
+                error
               );
             }
-          } catch (error) {
-            console.error(
-              "Error fetching username:",
-              error
-            );
           }
-        }
 
-        const usernameElement =
-          document.getElementById(
-            "username"
+          // ---------------- Display Username ----------------
+          const usernameElement =
+            document.getElementById(
+              "username"
+            );
+
+          if (
+            usernameElement
+          ) {
+            usernameElement.textContent =
+              usernameToDisplay ||
+              "";
+          }
+
+          // ---------------- Load Binder ----------------
+          loadBinderForUser(
+            targetUid
           );
 
-        if (usernameElement) {
-          usernameElement.textContent =
-            usernameToDisplay || "";
-        }
-
-        loadBinderForUser(targetUid);
-
-        onAuthStateChanged(
-          auth,
-          (user) => {
-            if (
-              user &&
-              user.uid === targetUid
-            ) {
-              enableShareControls(user);
+          // ---------------- Share Controls ----------------
+          onAuthStateChanged(
+            auth,
+            (user) => {
+              if (
+                user &&
+                user.uid ===
+                  targetUid
+              ) {
+                enableShareControls(
+                  user
+                );
+              }
             }
-          }
-        );
-      })
-      .catch((error) => {
-        console.warn(
-          "Redirecting to login due to:",
-          error
-        );
+          );
+        }
+      )
+      .catch(
+        (error) => {
+          console.warn(
+            "Redirecting to login due to:",
+            error
+          );
 
-        location.href =
-          `${basePath}/login.html`;
-      });
+          location.href =
+            `${basePath}/login.html`;
+        }
+      );
   }
 );
 
-// ---------------- Binder Rendering ----------------
+// ======================================================
+// BINDER RENDERING
+// ======================================================
+
 function loadBinderForUser(uid) {
-  const cardsRef = ref(
-    db,
-    `cards/${uid}`
-  );
+  const cardsRef =
+    ref(
+      db,
+      `cards/${uid}`
+    );
 
   const container =
     document.getElementById(
@@ -471,10 +620,14 @@ function loadBinderForUser(uid) {
 
   onValue(
     cardsRef,
-    async (snapshot) => {
-      const data = snapshot.val();
+    async (
+      snapshot
+    ) => {
+      const data =
+        snapshot.val();
 
-      container.innerHTML = "";
+      container.innerHTML =
+        "";
 
       if (!data) {
         container.innerHTML =
@@ -484,41 +637,69 @@ function loadBinderForUser(uid) {
       }
 
       const entries =
-        Object.entries(data);
+        Object.entries(
+          data
+        );
 
-      const identifiers = [];
+      const identifiers =
+        [];
 
-      const keyForIndex = [];
+      const keyForIndex =
+        [];
 
-      // ---------------- Prepare Fetches ----------------
+      // ==================================================
+      // PREPARE IDENTIFIERS
+      // ==================================================
+
       for (
-        const [cardId, card] of entries
-      ) {
-        const key =
-          cacheKeyFor(card);
-
-        keyForIndex.push({
+        const [
           cardId,
           card,
-          key,
-        });
+        ] of entries
+      ) {
+        const key =
+          cacheKeyFor(
+            card
+          );
+
+        keyForIndex.push(
+          {
+            cardId,
+            card,
+            key,
+          }
+        );
 
         const cached =
-          cacheGet(key);
+          cacheGet(
+            key
+          );
 
         console.log(
           "Card cache check:",
           {
-            name: card.name,
+            name:
+              card.name,
+
+            setCode:
+              card.setCode,
+
+            collectorNumber:
+              card.collectorNumber,
+
             key,
-            cached: !!cached,
+
+            cached:
+              !!cached,
           }
         );
 
         if (!cached) {
-          identifiers.push(
-            buildIdentifier(card)
-          );
+          const identifier = buildIdentifier(card);
+
+          if (identifier) {
+            identifiers.push(identifier);
+          }
         }
       }
 
@@ -527,8 +708,13 @@ function loadBinderForUser(uid) {
         identifiers
       );
 
-      // ---------------- Fetch Missing Cards ----------------
-      if (identifiers.length) {
+      // ==================================================
+      // FETCH UNCACHED CARDS
+      // ==================================================
+
+      if (
+        identifiers.length
+      ) {
         try {
           const fetchedMap =
             await fetchScryfallBatches(
@@ -536,19 +722,29 @@ function loadBinderForUser(uid) {
             );
 
           for (
-            const { key } of keyForIndex
+            const {
+              key,
+            } of keyForIndex
           ) {
             if (
-              !cacheGet(key) &&
-              fetchedMap.has(key)
+              !cacheGet(
+                key
+              ) &&
+              fetchedMap.has(
+                key
+              )
             ) {
               cacheSet(
                 key,
-                fetchedMap.get(key)
+                fetchedMap.get(
+                  key
+                )
               );
             }
           }
-        } catch (error) {
+        } catch (
+          error
+        ) {
           console.error(
             "Batch fetch failed:",
             error
@@ -556,11 +752,14 @@ function loadBinderForUser(uid) {
         }
       } else {
         console.log(
-          "No Scryfall fetch needed because every card is already cached."
+          "No Scryfall fetch needed because all cards are cached."
         );
       }
 
-      // ---------------- Render Cards ----------------
+      // ==================================================
+      // RENDER CARDS
+      // ==================================================
+
       for (
         const {
           card,
@@ -587,11 +786,14 @@ function loadBinderForUser(uid) {
         quantity.textContent =
           `x${card.quantity ?? 1}`;
 
-        // ---------------- Treatment ----------------
+        // ---------------- Treatment Badge ----------------
         const {
-          text: treatmentText,
+          text:
+            treatmentText,
+
           className:
             treatmentClass,
+
           show,
         } = mapTreatment(
           card.treatment
@@ -609,7 +811,9 @@ function loadBinderForUser(uid) {
           treatment.textContent =
             treatmentText;
 
-          if (treatmentClass) {
+          if (
+            treatmentClass
+          ) {
             treatment.classList.add(
               treatmentClass
             );
@@ -620,32 +824,51 @@ function loadBinderForUser(uid) {
           );
         }
 
-        // ---------------- Image ----------------
+        // ==================================================
+        // IMAGE
+        // ==================================================
+
         const image =
           document.createElement(
             "img"
           );
 
-        image.alt = card.name;
+        image.alt =
+          card.name;
 
-        let sf = cacheGet(key);
+        let sf =
+          cacheGet(
+            key
+          );
 
         console.log(
-          "Cached Scryfall object for:",
-          card.name,
-          sf
+          "Cached Scryfall object:",
+          {
+            firebaseCard:
+              card,
+
+            scryfall:
+              sf,
+          }
         );
 
         if (sf) {
           image.src =
-            getBestImage(sf);
+            getBestImage(
+              sf
+            );
         } else {
-          // Very rare fallback
-          const setCode = (
-            card.setCode || ""
-          ).toLowerCase();
+          // ----------------------------------------------
+          // Fallback Scryfall request
+          // ----------------------------------------------
 
-          const collectorNumber =
+          const set =
+            (
+              card.setCode ||
+              ""
+            ).toLowerCase();
+
+          const number =
             card.collectorNumber
               ? String(
                   card.collectorNumber
@@ -656,35 +879,43 @@ function loadBinderForUser(uid) {
               : "";
 
           const url =
-            collectorNumber &&
-            setCode
-              ? `https://api.scryfall.com/cards/${setCode}/${collectorNumber}`
+            number &&
+            set
+              ? `https://api.scryfall.com/cards/${set}/${number}`
               : (() => {
                   const fallbackUrl =
                     new URL(
                       "https://api.scryfall.com/cards/named"
                     );
 
-                  fallbackUrl.searchParams.set(
-                    "exact",
-                    card.name
-                  );
-
-                  if (setCode) {
-                    fallbackUrl.searchParams.set(
-                      "set",
-                      setCode
+                  fallbackUrl
+                    .searchParams
+                    .set(
+                      "exact",
+                      card.name
                     );
+
+                  if (set) {
+                    fallbackUrl
+                      .searchParams
+                      .set(
+                        "set",
+                        set
+                      );
                   }
 
                   return fallbackUrl.toString();
                 })();
 
           try {
-            await sleep(120);
+            await sleep(
+              120
+            );
 
             let response =
-              await fetch(url);
+              await fetch(
+                url
+              );
 
             if (
               response.status ===
@@ -692,20 +923,27 @@ function loadBinderForUser(uid) {
             ) {
               const retryAfter =
                 Number(
-                  response.headers.get(
-                    "Retry-After"
-                  ) || 1
+                  response
+                    .headers
+                    .get(
+                      "Retry-After"
+                    ) || 1
                 );
 
               await sleep(
-                retryAfter * 1000
+                retryAfter *
+                  1000
               );
 
               response =
-                await fetch(url);
+                await fetch(
+                  url
+                );
             }
 
-            if (response.ok) {
+            if (
+              response.ok
+            ) {
               const fetchedCard =
                 await response.json();
 
@@ -724,17 +962,23 @@ function loadBinderForUser(uid) {
                 fetchedCard
               );
 
-              sf = fetchedCard;
+              sf =
+                fetchedCard;
             }
-          } catch (error) {
+          } catch (
+            error
+          ) {
             console.warn(
-              "Fallback fetch failed:",
+              "Fallback Scryfall fetch failed:",
               error
             );
           }
         }
 
-        // ---------------- Cardmarket Button ----------------
+        // ==================================================
+        // CARDMARKET BUTTON
+        // ==================================================
+
         const button =
           document.createElement(
             "button"
@@ -747,88 +991,149 @@ function loadBinderForUser(uid) {
           "button"
         );
 
-        button.onclick = () => {
-          const scryfallCard =
-            cacheGet(key);
+        button.onclick =
+          () => {
+            const scryfallCard =
+              cacheGet(
+                key
+              );
 
-          console.log(
-            "Cardmarket click - Firebase:",
-            card
-          );
-
-          console.log(
-            "Cardmarket click - Scryfall:",
-            scryfallCard
-          );
-
-          if (!scryfallCard) {
-            console.warn(
-              "No Scryfall data available. Falling back to Cardmarket search."
-            );
-
-            const search =
-              `${card.setCode} ${card.collectorNumber}`;
-
-            const searchUrl =
-              `https://www.cardmarket.com/en/Magic/Products/Search?searchString=${encodeURIComponent(
-                search
-              )}`;
-
-            window.open(
-              searchUrl,
-              "_blank"
-            );
-
-            return;
-          }
-
-          const cardmarketSet =
-            getCardmarketSetName(
-              scryfallCard,
+            console.log(
+              "Cardmarket click - Firebase:",
               card
             );
 
-          const cardmarketCard =
-            cardmarketSlug(
-              scryfallCard.name ||
-              card.name
+            console.log(
+              "Cardmarket click - Scryfall:",
+              scryfallCard
             );
 
-          const cardmarketUrl =
-            `https://www.cardmarket.com/en/Magic/Products/Singles/${cardmarketSet}/${cardmarketCard}`;
+            // ------------------------------------------
+            // No Scryfall object:
+            // use Cardmarket search instead of guessing
+            // ------------------------------------------
 
-          console.log(
-            "CARDMARKET RESULT:",
-            {
-              firebaseName:
-                card.name,
-              firebaseSet:
-                card.setCode,
-              firebaseCollector:
-                card.collectorNumber,
+            if (
+              !scryfallCard
+            ) {
+              console.warn(
+                "No Scryfall data available. Falling back to Cardmarket search."
+              );
 
-              scryfallName:
-                scryfallCard.name,
-              scryfallSet:
-                scryfallCard.set,
-              scryfallSetName:
-                scryfallCard.set_name,
-              scryfallCollector:
-                scryfallCard.collector_number,
+              const query =
+                `${card.setCode} ${card.collectorNumber}`;
 
-              cardmarketSet,
-              cardmarketCard,
-              cardmarketUrl,
+              const searchUrl =
+                `https://www.cardmarket.com/en/Magic/Products/Search?searchString=${encodeURIComponent(
+                  query
+                )}`;
+
+              window.open(
+                searchUrl,
+                "_blank"
+              );
+
+              return;
             }
-          );
 
-          window.open(
-            cardmarketUrl,
-            "_blank"
-          );
-        };
+            // ------------------------------------------
+            // Determine Cardmarket Expansion
+            // ------------------------------------------
 
-        // ---------------- Append ----------------
+            const cardmarketSet =
+              getCardmarketSetName(
+                scryfallCard,
+                card
+              );
+
+            // ------------------------------------------
+            // Cannot determine safely:
+            // use search
+            // ------------------------------------------
+
+            if (
+              !cardmarketSet
+            ) {
+              const query =
+                `${scryfallCard.set} ${scryfallCard.collector_number}`;
+
+              const searchUrl =
+                `https://www.cardmarket.com/en/Magic/Products/Search?searchString=${encodeURIComponent(
+                  query
+                )}`;
+
+              console.warn(
+                "Could not determine safe direct Cardmarket URL. Using search:",
+                searchUrl
+              );
+
+              window.open(
+                searchUrl,
+                "_blank"
+              );
+
+              return;
+            }
+
+            // ------------------------------------------
+            // Cardmarket Card Name
+            // ------------------------------------------
+
+            const cardmarketCard =
+              cardmarketSlug(
+                scryfallCard.name ||
+                card.name
+              );
+
+            // ------------------------------------------
+            // Direct Cardmarket URL
+            // ------------------------------------------
+
+            const cardmarketUrl =
+              `https://www.cardmarket.com/en/Magic/Products/Singles/${cardmarketSet}/${cardmarketCard}`;
+
+            console.log(
+              "CARDMARKET RESULT:",
+              {
+                firebaseName:
+                  card.name,
+
+                firebaseSet:
+                  card.setCode,
+
+                firebaseCollector:
+                  card.collectorNumber,
+
+                scryfallName:
+                  scryfallCard.name,
+
+                scryfallSet:
+                  scryfallCard.set,
+
+                scryfallSetName:
+                  scryfallCard.set_name,
+
+                scryfallCollector:
+                  scryfallCard.collector_number,
+
+                cardmarketSet,
+
+                cardmarketCard,
+
+                cardmarketUrl,
+              }
+            );
+
+            window.open(
+              cardmarketUrl,
+              "_blank"
+            );
+          };
+
+        // ==================================================
+        // APPEND
+        // ==================================================
+
         cardBox.appendChild(
           quantity
         );
@@ -849,21 +1154,26 @@ function loadBinderForUser(uid) {
   );
 }
 
-// ---------------- Share Controls ----------------
-function enableShareControls(user) {
-  const shareButton =
+// ======================================================
+// SHARE CONTROLS
+// ======================================================
+
+function enableShareControls(
+  user
+) {
+  const shareBtn =
     document.getElementById(
       "shareBinderBtn"
     );
 
-  if (!shareButton) {
+  if (!shareBtn) {
     return;
   }
 
-  shareButton.addEventListener(
+  shareBtn.addEventListener(
     "click",
     async () => {
-      const usernameSnapshot =
+      const usernameSnap =
         await get(
           ref(
             db,
@@ -875,8 +1185,8 @@ function enableShareControls(user) {
         `${window.location.origin}/mtg-binder`;
 
       const shareUrl =
-        usernameSnapshot.exists()
-          ? `${basePath}/public-binder.html?username=${usernameSnapshot.val()}`
+        usernameSnap.exists()
+          ? `${basePath}/public-binder.html?username=${usernameSnap.val()}`
           : `${basePath}/public-binder.html?uid=${user.uid}`;
 
       try {
@@ -903,7 +1213,8 @@ function enableShareControls(user) {
         "textarea"
       );
 
-    textarea.value = text;
+    textarea.value =
+      text;
 
     textarea.setAttribute(
       "readonly",
@@ -933,7 +1244,9 @@ function enableShareControls(user) {
           ? "📎 Link copied (fallback)!"
           : "❌ Copy failed."
       );
-    } catch (error) {
+    } catch (
+      error
+    ) {
       alert(
         "❌ Copy failed."
       );
