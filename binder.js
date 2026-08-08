@@ -1646,12 +1646,35 @@ function loadBinderForUser(
   }
 
 
+  // ==================================================
+  // DESKTOP / MOBILE BINDER MODE
+  // ==================================================
+
   /*
-   * binder.html itself can stay intact.
+   * Wide desktop:
+   * two binder pages at once.
    *
-   * Everything below is built inside the
-   * existing #binderContainer.
+   * Smaller screens:
+   * one page at a time.
    */
+
+  const desktopSpreadQuery =
+    window.matchMedia(
+      "(min-width: 1180px)"
+    );
+
+
+  function isDoublePageMode() {
+
+    return (
+      desktopSpreadQuery.matches
+    );
+  }
+
+
+  // ==================================================
+  // BUILD ORGANISER
+  // ==================================================
 
   container.innerHTML = `
 
@@ -1693,7 +1716,7 @@ function loadBinderForUser(
           id="returnUnsortedBtn"
           hidden
         >
-          Return selected card to Unsorted
+          Return selected card to Cards to Place
         </button>
 
 
@@ -1717,12 +1740,6 @@ function loadBinderForUser(
       >
 
         <div class="binder-page-toolbar">
-          <button
-            type="button"
-            id="deletePageBtn"
-          >
-            🗑 Delete Page
-          </button>
 
           <button
             type="button"
@@ -1730,6 +1747,7 @@ function loadBinderForUser(
           >
             ◀ Previous
           </button>
+
 
           <div
             class="page-indicator"
@@ -1754,26 +1772,13 @@ function loadBinderForUser(
             ＋ Add Page
           </button>
 
-          
-
         </div>
 
 
-        <div class="binder-page-shell">
-
-          <div
-            class="binder-page"
-            id="binderPage"
-          >
-
-            <div
-              class="binder-slots"
-              id="binderSlots"
-            >
-            </div>
-
-          </div>
-
+        <div
+          class="binder-spread"
+          id="binderSpread"
+        >
         </div>
 
 
@@ -1813,9 +1818,9 @@ function loadBinderForUser(
     );
 
 
-  const binderSlots =
+  const binderSpread =
     document.getElementById(
-      "binderSlots"
+      "binderSpread"
     );
 
 
@@ -1842,10 +1847,6 @@ function loadBinderForUser(
       "addPageBtn"
     );
 
-  const deletePageBtn =
-  document.getElementById(
-    "deletePageBtn"
-  );
 
   const returnUnsortedBtn =
     document.getElementById(
@@ -1858,9 +1859,352 @@ function loadBinderForUser(
       "binderStatus"
     );
 
+    // ==================================================
+// CARDS TO PLACE STACK / HEIGHT
+// ==================================================
+
+const binderStage =
+  container.querySelector(
+    ".binder-stage"
+  );
+
+
+const stackedTrayQuery =
+  window.matchMedia(
+    "(min-width: 901px)"
+  );
+
+
+/*
+ * Arrange the Cards to Place pile.
+ *
+ * Desktop:
+ * cards overlap vertically, normally by 10px.
+ *
+ * If there are too many cards to fit inside the
+ * available binder height, the gap shrinks so the
+ * pile still remains inside the tray.
+ *
+ * Mobile:
+ * inline positioning is removed because the
+ * existing horizontal card tray is used instead.
+ */
+
+// ==================================================
+// CLEAR CARDS-TO-PLACE STACK POSITIONING
+// ==================================================
+
+function clearUnsortedStackStyles(
+  card
+) {
+
+  if (
+    !card
+  ) {
+
+    return;
+  }
+
+
+  /*
+   * Cards in the Cards to Place pile are given
+   * inline positioning by layoutUnsortedStack().
+   *
+   * Those styles MUST be removed before that same
+   * DOM element is moved into a binder pocket.
+   */
+
+  card.style.removeProperty(
+    "position"
+  );
+
+
+  card.style.removeProperty(
+    "top"
+  );
+
+
+  card.style.removeProperty(
+    "left"
+  );
+
+
+  card.style.removeProperty(
+    "transform"
+  );
+
+
+  card.style.removeProperty(
+    "z-index"
+  );
+}
+
+
+// ==================================================
+// CARDS TO PLACE STACK
+// ==================================================
+
+function layoutUnsortedStack() {
+
+  const cards =
+    Array.from(
+      unsortedCards.querySelectorAll(
+        ":scope > .card-box"
+      )
+    );
+
 
   // ==================================================
-  // LOCAL STATE
+  // MOBILE / TABLET
+  // ==================================================
+
+  if (
+    !stackedTrayQuery.matches
+  ) {
+
+    cards.forEach(
+      (
+        card
+      ) => {
+
+        clearUnsortedStackStyles(
+          card
+        );
+      }
+    );
+
+
+    return;
+  }
+
+
+  if (
+    cards.length ===
+    0
+  ) {
+
+    return;
+  }
+
+
+  // ==================================================
+  // AVAILABLE HEIGHT
+  // ==================================================
+
+  const availableHeight =
+    unsortedCards.clientHeight;
+
+
+  const cardHeight =
+    cards[0]
+      .getBoundingClientRect()
+      .height;
+
+
+  /*
+   * Preferred exposed amount between cards.
+   */
+
+  let stackGap =
+    50;
+
+
+  // ==================================================
+  // COMPRESS IF REQUIRED
+  // ==================================================
+
+  if (
+    cards.length >
+    1
+  ) {
+
+    const fittingGap =
+      (
+        availableHeight -
+        cardHeight
+      ) /
+      (
+        cards.length -
+        1
+      );
+
+
+    stackGap =
+      Math.min(
+        50,
+        Math.max(
+          8,
+          fittingGap
+        )
+      );
+  }
+
+
+  // ==================================================
+  // POSITION CARDS IN REVERSE ORDER
+  // ==================================================
+
+  cards.forEach(
+    (
+      card,
+      index
+    ) => {
+
+      /*
+       * Firebase/list order:
+       *
+       * A
+       * B
+       * C
+       * D
+       *
+       * Visible pile:
+       *
+       * D
+       * C
+       * B
+       * A
+       *
+       * A therefore becomes the fully-visible
+       * card at the bottom.
+       */
+
+      const reversedIndex =
+        cards.length -
+        1 -
+        index;
+
+
+      card.style.position =
+        "absolute";
+
+
+      card.style.left =
+        "50%";
+
+
+      card.style.top =
+        `${reversedIndex * stackGap}px`;
+
+
+      card.style.transform =
+        "translateX(-50%)";
+
+
+      card.style.zIndex =
+        String(
+          cards.length -
+          reversedIndex
+        );
+    }
+  );
+}
+
+
+/*
+ * Keep Cards to Place exactly the same vertical
+ * height as the right-hand binder stage.
+ */
+
+function syncUnsortedPanelHeight() {
+
+  // ==================================================
+  // MOBILE
+  // ==================================================
+
+  if (
+    !stackedTrayQuery.matches
+  ) {
+
+    unsortedPanel.style.height =
+      "";
+
+
+    layoutUnsortedStack();
+
+
+    return;
+  }
+
+
+  if (
+    !binderStage
+  ) {
+
+    return;
+  }
+
+
+  const binderHeight =
+    binderStage
+      .getBoundingClientRect()
+      .height;
+
+
+  if (
+    binderHeight >
+    0
+  ) {
+
+    unsortedPanel.style.height =
+      `${Math.ceil(
+        binderHeight
+      )}px`;
+  }
+
+
+  requestAnimationFrame(
+    layoutUnsortedStack
+  );
+}
+
+
+/*
+ * Automatically keep the left and right sections
+ * matched if cards, pages or the browser size
+ * change.
+ */
+
+if (
+  binderStage &&
+  "ResizeObserver" in window
+) {
+
+  const binderStageObserver =
+    new ResizeObserver(
+      () => {
+
+        syncUnsortedPanelHeight();
+      }
+    );
+
+
+  binderStageObserver.observe(
+    binderStage
+  );
+}
+
+
+stackedTrayQuery.addEventListener(
+  "change",
+  () => {
+
+    syncUnsortedPanelHeight();
+  }
+);
+
+
+window.addEventListener(
+  "resize",
+  () => {
+
+    syncUnsortedPanelHeight();
+  }
+);
+
+
+  // ==================================================
+  // STATE
   // ==================================================
 
   let currentPage =
@@ -1906,7 +2250,7 @@ function loadBinderForUser(
 
 
   // ==================================================
-  // STATUS MESSAGE
+  // STATUS
   // ==================================================
 
   function setStatus(
@@ -2011,7 +2355,9 @@ function loadBinderForUser(
 
 
     const pagesNeededForCards =
-      highestPosition >= 0
+
+      highestPosition >=
+      0
 
         ? Math.floor(
             highestPosition /
@@ -2030,6 +2376,24 @@ function loadBinderForUser(
       pagesNeededForCards,
 
       1
+    );
+  }
+
+
+  function getSpreadStart() {
+
+    if (
+      !isDoublePageMode()
+    ) {
+
+      return currentPage;
+    }
+
+
+    return (
+      Math.floor(
+        currentPage / 2
+      ) * 2
     );
   }
 
@@ -2119,7 +2483,7 @@ function loadBinderForUser(
     } else {
 
       setStatus(
-        "Selection cleared. Drag a card into a pocket, or tap a card and then tap a pocket."
+        "Selection cleared."
       );
     }
   }
@@ -2180,23 +2544,23 @@ function loadBinderForUser(
       );
 
 
-    const updates = {};
+    const updates =
+      {};
 
-
-    // Move selected card into target pocket.
 
     updates[
       `binderLayouts/${uid}/positions/${cardId}`
     ] = targetPosition;
 
 
-    // This automatically creates binderLayouts/{uid}
-    // the first time a card is placed.
-
     updates[
       `binderLayouts/${uid}/pageCount`
     ] = getEffectivePageCount();
 
+
+    // ==================================================
+    // OCCUPIED POCKET
+    // ==================================================
 
     if (
       occupyingCardId &&
@@ -2204,14 +2568,12 @@ function loadBinderForUser(
         cardId
     ) {
 
-      // ----------------------------------------------
-      // BINDER CARD -> OCCUPIED POCKET
-      //
-      // Swap them.
-      // ----------------------------------------------
+      // Binder card -> binder card:
+      // swap positions.
 
       if (
-        oldPosition !== null
+        oldPosition !==
+        null
       ) {
 
         updates[
@@ -2220,11 +2582,8 @@ function loadBinderForUser(
       }
 
 
-      // ----------------------------------------------
-      // UNSORTED CARD -> OCCUPIED POCKET
-      //
-      // Existing card returns to unsorted.
-      // ----------------------------------------------
+      // Unsorted card -> occupied pocket:
+      // old card is ejected to Cards to Place.
 
       else {
 
@@ -2258,22 +2617,22 @@ function loadBinderForUser(
         );
 
 
-      const pocketOnPage =
-        (
-          targetPosition %
-          BINDER_SLOTS_PER_PAGE
-        ) + 1;
-
-
-      const pageNumber =
+      const page =
         Math.floor(
           targetPosition /
           BINDER_SLOTS_PER_PAGE
         ) + 1;
 
 
+      const pocket =
+        (
+          targetPosition %
+          BINDER_SLOTS_PER_PAGE
+        ) + 1;
+
+
       setStatus(
-        `${card?.name || "Card"} placed in page ${pageNumber}, pocket ${pocketOnPage}.`
+        `${card?.name || "Card"} placed in Page ${page}, Pocket ${pocket}.`
       );
 
     } catch (
@@ -2287,14 +2646,14 @@ function loadBinderForUser(
 
 
       setStatus(
-        "Could not save that binder move. Check the browser console for the Firebase error."
+        "Could not save that binder move."
       );
     }
   }
 
 
   // ==================================================
-  // RETURN CARD TO UNSORTED
+  // RETURN CARD TO CARDS TO PLACE
   // ==================================================
 
   async function returnCardToUnsorted(
@@ -2358,206 +2717,100 @@ function loadBinderForUser(
     ) {
 
       console.error(
-        "Could not return card to unsorted:",
+        "Could not return card to Cards to Place:",
         error
       );
 
 
       setStatus(
-        "Could not return that card to the unsorted tray."
+        "Could not return that card."
       );
     }
   }
 
 
-// ======================================================
-// ADD PAGE
-// ======================================================
-
-async function addBinderPage() {
-
-  const nextPageCount =
-    getEffectivePageCount() + 1;
-
-
-  try {
-
-    const updates = {};
-
-
-    updates[
-      `binderLayouts/${uid}/pageCount`
-    ] = nextPageCount;
-
-
-    await update(
-      ref(db),
-      updates
-    );
-
-
-    /*
-     * IMPORTANT:
-     *
-     * Update our local copy immediately.
-     *
-     * Otherwise renderLayout() may still think
-     * the old page count is active until Firebase's
-     * onValue listener comes back.
-     */
-
-    layout.pageCount =
-      nextPageCount;
-
-
-    /*
-     * Move directly onto the page we just created.
-     */
-
-    currentPage =
-      nextPageCount - 1;
-
-
-    /*
-     * Render immediately instead of waiting for
-     * the Firebase listener.
-     */
-
-    renderLayout();
-
-
-    setStatus(
-      `Page ${nextPageCount} added.`
-    );
-
-  } catch (
-    error
-  ) {
-
-    console.error(
-      "Could not add binder page:",
-      error
-    );
-
-
-    setStatus(
-      "Could not add a binder page. Check Firebase permissions."
-    );
-  }
-}
-
-// ======================================================
-// DELETE PAGE
-// ======================================================
-
-async function deleteCurrentBinderPage() {
-
-  const pageCount =
-    getEffectivePageCount();
-
-
   // ==================================================
-  // ALWAYS KEEP AT LEAST ONE PAGE
+  // ADD PAGE
   // ==================================================
 
-  if (
-    pageCount <= 1
-  ) {
+  async function addBinderPage() {
 
-    setStatus(
-      "The binder must always have at least one page."
-    );
+    const nextPageCount =
+      getEffectivePageCount() +
+      1;
 
 
-    return;
-  }
+    try {
+
+      const updates =
+        {};
 
 
-  const pageToDelete =
-    currentPage;
+      updates[
+        `binderLayouts/${uid}/pageCount`
+      ] = nextPageCount;
 
 
-  const pageNumber =
-    pageToDelete + 1;
-
-
-  const pageStart =
-    pageToDelete *
-    BINDER_SLOTS_PER_PAGE;
-
-
-  const pageEnd =
-    pageStart +
-    BINDER_SLOTS_PER_PAGE;
-
-
-  // ==================================================
-  // FIND CARDS CURRENTLY ON THIS PAGE
-  // ==================================================
-
-  const cardsOnDeletedPage =
-    [];
-
-
-  for (
-    const [
-      cardId,
-      card
-    ] of currentCards
-  ) {
-
-    const position =
-      getPosition(
-        cardId
+      await update(
+        ref(
+          db
+        ),
+        updates
       );
 
 
-    if (
-      position !== null &&
-      position >= pageStart &&
-      position < pageEnd
+      /*
+       * Update local state immediately.
+       */
+
+      layout.pageCount =
+        nextPageCount;
+
+
+      /*
+       * Jump directly to the newly-created page.
+       */
+
+      currentPage =
+        nextPageCount -
+        1;
+
+
+      renderLayout();
+
+
+      setStatus(
+        `Page ${nextPageCount} added.`
+      );
+
+    } catch (
+      error
     ) {
 
-      cardsOnDeletedPage.push({
-        cardId,
-        card,
-        position
-      });
+      console.error(
+        "Could not add binder page:",
+        error
+      );
+
+
+      setStatus(
+        "Could not add a binder page."
+      );
     }
   }
 
+  // ======================================================
+// ADD PAGE AND PLACE CARD
+// ======================================================
 
-  // ==================================================
-  // CONFIRM DELETION
-  // ==================================================
-
-  let confirmMessage =
-    `Delete Page ${pageNumber}?`;
-
-
-  if (
-    cardsOnDeletedPage.length >
-    0
-  ) {
-
-    confirmMessage +=
-      `\n\n${cardsOnDeletedPage.length} card${cardsOnDeletedPage.length === 1 ? "" : "s"} on this page will be returned to Cards to Place.`;
-  }
-
+async function addPageAndPlaceCard(
+  cardId
+) {
 
   if (
-    pageToDelete <
-    pageCount - 1
-  ) {
-
-    confirmMessage +=
-      "\n\nPages after this one will move back by one page.";
-  }
-
-
-  if (
-    !window.confirm(
-      confirmMessage
+    !cardId ||
+    !currentCards.has(
+      cardId
     )
   ) {
 
@@ -2565,189 +2818,126 @@ async function deleteCurrentBinderPage() {
   }
 
 
-  // ==================================================
-  // BUILD ONE FIREBASE UPDATE
-  // ==================================================
+  const oldPageCount =
+    getEffectivePageCount();
+
+
+  const nextPageCount =
+    oldPageCount + 1;
+
+
+  /*
+   * The new page starts immediately after
+   * all existing pages.
+   *
+   * Example:
+   *
+   * Page 1 = positions 0-8
+   * Page 2 = positions 9-17
+   * Page 3 = positions 18-26
+   *
+   * If Page 3 is being created:
+   *
+   * oldPageCount = 2
+   *
+   * 2 * 9 = position 18
+   *
+   * That is Pocket 1 of Page 3.
+   */
+
+  const targetPosition =
+    oldPageCount *
+    BINDER_SLOTS_PER_PAGE;
+
 
   const updates =
     {};
 
 
   /*
-   * This becomes our local copy of the
-   * positions after deletion.
+   * Create the page.
    */
-
-  const nextPositions =
-    {};
-
-
-  // ==================================================
-  // PROCESS ALL SAVED POSITIONS
-  // ==================================================
-
-  for (
-    const [
-      cardId,
-      rawPosition
-    ] of Object.entries(
-      layout.positions ||
-      {}
-    )
-  ) {
-
-    const position =
-      Number(
-        rawPosition
-      );
-
-
-    if (
-      !Number.isInteger(
-        position
-      ) ||
-      position < 0
-    ) {
-
-      continue;
-    }
-
-
-    // ==================================================
-    // CARD IS ON THE PAGE BEING DELETED
-    //
-    // Remove its binder position.
-    // The card itself remains safely in cards/{uid}.
-    // ==================================================
-
-    if (
-      position >= pageStart &&
-      position < pageEnd
-    ) {
-
-      updates[
-        `binderLayouts/${uid}/positions/${cardId}`
-      ] = null;
-
-
-      continue;
-    }
-
-
-    // ==================================================
-    // CARD IS ON A LATER PAGE
-    //
-    // Move it backwards exactly one page.
-    //
-    // Example:
-    //
-    // Page 3 slot 1 = position 18
-    //
-    // Delete Page 2
-    //
-    // 18 - 9 = 9
-    //
-    // It is now Page 2 slot 1.
-    // ==================================================
-
-    if (
-      position >= pageEnd
-    ) {
-
-      const shiftedPosition =
-        position -
-        BINDER_SLOTS_PER_PAGE;
-
-
-      updates[
-        `binderLayouts/${uid}/positions/${cardId}`
-      ] = shiftedPosition;
-
-
-      nextPositions[
-        cardId
-      ] = shiftedPosition;
-
-
-      continue;
-    }
-
-
-    // ==================================================
-    // CARD IS BEFORE THE DELETED PAGE
-    //
-    // Leave it exactly where it is.
-    // ==================================================
-
-    nextPositions[
-      cardId
-    ] = position;
-  }
-
-
-  // ==================================================
-  // REDUCE PAGE COUNT
-  // ==================================================
-
-  const nextPageCount =
-    Math.max(
-      pageCount - 1,
-      1
-    );
-
 
   updates[
     `binderLayouts/${uid}/pageCount`
   ] = nextPageCount;
 
 
-  // ==================================================
-  // SAVE
-  // ==================================================
+  /*
+   * Put the dragged card directly into
+   * Pocket 1 of that page.
+   *
+   * If it was already in the binder,
+   * this simply moves its saved position.
+   *
+   * If it was unsorted, this creates
+   * its first saved position.
+   */
+
+  updates[
+    `binderLayouts/${uid}/positions/${cardId}`
+  ] = targetPosition;
+
 
   try {
 
+    /*
+     * Both changes happen in one Firebase update.
+     *
+     * We don't want a temporary state where the
+     * page exists but the card isn't there yet.
+     */
+
     await update(
-      ref(db),
+      ref(
+        db
+      ),
       updates
     );
 
 
     // ==================================================
     // UPDATE LOCAL STATE IMMEDIATELY
-    //
-    // Same principle as the Add Page fix:
-    // don't make the UI wait for Firebase's listener.
     // ==================================================
 
     layout.pageCount =
       nextPageCount;
 
 
-    layout.positions =
-      nextPositions;
+    if (
+      !layout.positions ||
+      typeof layout.positions !==
+        "object"
+    ) {
+
+      layout.positions =
+        {};
+    }
 
 
-    // ==================================================
-    // DECIDE WHICH PAGE TO SHOW NEXT
-    // ==================================================
+    layout.positions[
+      cardId
+    ] = targetPosition;
+
 
     /*
-     * If we deleted a middle page:
+     * Keep the user on the spread that contains
+     * the newly-created page.
      *
-     * Page 3 becomes Page 2, so remain on
-     * the same currentPage index.
+     * On a desktop odd-page spread:
      *
-     * If we deleted the final page:
+     * Page 3 | [blank]
      *
-     * Go backwards onto the new final page.
+     * becomes:
+     *
+     * Page 3 | Page 4
+     *
+     * without jumping somewhere else.
      */
 
     currentPage =
-      Math.min(
-        pageToDelete,
-        nextPageCount - 1
-      );
+      oldPageCount -
+      1;
 
 
     selectedCardId =
@@ -2760,45 +2950,738 @@ async function deleteCurrentBinderPage() {
     renderLayout();
 
 
-    // ==================================================
-    // STATUS MESSAGE
-    // ==================================================
-
-    if (
-      cardsOnDeletedPage.length >
-      0
-    ) {
-
-      setStatus(
-        `Page ${pageNumber} deleted. ${cardsOnDeletedPage.length} card${cardsOnDeletedPage.length === 1 ? "" : "s"} returned to Cards to Place.`
+    const card =
+      currentCards.get(
+        cardId
       );
 
-    } else {
 
-      setStatus(
-        `Page ${pageNumber} deleted.`
-      );
-    }
+    setStatus(
+      `Page ${nextPageCount} created. ${card?.name || "Card"} placed in Pocket 1.`
+    );
 
   } catch (
     error
   ) {
 
     console.error(
-      "Could not delete binder page:",
+      "Could not create binder page from dropped card:",
       error
     );
 
 
     setStatus(
-      "Could not delete that binder page. Check the browser console for the Firebase error."
+      "Could not create the new binder page."
     );
   }
 }
 
 
   // ==================================================
-  // RENDER LAYOUT
+  // DELETE A SPECIFIC PAGE
+  // ==================================================
+
+  async function deleteBinderPage(
+    pageToDelete
+  ) {
+
+    const pageCount =
+      getEffectivePageCount();
+
+
+    if (
+      pageCount <=
+      1
+    ) {
+
+      setStatus(
+        "The binder must always have at least one page."
+      );
+
+
+      return;
+    }
+
+
+    if (
+      pageToDelete < 0 ||
+      pageToDelete >=
+        pageCount
+    ) {
+
+      return;
+    }
+
+
+    const pageNumber =
+      pageToDelete + 1;
+
+
+    const pageStart =
+      pageToDelete *
+      BINDER_SLOTS_PER_PAGE;
+
+
+    const pageEnd =
+      pageStart +
+      BINDER_SLOTS_PER_PAGE;
+
+
+    const cardsOnDeletedPage =
+      [];
+
+
+    for (
+      const [
+        cardId,
+        card
+      ] of
+      currentCards
+    ) {
+
+      const position =
+        getPosition(
+          cardId
+        );
+
+
+      if (
+        position !== null &&
+        position >= pageStart &&
+        position < pageEnd
+      ) {
+
+        cardsOnDeletedPage.push({
+          cardId,
+          card,
+          position
+        });
+      }
+    }
+
+
+    // ==================================================
+    // CONFIRM
+    // ==================================================
+
+    let message =
+      `Delete Page ${pageNumber}?`;
+
+
+    if (
+      cardsOnDeletedPage.length >
+      0
+    ) {
+
+      message +=
+        `\n\n${cardsOnDeletedPage.length} card${cardsOnDeletedPage.length === 1 ? "" : "s"} will be returned to Cards to Place.`;
+    }
+
+
+    if (
+      pageToDelete <
+      pageCount - 1
+    ) {
+
+      message +=
+        "\n\nPages after this one will move back by one page.";
+    }
+
+
+    if (
+      !window.confirm(
+        message
+      )
+    ) {
+
+      return;
+    }
+
+
+    const updates =
+      {};
+
+
+    const nextPositions =
+      {};
+
+
+    // ==================================================
+    // REBUILD POSITIONS
+    // ==================================================
+
+    for (
+      const [
+        cardId,
+        rawPosition
+      ] of
+      Object.entries(
+        layout.positions ||
+        {}
+      )
+    ) {
+
+      const position =
+        Number(
+          rawPosition
+        );
+
+
+      if (
+        !Number.isInteger(
+          position
+        ) ||
+        position < 0
+      ) {
+
+        continue;
+      }
+
+
+      // ----------------------------------------------
+      // CARD ON DELETED PAGE
+      // ----------------------------------------------
+
+      if (
+        position >= pageStart &&
+        position < pageEnd
+      ) {
+
+        updates[
+          `binderLayouts/${uid}/positions/${cardId}`
+        ] = null;
+
+
+        continue;
+      }
+
+
+      // ----------------------------------------------
+      // CARD AFTER DELETED PAGE
+      // ----------------------------------------------
+
+      if (
+        position >=
+        pageEnd
+      ) {
+
+        const shiftedPosition =
+          position -
+          BINDER_SLOTS_PER_PAGE;
+
+
+        updates[
+          `binderLayouts/${uid}/positions/${cardId}`
+        ] = shiftedPosition;
+
+
+        nextPositions[
+          cardId
+        ] = shiftedPosition;
+
+
+        continue;
+      }
+
+
+      // ----------------------------------------------
+      // CARD BEFORE DELETED PAGE
+      // ----------------------------------------------
+
+      nextPositions[
+        cardId
+      ] = position;
+    }
+
+
+    const nextPageCount =
+      Math.max(
+        pageCount - 1,
+        1
+      );
+
+
+    updates[
+      `binderLayouts/${uid}/pageCount`
+    ] = nextPageCount;
+
+
+    try {
+
+      await update(
+        ref(
+          db
+        ),
+        updates
+      );
+
+
+      layout.pageCount =
+        nextPageCount;
+
+
+      layout.positions =
+        nextPositions;
+
+
+      currentPage =
+        Math.min(
+          pageToDelete,
+          nextPageCount - 1
+        );
+
+
+      selectedCardId =
+        null;
+
+
+      refreshSelectionStyles();
+
+
+      renderLayout();
+
+
+      if (
+        cardsOnDeletedPage.length >
+        0
+      ) {
+
+        setStatus(
+          `Page ${pageNumber} deleted. ${cardsOnDeletedPage.length} card${cardsOnDeletedPage.length === 1 ? "" : "s"} returned to Cards to Place.`
+        );
+
+      } else {
+
+        setStatus(
+          `Page ${pageNumber} deleted.`
+        );
+      }
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        "Could not delete binder page:",
+        error
+      );
+
+
+      setStatus(
+        "Could not delete that binder page."
+      );
+    }
+  }
+
+
+  // ==================================================
+  // BUILD ONE BINDER PAGE
+  // ==================================================
+
+  function createBinderPage(
+    pageIndex,
+    side
+  ) {
+
+    const pageCount =
+      getEffectivePageCount();
+
+
+    const pageShell =
+      document.createElement(
+        "article"
+      );
+
+
+    pageShell.className =
+      "binder-page-shell";
+
+
+    pageShell.classList.add(
+
+      side ===
+        "left"
+
+        ? "binder-page-left"
+
+        : "binder-page-right"
+    );
+
+
+    // ==================================================
+    // PAGE HEADER
+    // ==================================================
+
+    const pageHeader =
+      document.createElement(
+        "div"
+      );
+
+
+    pageHeader.className =
+      "binder-page-header";
+
+
+    const title =
+      document.createElement(
+        "div"
+      );
+
+
+    title.className =
+      "binder-page-title";
+
+
+    title.textContent =
+      `Page ${pageIndex + 1}`;
+
+
+    const deleteButton =
+      document.createElement(
+        "button"
+      );
+
+
+    deleteButton.type =
+      "button";
+
+
+    deleteButton.className =
+      "delete-binder-page-button";
+
+
+    deleteButton.textContent =
+      "🗑 Delete Page";
+
+
+    deleteButton.disabled =
+      pageCount <=
+      1;
+
+
+    deleteButton.addEventListener(
+      "click",
+      () => {
+
+        deleteBinderPage(
+          pageIndex
+        );
+      }
+    );
+
+
+    pageHeader.appendChild(
+      title
+    );
+
+
+    pageHeader.appendChild(
+      deleteButton
+    );
+
+
+    pageShell.appendChild(
+      pageHeader
+    );
+
+
+    // ==================================================
+    // PAGE INNER
+    // ==================================================
+
+    const page =
+      document.createElement(
+        "div"
+      );
+
+
+    page.className =
+      "binder-page";
+
+
+    const slots =
+      document.createElement(
+        "div"
+      );
+
+
+    slots.className =
+      "binder-slots";
+
+
+    const pageStart =
+      pageIndex *
+      BINDER_SLOTS_PER_PAGE;
+
+
+    const pageEnd =
+      pageStart +
+      BINDER_SLOTS_PER_PAGE;
+
+
+    // ==================================================
+    // NINE POCKETS
+    // ==================================================
+
+    for (
+      let position =
+        pageStart;
+
+      position <
+        pageEnd;
+
+      position++
+    ) {
+
+      const slot =
+        document.createElement(
+          "div"
+        );
+
+
+      slot.className =
+        "binder-slot";
+
+
+      slot.dataset.position =
+        String(
+          position
+        );
+
+
+      slot.setAttribute(
+        "aria-label",
+        `Page ${pageIndex + 1}, pocket ${(position % BINDER_SLOTS_PER_PAGE) + 1}`
+      );
+
+
+      // ----------------------------------------------
+      // POCKET NUMBER
+      // ----------------------------------------------
+
+      const pocketNumber =
+        document.createElement(
+          "span"
+        );
+
+
+      pocketNumber.className =
+        "pocket-number";
+
+
+      pocketNumber.textContent =
+        String(
+          (
+            position %
+            BINDER_SLOTS_PER_PAGE
+          ) + 1
+        );
+
+
+      slot.appendChild(
+        pocketNumber
+      );
+
+
+      // ----------------------------------------------
+      // CARD?
+      // ----------------------------------------------
+
+      const cardId =
+        getCardAtPosition(
+          position
+        );
+
+
+      if (
+        cardId
+      ) {
+
+        slot.classList.add(
+          "binder-slot-filled"
+        );
+
+
+        const element =
+  cardElements.get(
+    cardId
+  );
+
+
+if (
+  element
+) {
+
+  /*
+   * The card may have previously been inside
+   * Cards to Place, where it had absolute
+   * positioning for the overlapping pile.
+   *
+   * Strip that positioning before putting it
+   * inside a physical binder pocket.
+   */
+
+  clearUnsortedStackStyles(
+    element
+  );
+
+
+  slot.appendChild(
+    element
+  );
+}
+        
+
+      } else {
+
+        const emptyLabel =
+          document.createElement(
+            "span"
+          );
+
+
+        emptyLabel.className =
+          "empty-pocket-label";
+
+
+        emptyLabel.textContent =
+          "Empty Pocket";
+
+
+        slot.appendChild(
+          emptyLabel
+        );
+      }
+
+
+      // ==================================================
+      // DRAG OVER
+      // ==================================================
+
+      slot.addEventListener(
+        "dragover",
+        (
+          event
+        ) => {
+
+          event.preventDefault();
+
+
+          slot.classList.add(
+            "binder-slot-dragover"
+          );
+        }
+      );
+
+
+      slot.addEventListener(
+        "dragleave",
+        () => {
+
+          slot.classList.remove(
+            "binder-slot-dragover"
+          );
+        }
+      );
+
+
+      // ==================================================
+      // DROP
+      // ==================================================
+
+      slot.addEventListener(
+        "drop",
+        (
+          event
+        ) => {
+
+          event.preventDefault();
+
+
+          slot.classList.remove(
+            "binder-slot-dragover"
+          );
+
+
+          const cardIdFromDrop =
+
+            event
+              .dataTransfer
+              ?.getData(
+                "text/plain"
+              ) ||
+
+            draggedCardId;
+
+
+          if (
+            cardIdFromDrop
+          ) {
+
+            saveMove(
+              cardIdFromDrop,
+              position
+            );
+          }
+        }
+      );
+
+
+      // ==================================================
+      // TAP EMPTY POCKET
+      // ==================================================
+
+      slot.addEventListener(
+        "click",
+        (
+          event
+        ) => {
+
+          if (
+            event.target.closest(
+              ".card-box"
+            )
+          ) {
+
+            return;
+          }
+
+
+          if (
+            selectedCardId
+          ) {
+
+            saveMove(
+              selectedCardId,
+              position
+            );
+          }
+        }
+      );
+
+
+      slots.appendChild(
+        slot
+      );
+    }
+
+
+    page.appendChild(
+      slots
+    );
+
+
+    pageShell.appendChild(
+      page
+    );
+
+
+    return pageShell;
+  }
+
+
+  // ==================================================
+  // RENDER COMPLETE ORGANISER
   // ==================================================
 
   function renderLayout() {
@@ -2824,23 +3707,12 @@ async function deleteCurrentBinderPage() {
           0
         ),
 
-        pageCount -
-          1
+        pageCount - 1
       );
 
 
-    const pageStart =
-      currentPage *
-      BINDER_SLOTS_PER_PAGE;
-
-
-    const pageEnd =
-      pageStart +
-      BINDER_SLOTS_PER_PAGE;
-
-
     // ==================================================
-    // UNSORTED / CARDS TO PLACE
+    // CARDS TO PLACE
     // ==================================================
 
     unsortedCards.innerHTML =
@@ -2861,7 +3733,8 @@ async function deleteCurrentBinderPage() {
       if (
         getPosition(
           cardId
-        ) === null
+        ) ===
+        null
       ) {
 
         unsortedTotal +=
@@ -2918,276 +3791,332 @@ async function deleteCurrentBinderPage() {
 
 
     // ==================================================
-    // CURRENT 3 x 3 PAGE
+    // BINDER PAGES
     // ==================================================
 
-    binderSlots.innerHTML =
+    binderSpread.innerHTML =
       "";
 
 
-    for (
-      let position =
-        pageStart;
+    const doublePage =
+      isDoublePageMode();
 
-      position <
-        pageEnd;
 
-      position++
+    binderSpread.className =
+      doublePage
+
+        ? "binder-spread binder-spread-double"
+
+        : "binder-spread binder-spread-single";
+
+
+    // ==================================================
+    // DESKTOP DOUBLE PAGE
+    // ==================================================
+
+    if (
+      doublePage
     ) {
 
-      const slot =
-        document.createElement(
-          "div"
-        );
+      const spreadStart =
+        getSpreadStart();
 
 
-      slot.className =
-        "binder-slot";
-
-
-      slot.dataset.position =
-        String(
-          position
-        );
-
-
-      slot.setAttribute(
-        "aria-label",
-        `Binder pocket ${position + 1}`
-      );
-
-
-      // Pocket number
-
-      const pocketNumber =
-        document.createElement(
-          "span"
-        );
-
-
-      pocketNumber.className =
-        "pocket-number";
-
-
-      pocketNumber.textContent =
-        String(
-          (
-            position %
-            BINDER_SLOTS_PER_PAGE
-          ) + 1
-        );
-
-
-      slot.appendChild(
-        pocketNumber
-      );
-
-
-      // ----------------------------------------------
-      // CARD IN THIS SLOT?
-      // ----------------------------------------------
-
-      const cardId =
-        getCardAtPosition(
-          position
-        );
-
+      /*
+       * Left side
+       */
 
       if (
-        cardId
+        spreadStart <
+        pageCount
       ) {
 
-        slot.classList.add(
-          "binder-slot-filled"
-        );
-
-
-        const element =
-          cardElements.get(
-            cardId
-          );
-
-
-        if (
-          element
-        ) {
-
-          slot.appendChild(
-            element
-          );
-        }
-
-      } else {
-
-        const pocketHint =
-          document.createElement(
-            "span"
-          );
-
-
-        pocketHint.className =
-          "empty-pocket-label";
-
-
-        pocketHint.textContent =
-          "Empty Pocket";
-
-
-        slot.appendChild(
-          pocketHint
+        binderSpread.appendChild(
+          createBinderPage(
+            spreadStart,
+            "left"
+          )
         );
       }
 
 
-      // ----------------------------------------------
-      // DRAG OVER
-      // ----------------------------------------------
+      /*
+       * Right side
+       */
 
-      slot.addEventListener(
-        "dragover",
-        (
-          event
-        ) => {
+      if (
+        spreadStart + 1 <
+        pageCount
+      ) {
 
-          event.preventDefault();
+        binderSpread.appendChild(
+          createBinderPage(
+            spreadStart + 1,
+            "right"
+          )
+        );
+
+      } else{
+
+  // ==================================================
+  // EMPTY RIGHT-HAND SIDE
+  // ==================================================
+
+  const blankSide =
+    document.createElement(
+      "div"
+    );
 
 
-          slot.classList.add(
-            "binder-slot-dragover"
-          );
-        }
+  blankSide.className =
+    "binder-blank-side";
+
+
+  const newPageNumber =
+    pageCount + 1;
+
+
+  blankSide.innerHTML = `
+
+    <div class="binder-blank-side-inner">
+
+      <div class="blank-page-drop-message">
+
+        <span class="blank-page-plus">
+          ＋
+        </span>
+
+        <strong>
+          Create Page ${newPageNumber}
+        </strong>
+
+        <span>
+          Drag a card here to create the page
+          and place it in Pocket 1.
+        </span>
+
+      </div>
+
+    </div>
+  `;
+
+
+  // ==================================================
+  // DRAG OVER
+  // ==================================================
+
+  blankSide.addEventListener(
+    "dragover",
+    (
+      event
+    ) => {
+
+      event.preventDefault();
+
+
+      if (
+        event.dataTransfer
+      ) {
+
+        event.dataTransfer.dropEffect =
+          "move";
+      }
+
+
+      blankSide.classList.add(
+        "binder-blank-side-dragover"
+      );
+    }
+  );
+
+
+  // ==================================================
+  // DRAG LEAVE
+  // ==================================================
+
+  blankSide.addEventListener(
+    "dragleave",
+    (
+      event
+    ) => {
+
+      /*
+       * Don't remove the highlight when the
+       * cursor merely passes over one of the
+       * child text elements.
+       */
+
+      if (
+        !blankSide.contains(
+          event.relatedTarget
+        )
+      ) {
+
+        blankSide.classList.remove(
+          "binder-blank-side-dragover"
+        );
+      }
+    }
+  );
+
+
+  // ==================================================
+  // DROP CARD -> CREATE PAGE
+  // ==================================================
+
+  blankSide.addEventListener(
+    "drop",
+    (
+      event
+    ) => {
+
+      event.preventDefault();
+
+
+      blankSide.classList.remove(
+        "binder-blank-side-dragover"
       );
 
 
-      // ----------------------------------------------
-      // DRAG LEAVE
-      // ----------------------------------------------
+      const cardId =
 
-      slot.addEventListener(
-        "dragleave",
-        () => {
+        event
+          .dataTransfer
+          ?.getData(
+            "text/plain"
+          ) ||
 
-          slot.classList.remove(
-            "binder-slot-dragover"
-          );
-        }
+        draggedCardId;
+
+
+      if (
+        !cardId
+      ) {
+
+        return;
+      }
+
+
+      addPageAndPlaceCard(
+        cardId
       );
+    }
+  );
+
+
+  // ==================================================
+  // TAP-TO-PLACE SUPPORT
+  // ==================================================
+
+  /*
+   * This also works with the selection system.
+   *
+   * Select a card first, then click the empty
+   * binder side.
+   */
+
+  blankSide.addEventListener(
+    "click",
+    () => {
+
+      if (
+        selectedCardId
+      ) {
+
+        addPageAndPlaceCard(
+          selectedCardId
+        );
+      }
+    }
+  );
+
+
+  binderSpread.appendChild(
+    blankSide
+  );
+}
 
 
       // ----------------------------------------------
-      // DROP
+      // INDICATOR
       // ----------------------------------------------
 
-      slot.addEventListener(
-        "drop",
-        (
-          event
-        ) => {
+      if (
+        spreadStart + 1 <
+        pageCount
+      ) {
 
-          event.preventDefault();
+        pageIndicator.textContent =
+          `Pages ${spreadStart + 1}–${spreadStart + 2} of ${pageCount}`;
 
+      } else {
 
-          slot.classList.remove(
-            "binder-slot-dragover"
-          );
-
-
-          const cardIdFromDrop =
-
-            event
-              .dataTransfer
-              ?.getData(
-                "text/plain"
-              ) ||
-
-            draggedCardId;
+        pageIndicator.textContent =
+          `Page ${spreadStart + 1} of ${pageCount}`;
+      }
 
 
-          if (
-            cardIdFromDrop
-          ) {
-
-            saveMove(
-              cardIdFromDrop,
-              position
-            );
-          }
-        }
-      );
+      previousPageBtn.disabled =
+        spreadStart <=
+        0;
 
 
-      // ----------------------------------------------
-      // TAP / CLICK POCKET
-      // ----------------------------------------------
-
-      slot.addEventListener(
-        "click",
-        (
-          event
-        ) => {
-
-          /*
-           * Clicking the card itself or its
-           * Cardmarket button should not also
-           * count as clicking the pocket.
-           */
-
-          if (
-            event.target.closest(
-              ".card-box"
-            )
-          ) {
-
-            return;
-          }
-
-
-          if (
-            selectedCardId
-          ) {
-
-            saveMove(
-              selectedCardId,
-              position
-            );
-          }
-        }
-      );
-
-
-      binderSlots.appendChild(
-        slot
-      );
+      nextPageBtn.disabled =
+        spreadStart + 2 >=
+        pageCount;
     }
 
 
     // ==================================================
-    // PAGE CONTROLS
+    // MOBILE / TABLET SINGLE PAGE
     // ==================================================
 
-    pageIndicator.textContent =
-      `Page ${currentPage + 1} of ${pageCount}`;
+    else {
+
+      binderSpread.appendChild(
+        createBinderPage(
+          currentPage,
+          "single"
+        )
+      );
 
 
-    previousPageBtn.disabled =
-      currentPage <=
-      0;
+      pageIndicator.textContent =
+        `Page ${currentPage + 1} of ${pageCount}`;
 
 
-    nextPageBtn.disabled =
-      currentPage >=
-      pageCount - 1;
+      previousPageBtn.disabled =
+        currentPage <=
+        0;
 
-    deletePageBtn.disabled =
-      pageCount <=
-      1;
-      
+
+      nextPageBtn.disabled =
+        currentPage >=
+        pageCount - 1;
+    }
+
+
     refreshSelectionStyles();
+
+
+      /*
+      * Cards may just have moved into or out of
+      * the unsorted pile, so rebuild the physical stack.
+      */
+
+      requestAnimationFrame(
+        () => {
+
+          syncUnsortedPanelHeight();
+
+          layoutUnsortedStack();
+        }
+      );
   }
 
 
   // ==================================================
-  // CARD DRAG / TAP EVENTS
+  // CARD ORGANISER EVENTS
   // ==================================================
 
   function attachCardOrganiserEvents(
@@ -3203,9 +4132,9 @@ async function deleteCurrentBinderPage() {
       true;
 
 
-    // ----------------------------------------------
+    // ==================================================
     // DRAG START
-    // ----------------------------------------------
+    // ==================================================
 
     cardBox.addEventListener(
       "dragstart",
@@ -3239,9 +4168,9 @@ async function deleteCurrentBinderPage() {
     );
 
 
-    // ----------------------------------------------
+    // ==================================================
     // DRAG END
-    // ----------------------------------------------
+    // ==================================================
 
     cardBox.addEventListener(
       "dragend",
@@ -3257,11 +4186,9 @@ async function deleteCurrentBinderPage() {
 
 
         document
-
           .querySelectorAll(
             ".binder-slot-dragover"
           )
-
           .forEach(
             (
               slot
@@ -3276,9 +4203,9 @@ async function deleteCurrentBinderPage() {
     );
 
 
-    // ----------------------------------------------
-    // TAP / CLICK CARD
-    // ----------------------------------------------
+    // ==================================================
+    // TAP CARD
+    // ==================================================
 
     cardBox.addEventListener(
       "click",
@@ -3287,7 +4214,8 @@ async function deleteCurrentBinderPage() {
       ) => {
 
         /*
-         * Search/Cardmarket links do their own thing.
+         * Don't select the card when clicking
+         * Cardmarket.
          */
 
         if (
@@ -3304,11 +4232,8 @@ async function deleteCurrentBinderPage() {
 
 
         /*
-         * If a different card is already selected
-         * and this clicked card is already in the
-         * binder, use its pocket as the destination.
-         *
-         * This makes tap-to-swap work on phones.
+         * Card already selected + click another
+         * binder card = swap with that card.
          */
 
         if (
@@ -3386,7 +4311,7 @@ async function deleteCurrentBinderPage() {
 
 
     // ==================================================
-    // TREATMENT BADGE
+    // TREATMENT
     // ==================================================
 
     const {
@@ -3439,7 +4364,7 @@ async function deleteCurrentBinderPage() {
 
 
     // ==================================================
-    // CARD IMAGE
+    // IMAGE
     // ==================================================
 
     const image =
@@ -3540,22 +4465,11 @@ async function deleteCurrentBinderPage() {
         event
       ) => {
 
-        /*
-         * Prevent the Cardmarket button click
-         * from selecting the binder card.
-         */
-
         event.stopPropagation();
 
 
         /*
-         * IMPORTANT:
-         *
-         * We NEVER fetch Cardmarket.
-         *
-         * We only resolve a URL using
-         * Scryfall information and then
-         * navigate there after the user click.
+         * Never fetch Cardmarket.
          */
 
         let sf =
@@ -3598,10 +4512,6 @@ async function deleteCurrentBinderPage() {
         }
 
 
-        // ----------------------------------------------
-        // DIRECT CARDMARKET RESULT
-        // ----------------------------------------------
-
         if (
           sf
         ) {
@@ -3628,10 +4538,6 @@ async function deleteCurrentBinderPage() {
         }
 
 
-        // ----------------------------------------------
-        // SAFE SEARCH FALLBACK
-        // ----------------------------------------------
-
         const searchUrl =
           buildCardmarketSearchUrl(
             sf,
@@ -3645,10 +4551,6 @@ async function deleteCurrentBinderPage() {
         );
       };
 
-
-    // ==================================================
-    // APPEND CARD PARTS
-    // ==================================================
 
     cardBox.appendChild(
       quantity
@@ -3676,7 +4578,7 @@ async function deleteCurrentBinderPage() {
 
 
   // ==================================================
-  // PAGE CONTROL EVENTS
+  // PREVIOUS
   // ==================================================
 
   previousPageBtn.addEventListener(
@@ -3684,50 +4586,109 @@ async function deleteCurrentBinderPage() {
     () => {
 
       if (
-        currentPage >
-        0
+        isDoublePageMode()
       ) {
 
-        currentPage -=
-          1;
+        const spreadStart =
+          getSpreadStart();
 
 
-        renderLayout();
+        if (
+          spreadStart >
+          0
+        ) {
+
+          currentPage =
+            Math.max(
+              0,
+              spreadStart - 2
+            );
+
+
+          renderLayout();
+        }
+
+      } else {
+
+        if (
+          currentPage >
+          0
+        ) {
+
+          currentPage -=
+            1;
+
+
+          renderLayout();
+        }
       }
     }
   );
 
+
+  // ==================================================
+  // NEXT
+  // ==================================================
 
   nextPageBtn.addEventListener(
     "click",
     () => {
 
+      const pageCount =
+        getEffectivePageCount();
+
+
       if (
-        currentPage <
-        getEffectivePageCount() -
-          1
+        isDoublePageMode()
       ) {
 
-        currentPage +=
-          1;
+        const spreadStart =
+          getSpreadStart();
 
 
-        renderLayout();
+        if (
+          spreadStart + 2 <
+          pageCount
+        ) {
+
+          currentPage =
+            spreadStart + 2;
+
+
+          renderLayout();
+        }
+
+      } else {
+
+        if (
+          currentPage <
+          pageCount - 1
+        ) {
+
+          currentPage +=
+            1;
+
+
+          renderLayout();
+        }
       }
     }
   );
 
+
+  // ==================================================
+  // ADD PAGE
+  // ==================================================
 
   addPageBtn.addEventListener(
     "click",
     addBinderPage
   );
 
-  deletePageBtn.addEventListener(
-  "click",
-  deleteCurrentBinderPage
-  );
 
+  // ==================================================
+  // RETURN SELECTED CARD
+  // ==================================================
 
   returnUnsortedBtn.addEventListener(
     "click",
@@ -3746,7 +4707,7 @@ async function deleteCurrentBinderPage() {
 
 
   // ==================================================
-  // UNSORTED PANEL DROP TARGET
+  // CARDS TO PLACE DROP TARGET
   // ==================================================
 
   unsortedPanel.addEventListener(
@@ -3823,6 +4784,19 @@ async function deleteCurrentBinderPage() {
 
 
   // ==================================================
+  // SWITCH LAYOUT WHEN SCREEN SIZE CHANGES
+  // ==================================================
+
+  desktopSpreadQuery.addEventListener(
+    "change",
+    () => {
+
+      renderLayout();
+    }
+  );
+
+
+  // ==================================================
   // FIREBASE LAYOUT LISTENER
   // ==================================================
 
@@ -3882,13 +4856,6 @@ async function deleteCurrentBinderPage() {
       );
 
 
-      /*
-       * A missing layout is absolutely fine.
-       *
-       * It means all cards start in
-       * Cards to Place.
-       */
-
       layout = {
 
         pageCount:
@@ -3909,7 +4876,7 @@ async function deleteCurrentBinderPage() {
 
 
   // ==================================================
-  // FIREBASE CARDS + SCRYFALL
+  // FIREBASE CARDS
   // ==================================================
 
   onValue(
@@ -3918,12 +4885,6 @@ async function deleteCurrentBinderPage() {
     async (
       snapshot
     ) => {
-
-      /*
-       * Used to prevent an old asynchronous
-       * Scryfall render from overwriting a
-       * newer Firebase snapshot.
-       */
 
       const thisLoad =
         ++cardsLoadVersion;
@@ -3957,7 +4918,7 @@ async function deleteCurrentBinderPage() {
 
 
       // ==================================================
-      // BUILD SCRYFALL REQUEST LIST
+      // SCRYFALL IDENTIFIERS
       // ==================================================
 
       for (
@@ -4009,7 +4970,7 @@ async function deleteCurrentBinderPage() {
 
 
       // ==================================================
-      // FETCH UNCACHED SCRYFALL CARDS
+      // BATCH FETCH
       // ==================================================
 
       if (
@@ -4042,10 +5003,6 @@ async function deleteCurrentBinderPage() {
             }
 
 
-            // ------------------------------------------
-            // CURRENT CACHE KEY
-            // ------------------------------------------
-
             if (
               fetchedMap.has(
                 key
@@ -4063,10 +5020,6 @@ async function deleteCurrentBinderPage() {
               continue;
             }
 
-
-            // ------------------------------------------
-            // SCRYFALL ID FALLBACK
-            // ------------------------------------------
 
             if (
               card.scryfallId
@@ -4094,10 +5047,6 @@ async function deleteCurrentBinderPage() {
               }
             }
 
-
-            // ------------------------------------------
-            // SET + COLLECTOR FALLBACK
-            // ------------------------------------------
 
             const set =
               normalizeSetCode(
@@ -4142,13 +5091,6 @@ async function deleteCurrentBinderPage() {
       }
 
 
-      /*
-       * A newer cards snapshot arrived
-       * while Scryfall was loading.
-       *
-       * Ignore this old render.
-       */
-
       if (
         thisLoad !==
         cardsLoadVersion
@@ -4159,7 +5101,7 @@ async function deleteCurrentBinderPage() {
 
 
       // ==================================================
-      // CREATE THE CARD ELEMENTS
+      // CREATE CARDS
       // ==================================================
 
       const nextCards =
@@ -4223,7 +5165,6 @@ async function deleteCurrentBinderPage() {
 
       if (
         selectedCardId &&
-
         !currentCards.has(
           selectedCardId
         )
