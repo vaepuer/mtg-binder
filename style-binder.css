@@ -2,8 +2,28 @@
    GLOBAL
    ====================================================== */
 
+:root {
+  /*
+   * Change this one path when your sleeve art
+   * is ready.
+   */
+  --binder-sleeve-image:
+    url("assets/binder-sleeve.png");
+
+  /*
+   * Binder geometry.
+   *
+   * The desktop double-page spread has a 14px gap,
+   * so the spine sits 7px in from each page edge.
+   */
+  --binder-spread-gap: 14px;
+  --binder-half-spread-gap: 7px;
+}
+
+
 body {
   font-family: Arial, sans-serif;
+
   margin: 0;
   padding: 20px;
 
@@ -21,6 +41,7 @@ header {
   width: 100%;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
@@ -40,6 +61,7 @@ header {
 h1,
 h2 {
   color: white;
+
   text-align: center;
 }
 
@@ -50,7 +72,9 @@ h2 {
 
 .banner {
   position: sticky;
+
   top: 0;
+
   z-index: 10;
 
   width: 80%;
@@ -64,7 +88,9 @@ h2 {
   background-color: #1a1c2b;
 
   color: white;
+
   text-align: center;
+
   font-size: 18px;
   font-weight: bold;
 
@@ -94,7 +120,9 @@ button,
   background-color: #1a1c2b;
 
   color: white;
+
   font-size: 14px;
+
   text-decoration: none;
 
   border: 1px solid white;
@@ -110,7 +138,9 @@ button,
 
 .back-button {
   display: block;
+
   width: fit-content;
+
   text-align: center;
 }
 
@@ -119,6 +149,7 @@ button:hover,
 .button:hover,
 .back-button:hover {
   background-color: #3a3a4d;
+
   border-color: #868686;
 }
 
@@ -141,6 +172,7 @@ button:disabled {
 
 .user-container {
   display: flex;
+
   flex-direction: row;
   flex-wrap: wrap;
 
@@ -158,12 +190,13 @@ button:disabled {
    ====================================================== */
 
 /*
- * Keep this generic because public-binder.html
- * uses the same stylesheet.
+ * public-binder also uses this stylesheet,
+ * so keep the base container generic.
  */
 
 .binder-container {
   display: flex;
+
   flex-wrap: wrap;
 
   justify-content: center;
@@ -202,16 +235,37 @@ button:disabled {
 }
 
 
+/* ======================================================
+   CARD IMAGE WRAPPER
+   ====================================================== */
+
+.card-image-wrap {
+  position: relative;
+
+  width: 100%;
+
+  line-height: 0;
+
+  border-radius: 8px;
+}
+
+
 .card-box img {
   display: block;
 
   width: 100%;
   height: auto;
 
+  box-sizing: border-box;
+
   border: 1px solid #52526d;
   border-radius: 8px;
 }
 
+
+/* ======================================================
+   CARDMARKET BUTTON
+   ====================================================== */
 
 .card-box button {
   margin-top: 8px;
@@ -221,6 +275,7 @@ button:disabled {
   background-color: #1a1c2b;
 
   color: white;
+
   font-size: 14px;
 
   border: 1px solid white;
@@ -240,11 +295,13 @@ button:disabled {
 .quantity-badge,
 .foil-badge {
   position: absolute;
+
   z-index: 5;
 
   padding: 4px 8px;
 
   color: white;
+
   font-size: 13px;
 
   border-radius: 8px;
@@ -392,6 +449,7 @@ button:disabled {
   background-color: #000;
 
   color: white;
+
   font-family: monospace;
   font-size: 12px;
 
@@ -419,7 +477,7 @@ button:disabled {
 
 
 /* ======================================================
-   BINDER ORGANISER WORKSPACE
+   BINDER WORKSPACE
    ====================================================== */
 
 .binder-workspace {
@@ -458,19 +516,31 @@ button:disabled {
 
 
 /* ======================================================
+   DISABLE INTERACTION DURING PAGE TURN
+   ====================================================== */
+
+.binder-workspace.binder-is-turning
+.binder-stage,
+
+.binder-workspace.binder-is-turning
+.unsorted-panel {
+  pointer-events: none;
+}
+
+
+.binder-workspace.binder-is-turning
+.card-box {
+  cursor: default;
+}
+
+
+/* ======================================================
    CARDS TO PLACE PANEL
    ====================================================== */
 
-/*
- * binder.js synchronises this panel's desktop
- * height with the binder stage.
- *
- * It is not sticky and does not have its own
- * vertical scrollbar.
- */
-
 .unsorted-panel {
   display: flex;
+
   flex-direction: column;
 
   min-width: 0;
@@ -531,11 +601,13 @@ button:disabled {
 
 
 .unsorted-header h2 {
-  margin: 0 0 6px;
+  margin:
+    0 0 6px;
 
   color: white;
 
   text-align: left;
+
   font-size: 18px;
 }
 
@@ -546,6 +618,7 @@ button:disabled {
   color: #c9c9d3;
 
   text-align: left;
+
   font-size: 12px;
   line-height: 1.4;
 }
@@ -563,7 +636,9 @@ button:disabled {
   background-color: #1a1c2b;
 
   color: white;
+
   text-align: center;
+
   font-size: 12px;
 
   border: 1px solid #77778f;
@@ -576,18 +651,14 @@ button:disabled {
 
   width: 100%;
 
-  margin: 0 0 12px;
+  margin:
+    0 0 12px;
 }
 
 
 /* ======================================================
-   CARDS TO PLACE PHYSICAL STACK
+   PHYSICAL CARDS-TO-PLACE STACK
    ====================================================== */
-
-/*
- * Desktop card positions are assigned by
- * layoutUnsortedStack() in binder.js.
- */
 
 .unsorted-cards {
   position: relative;
@@ -602,16 +673,20 @@ button:disabled {
 
   box-sizing: border-box;
 
-  padding: 4px 0 0;
+  padding:
+    4px 0 0;
 
   overflow: hidden;
 }
 
 
-.unsorted-cards .card-box {
+.unsorted-cards
+.card-box {
   width: min(
     175px,
-    calc(100% - 8px)
+    calc(
+      100% - 8px
+    )
   );
 
   box-sizing: border-box;
@@ -631,25 +706,20 @@ button:disabled {
 
 
 /*
- * Cardmarket isn't useful while arranging loose
- * cards and makes dragging harder.
- *
- * The button still exists and automatically
- * returns once the card enters a binder slot.
+ * No Cardmarket button in loose cards.
  */
 
-.unsorted-cards .card-box button {
+.unsorted-cards
+.card-box
+button {
   display: none;
 }
 
 
-/*
- * Bring whichever exposed card is hovered
- * to the front of the loose stack.
- */
-
-.unsorted-cards .card-box:hover {
-  z-index: 10000 !important;
+.unsorted-cards
+.card-box:hover {
+  z-index:
+    10000 !important;
 
   box-shadow:
     0 20px 35px
@@ -657,13 +727,15 @@ button:disabled {
 }
 
 
-.unsorted-cards .card-box.binder-card-selected {
-  z-index: 10001 !important;
+.unsorted-cards
+.card-box.binder-card-selected {
+  z-index:
+    10001 !important;
 }
 
 
 /* ======================================================
-   CARDS TO PLACE EMPTY / LOADING STATE
+   UNSORTED EMPTY / LOADING
    ====================================================== */
 
 .unsorted-empty,
@@ -672,15 +744,19 @@ button:disabled {
 
   box-sizing: border-box;
 
-  padding: 22px 10px;
+  padding:
+    22px 10px;
 
   color: #c9c9d3;
 
   text-align: center;
+
   font-size: 13px;
   line-height: 1.4;
 
-  border: 1px dashed #52526d;
+  border:
+    1px dashed #52526d;
+
   border-radius: 8px;
 }
 
@@ -702,6 +778,7 @@ button:disabled {
 
 .binder-page-toolbar {
   display: flex;
+
   flex-wrap: wrap;
 
   align-items: center;
@@ -709,7 +786,8 @@ button:disabled {
 
   gap: 10px;
 
-  margin: 0 0 16px;
+  margin:
+    0 0 16px;
 }
 
 
@@ -719,11 +797,14 @@ button:disabled {
   color: white;
 
   text-align: center;
+
   font-weight: bold;
 }
 
 
-.binder-page-toolbar button:disabled,
+.binder-page-toolbar
+button:disabled,
+
 .delete-binder-page-button:disabled {
   opacity: 0.35;
 
@@ -744,7 +825,7 @@ button:disabled {
 
   box-sizing: border-box;
 
-  gap: 14px;
+  gap: var(--binder-spread-gap);
 
   padding: 16px;
 
@@ -756,25 +837,34 @@ button:disabled {
   box-shadow:
     inset 0 0 30px
     rgba(0, 0, 0, 0.75);
+
+  /*
+   * Required for the 3D page flip.
+   */
+
+  perspective: 2200px;
+
+  transform-style: preserve-3d;
+
+  isolation: isolate;
+
+  overflow: visible;
 }
 
 
 /* ======================================================
-   DESKTOP DOUBLE PAGE
+   DOUBLE PAGE
    ====================================================== */
 
 .binder-spread-double {
   grid-template-columns:
     repeat(
       2,
-      minmax(0, 1fr)
+      minmax(
+        0,
+        1fr
+      )
     );
-
-  /*
-   * The two page shells occupy one shared grid row.
-   * Stretch both sides to the height of whichever
-   * page requires the most room.
-   */
 
   align-items: stretch;
 }
@@ -793,11 +883,12 @@ button:disabled {
   bottom: 14px;
   left: 50%;
 
-  z-index: 2;
+  z-index: 30;
 
   width: 4px;
 
-  transform: translateX(-50%);
+  transform:
+    translateX(-50%);
 
   background: linear-gradient(
     to right,
@@ -817,7 +908,7 @@ button:disabled {
 
 
 /* ======================================================
-   SINGLE PAGE MODE
+   SINGLE PAGE
    ====================================================== */
 
 .binder-spread-single {
@@ -832,7 +923,7 @@ button:disabled {
 
 
 /* ======================================================
-   INDIVIDUAL BINDER PAGE
+   PAGE SHELL
    ====================================================== */
 
 .binder-page-shell {
@@ -870,25 +961,19 @@ button:disabled {
 }
 
 
-.binder-spread-single
-.binder-page-shell {
+.binder-page-single {
   border-radius: 15px;
 }
 
 
 /* ======================================================
-   DOUBLE PAGE MATCHING HEIGHT
+   MATCH BOTH DESKTOP PAGE HEIGHTS
    ====================================================== */
-
-/*
- * This is the important section for keeping an
- * empty Page 2 the same height as a populated
- * Page 1.
- */
 
 .binder-spread-double
 .binder-page-shell {
   display: flex;
+
   flex-direction: column;
 
   align-self: stretch;
@@ -898,6 +983,7 @@ button:disabled {
 .binder-spread-double
 .binder-page {
   display: flex;
+
   flex-direction: column;
 
   flex: 1 1 auto;
@@ -907,7 +993,6 @@ button:disabled {
 
 
 .binder-spread-double
-.binder-page
 .binder-slots {
   flex: 1 1 auto;
 }
@@ -927,7 +1012,8 @@ button:disabled {
 
   margin-bottom: 10px;
 
-  padding: 0 2px;
+  padding:
+    0 2px;
 }
 
 
@@ -940,7 +1026,8 @@ button:disabled {
 
 
 .delete-binder-page-button {
-  padding: 5px 7px;
+  padding:
+    5px 7px;
 
   font-size: 11px;
 }
@@ -968,7 +1055,7 @@ button:disabled {
 
 
 /* ======================================================
-   3 × 3 POCKET GRID
+   3 x 3 POCKET GRID
    ====================================================== */
 
 .binder-slots {
@@ -977,15 +1064,11 @@ button:disabled {
   grid-template-columns:
     repeat(
       3,
-      minmax(0, 1fr)
+      minmax(
+        0,
+        1fr
+      )
     );
-
-  /*
-   * All three rows always have identical heights.
-   *
-   * If one card needs extra space, all three rows
-   * use the same row height.
-   */
 
   grid-template-rows:
     repeat(
@@ -1000,7 +1083,7 @@ button:disabled {
 
 
 /* ======================================================
-   BINDER POCKET
+   POCKET
    ====================================================== */
 
 .binder-slot {
@@ -1014,14 +1097,10 @@ button:disabled {
   min-width: 0;
 
   /*
-   * This gives a completely empty binder page
-   * approximately card-sized pockets.
-   *
-   * If a real card needs slightly more room,
-   * the equal 1fr rows will expand together.
+   * Empty pockets remain card-sized.
    */
 
-  min-height: 285px;
+  min-height: 300px;
 
   box-sizing: border-box;
 
@@ -1036,7 +1115,9 @@ button:disabled {
     0.022
   );
 
-  border: 1px dashed #55556d;
+  border:
+    1px dashed #55556d;
+
   border-radius: 9px;
 
   transition:
@@ -1054,6 +1135,7 @@ button:disabled {
   );
 
   border-style: solid;
+
   border-color: #414155;
 }
 
@@ -1094,6 +1176,7 @@ button:disabled {
   color: #707080;
 
   text-align: center;
+
   font-size: 11px;
 
   pointer-events: none;
@@ -1101,18 +1184,11 @@ button:disabled {
 
 
 /* ======================================================
-   CARD INSIDE BINDER POCKET
+   CARD INSIDE POCKET
    ====================================================== */
 
-.binder-slot .card-box {
-  /*
-   * Cards in the loose stack receive absolute
-   * positioning from JS.
-   *
-   * binder.js clears those inline properties
-   * before moving the card here.
-   */
-
+.binder-slot
+.card-box {
   position: relative;
 
   width: 100%;
@@ -1130,27 +1206,79 @@ button:disabled {
 }
 
 
-.binder-slot .card-box button {
+.binder-slot
+.card-box
+button {
   display: inline-block;
 
   margin-top: 4px;
 
-  padding: 4px 7px;
+  padding:
+    4px 7px;
 
   font-size: 11px;
 }
 
 
-.binder-slot .quantity-badge,
-.binder-slot .foil-badge {
-  padding: 2px 4px;
+.binder-slot
+.quantity-badge,
+
+.binder-slot
+.foil-badge {
+  padding:
+    2px 4px;
 
   font-size: 9px;
 }
 
 
 /* ======================================================
-   CARD DRAG / SELECTION
+   PLASTIC SLEEVE OVERLAY
+   ====================================================== */
+
+/*
+ * Your art goes here:
+ *
+ * assets/binder-sleeve.png
+ *
+ * The centre of the image should be transparent.
+ *
+ * This layer exists ONLY on cards inside
+ * binder pockets.
+ */
+
+.binder-slot
+.card-image-wrap::after {
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  z-index: 3;
+
+  background-image:
+    var(
+      --binder-sleeve-image
+    );
+
+  background-size:
+    100% 100%;
+
+  background-position:
+    center;
+
+  background-repeat:
+    no-repeat;
+
+  border-radius: 8px;
+
+  pointer-events: none;
+}
+
+
+/* ======================================================
+   CARD DRAG / SELECT
    ====================================================== */
 
 .card-box.binder-card-dragging {
@@ -1159,7 +1287,9 @@ button:disabled {
 
 
 .card-box.binder-card-selected {
-  outline: 3px solid white;
+  outline:
+    3px solid white;
+
   outline-offset: 3px;
 }
 
@@ -1170,16 +1300,8 @@ button:disabled {
 
 
 /* ======================================================
-   EMPTY RIGHT-HAND BINDER SIDE
+   EMPTY RIGHT-HAND SIDE
    ====================================================== */
-
-/*
- * Used when an odd-numbered binder spread has
- * no right-hand page yet.
- *
- * binder.js also turns this into a drop target
- * that creates the next page.
- */
 
 .binder-blank-side {
   display: flex;
@@ -1228,7 +1350,9 @@ button:disabled {
 
   text-align: center;
 
-  border: 1px dashed #45455b;
+  border:
+    1px dashed #45455b;
+
   border-radius: 10px;
 
   transition:
@@ -1237,12 +1361,9 @@ button:disabled {
 }
 
 
-/* ======================================================
-   EMPTY SIDE DROP MESSAGE
-   ====================================================== */
-
 .blank-page-drop-message {
   display: flex;
+
   flex-direction: column;
 
   align-items: center;
@@ -1256,14 +1377,16 @@ button:disabled {
 }
 
 
-.blank-page-drop-message strong {
+.blank-page-drop-message
+strong {
   color: #c9c9d3;
 
   font-size: 15px;
 }
 
 
-.blank-page-drop-message span:last-child {
+.blank-page-drop-message
+span:last-child {
   color: #77778b;
 
   font-size: 12px;
@@ -1278,10 +1401,6 @@ button:disabled {
   line-height: 1;
 }
 
-
-/* ======================================================
-   DRAGGING OVER EMPTY PAGE
-   ====================================================== */
 
 .binder-blank-side-dragover {
   background: linear-gradient(
@@ -1318,125 +1437,295 @@ button:disabled {
 
 .binder-blank-side-dragover
 .blank-page-plus,
+
 .binder-blank-side-dragover
-.blank-page-drop-message strong {
+.blank-page-drop-message
+strong {
   color: white;
 }
 
 
 /* ======================================================
-   BINDER STATUS
+   STATUS
    ====================================================== */
 
 .binder-status {
   min-height: 18px;
 
-  margin: 14px 0 0;
+  margin:
+    14px 0 0;
 
   color: #d4d4dc;
 
   text-align: center;
+
   font-size: 12px;
 }
 
 
 /* ======================================================
-   DESKTOP DOUBLE PAGE
+   3D PAGE TURN
    ====================================================== */
+
+/*
+ * Old non-turning half of the binder is temporarily
+ * cloned above the new spread during an animation.
+ */
+
+.binder-static-page-overlay {
+  position: absolute !important;
+
+  z-index: 35;
+
+  margin: 0 !important;
+
+  pointer-events: none !important;
+}
+
+
+/*
+ * This is the physical sheet being turned.
+ */
+
+.binder-page-turner {
+  position: absolute;
+
+  z-index: 50;
+
+  margin: 0;
+
+  transform-style: preserve-3d;
+
+  will-change:
+    transform,
+    box-shadow;
+
+  pointer-events: none;
+}
+
+
+/* ======================================================
+   PAGE TURN PIVOTS
+   ====================================================== */
+
+/*
+ * Single-page mode:
+ * pivot from the natural page edge.
+ */
+
+.binder-page-turner-next {
+  transform-origin:
+    left center;
+}
+
+
+.binder-page-turner-previous {
+  transform-origin:
+    right center;
+}
+
+
+/*
+ * Desktop open-binder mode:
+ *
+ * The visible gap between the two page shells is 14px.
+ * The spine sits halfway through that gap.
+ *
+ * Therefore:
+ *
+ * RIGHT PAGE turning forward:
+ * pivot 7px LEFT of its own left edge.
+ *
+ * LEFT PAGE turning backward:
+ * pivot 7px RIGHT of its own right edge.
+ */
 
 @media (min-width: 1180px) {
 
-  /*
-   * Both physical pages occupy exactly the same
-   * height within the spread.
-   */
-
-  .binder-spread-double {
-    align-items: stretch;
+  .binder-spread-double
+  > .binder-page-turner-next {
+    transform-origin:
+      -7px 50%;
   }
 
 
   .binder-spread-double
-  .binder-page-shell {
-    align-self: stretch;
-
-    display: flex;
-    flex-direction: column;
-  }
-
-
-  /*
-   * Page header remains natural size.
-   * Everything below it grows to fill the shell.
-   */
-
-  .binder-spread-double
-  .binder-page {
-    flex: 1 1 auto;
-
-    display: flex;
-    flex-direction: column;
-
-    min-height: 0;
-  }
-
-
-  /*
-   * This grid fills all remaining height on
-   * both sides.
-   */
-
-  .binder-spread-double
-  .binder-slots {
-    flex: 1 1 auto;
-
-    grid-template-rows:
-      repeat(
-        3,
-        1fr
-      );
-  }
-
-
-  /*
-   * Because the grid rows are shared equally,
-   * empty Page 2 pockets now remain just as tall
-   * as Page 1's occupied pockets.
-   */
-
-  .binder-spread-double
-  .binder-slot {
-    height: 100%;
-  }
-
-
-  /*
-   * The blank "Create Page" side also stretches
-   * to the full open-binder height.
-   */
-
-  .binder-spread-double
-  .binder-blank-side {
-    align-self: stretch;
+  > .binder-page-turner-previous {
+    transform-origin:
+      calc(100% + 7px) 50%;
   }
 }
 
 
 /* ======================================================
-   SMALL DESKTOP / SINGLE PAGE MODE
+   FRONT / BACK OF TURNING SHEET
    ====================================================== */
 
-/*
- * JavaScript switches to one visible binder page
- * below 1180px.
- */
+.binder-page-turn-face {
+  position: absolute !important;
+
+  inset: 0;
+
+  width: 100% !important;
+  height: 100% !important;
+
+  box-sizing: border-box;
+
+  margin: 0 !important;
+
+  backface-visibility: hidden;
+
+  -webkit-backface-visibility: hidden;
+
+  transform-style: preserve-3d;
+
+  pointer-events: none !important;
+}
+
+
+.binder-page-turn-back {
+  transform:
+    rotateY(180deg);
+}
+
+
+/* ======================================================
+   FORWARD TURN
+   ====================================================== */
+
+.binder-page-turn-animate-next {
+  animation:
+    binder-turn-next
+    700ms
+    cubic-bezier(
+      0.35,
+      0.05,
+      0.2,
+      1
+    )
+    forwards;
+}
+
+
+@keyframes binder-turn-next {
+
+  0% {
+    transform:
+      rotateY(0deg);
+
+    box-shadow:
+      0 0 0
+      rgba(0, 0, 0, 0);
+  }
+
+
+  35% {
+    box-shadow:
+      -16px 3px 25px
+      rgba(0, 0, 0, 0.45);
+  }
+
+
+  50% {
+    box-shadow:
+      -30px 5px 45px
+      rgba(0, 0, 0, 0.68);
+  }
+
+
+  75% {
+    box-shadow:
+      -18px 3px 30px
+      rgba(0, 0, 0, 0.5);
+  }
+
+
+  100% {
+    transform:
+      rotateY(-180deg);
+
+    box-shadow:
+      0 0 0
+      rgba(0, 0, 0, 0);
+  }
+}
+
+
+/* ======================================================
+   BACKWARD TURN
+   ====================================================== */
+
+.binder-page-turn-animate-previous {
+  animation:
+    binder-turn-previous
+    700ms
+    cubic-bezier(
+      0.35,
+      0.05,
+      0.2,
+      1
+    )
+    forwards;
+}
+
+
+@keyframes binder-turn-previous {
+
+  0% {
+    transform:
+      rotateY(0deg);
+
+    box-shadow:
+      0 0 0
+      rgba(0, 0, 0, 0);
+  }
+
+
+  35% {
+    box-shadow:
+      16px 3px 25px
+      rgba(0, 0, 0, 0.45);
+  }
+
+
+  50% {
+    box-shadow:
+      30px 5px 45px
+      rgba(0, 0, 0, 0.68);
+  }
+
+
+  75% {
+    box-shadow:
+      18px 3px 30px
+      rgba(0, 0, 0, 0.5);
+  }
+
+
+  100% {
+    transform:
+      rotateY(180deg);
+
+    box-shadow:
+      0 0 0
+      rgba(0, 0, 0, 0);
+  }
+}
+
+
+/* ======================================================
+   SMALL DESKTOP
+   ====================================================== */
 
 @media (max-width: 1179px) {
 
   .binder-workspace {
     grid-template-columns:
       220px
-      minmax(0, 1fr);
+      minmax(
+        0,
+        1fr
+      );
 
     max-width: 1100px;
   }
@@ -1445,13 +1734,10 @@ button:disabled {
   .binder-spread {
     max-width: 700px;
 
-    margin: 0 auto;
+    margin:
+      0 auto;
   }
 
-
-  /*
-   * Slightly smaller baseline pocket height.
-   */
 
   .binder-slot {
     min-height: 260px;
@@ -1465,12 +1751,9 @@ button:disabled {
 
 @media (max-width: 900px) {
 
-  /*
-   * Cards to Place moves above the binder.
-   */
-
   .binder-workspace {
-    grid-template-columns: 1fr;
+    grid-template-columns:
+      1fr;
 
     gap: 18px;
 
@@ -1478,22 +1761,20 @@ button:disabled {
   }
 
 
-  /*
-   * Stop using the synced desktop height.
-   */
-
   .unsorted-panel {
     display: block;
 
     width: 100%;
-    height: auto !important;
+
+    height:
+      auto !important;
 
     overflow: visible;
   }
 
 
   /*
-   * Horizontal loose-card tray.
+   * Horizontal Cards to Place tray.
    */
 
   .unsorted-cards {
@@ -1521,45 +1802,42 @@ button:disabled {
   }
 
 
-  /*
-   * Reset desktop physical-stack positioning.
-   */
+  .unsorted-cards
+  .card-box {
+    position:
+      relative !important;
 
-  .unsorted-cards .card-box {
-    position: relative !important;
+    top:
+      auto !important;
 
-    top: auto !important;
-    left: auto !important;
+    left:
+      auto !important;
 
-    z-index: auto !important;
+    z-index:
+      auto !important;
 
-    flex: 0 0 135px;
+    flex:
+      0 0 135px;
 
     width: 135px;
 
     margin: 0;
 
-    transform: none !important;
+    transform:
+      none !important;
 
-    scroll-snap-align: start;
+    scroll-snap-align:
+      start;
   }
 
-
-  .unsorted-cards .card-box:hover,
-  .unsorted-cards .card-box.binder-card-selected {
-    z-index: auto !important;
-  }
-
-
-  /*
-   * Cardmarket remains hidden in Cards to Place
-   * on touch devices as well.
-   */
 
   .unsorted-cards
-  .card-box
-  button {
-    display: none;
+  .card-box:hover,
+
+  .unsorted-cards
+  .card-box.binder-card-selected {
+    z-index:
+      auto !important;
   }
 
 
@@ -1575,12 +1853,6 @@ button:disabled {
 
   .binder-slots {
     gap: 6px;
-
-    grid-template-rows:
-      repeat(
-        3,
-        1fr
-      );
   }
 
 
@@ -1591,30 +1863,40 @@ button:disabled {
   }
 
 
-  .binder-slot .card-box {
+  .binder-slot
+  .card-box {
     padding: 4px;
 
     border-radius: 7px;
   }
 
 
-  .binder-slot .card-box img {
+  .binder-slot
+  .card-box
+  img {
     border-radius: 5px;
   }
 
 
-  .binder-slot .card-box button {
+  .binder-slot
+  .card-box
+  button {
     display: inline-block;
 
-    padding: 3px 5px;
+    padding:
+      3px 5px;
 
     font-size: 10px;
   }
 
 
-  .binder-slot .quantity-badge,
-  .binder-slot .foil-badge {
-    padding: 2px 3px;
+  .binder-slot
+  .quantity-badge,
+
+  .binder-slot
+  .foil-badge {
+    padding:
+      2px 3px;
 
     font-size: 8px;
   }
@@ -1651,10 +1933,6 @@ button:disabled {
       10px 0 16px;
   }
 
-
-  /* ==================================================
-     WORKSPACE
-     ================================================== */
 
   .binder-workspace {
     padding: 9px;
@@ -1705,8 +1983,10 @@ button:disabled {
   }
 
 
-  .binder-page-toolbar button {
-    padding: 6px 7px;
+  .binder-page-toolbar
+  button {
+    padding:
+      6px 7px;
 
     font-size: 11px;
   }
@@ -1716,6 +1996,7 @@ button:disabled {
     order: -1;
 
     width: 100%;
+
     min-width: 0;
   }
 
@@ -1728,6 +2009,13 @@ button:disabled {
     padding: 5px;
 
     border-radius: 10px;
+
+    /*
+     * Slightly stronger perspective on the
+     * smaller viewport.
+     */
+
+    perspective: 1400px;
   }
 
 
@@ -1749,7 +2037,8 @@ button:disabled {
 
 
   .delete-binder-page-button {
-    padding: 4px 5px;
+    padding:
+      4px 5px;
 
     font-size: 9px;
   }
@@ -1762,12 +2051,6 @@ button:disabled {
 
   .binder-slots {
     gap: 3px;
-
-    grid-template-rows:
-      repeat(
-        3,
-        1fr
-      );
   }
 
 
@@ -1784,7 +2067,8 @@ button:disabled {
   }
 
 
-  .binder-slot .card-box {
+  .binder-slot
+  .card-box {
     padding: 2px;
 
     border-radius: 5px;
@@ -1792,8 +2076,8 @@ button:disabled {
 
 
   /*
-   * Compact Cardmarket button inside binder
-   * pockets only.
+   * Cardmarket becomes magnifying glass
+   * inside binder pockets.
    */
 
   .binder-slot
@@ -1824,11 +2108,15 @@ button:disabled {
      BADGES
      ================================================== */
 
-  .binder-slot .quantity-badge,
-  .binder-slot .foil-badge {
+  .binder-slot
+  .quantity-badge,
+
+  .binder-slot
+  .foil-badge {
     top: 3px;
 
-    padding: 1px 3px;
+    padding:
+      1px 3px;
 
     font-size: 7px;
   }
@@ -1857,11 +2145,6 @@ button:disabled {
   }
 
 
-  /*
-   * Pocket numbers get too cramped at
-   * phone widths.
-   */
-
   .pocket-number {
     display: none;
   }
@@ -1873,7 +2156,7 @@ button:disabled {
 
 
   /* ==================================================
-     BLANK PAGE DROP AREA
+     BLANK ADD-PAGE SIDE
      ================================================== */
 
   .binder-blank-side {
@@ -1888,12 +2171,14 @@ button:disabled {
   }
 
 
-  .blank-page-drop-message strong {
+  .blank-page-drop-message
+  strong {
     font-size: 13px;
   }
 
 
-  .blank-page-drop-message span:last-child {
+  .blank-page-drop-message
+  span:last-child {
     font-size: 10px;
   }
 
@@ -1914,6 +2199,238 @@ button:disabled {
     margin-top: 40px;
 
     text-align: right;
+
     font-size: 12px;
+  }
+}
+
+
+/* ======================================================
+   REDUCED MOTION
+   ====================================================== */
+
+@media (
+  prefers-reduced-motion:
+  reduce
+) {
+
+  .binder-page-turner {
+    animation-duration:
+      1ms !important;
+  }
+}
+
+/* ======================================================
+   PUBLIC BINDER
+   ====================================================== */
+
+/*
+ * The owner binder has:
+ *
+ * Cards to Place | Binder
+ *
+ * The public binder only needs the actual binder,
+ * so remove the unused sidebar column.
+ */
+
+.public-binder-workspace {
+  grid-template-columns:
+    minmax(
+      0,
+      1fr
+    );
+
+  width: 100%;
+
+  max-width: 1560px;
+}
+
+
+.public-binder-stage {
+  width: 100%;
+
+  min-width: 0;
+}
+
+
+/* ======================================================
+   PUBLIC PAGE HEADER
+   ====================================================== */
+
+/*
+ * No Delete Page button exists publicly.
+ */
+
+.public-binder-page-header {
+  justify-content:
+    flex-start;
+}
+
+
+/* ======================================================
+   PUBLIC CARDS
+   ====================================================== */
+
+.public-card-box {
+  /*
+   * Visitors can still use Search, but the card itself
+   * should not feel draggable.
+   */
+
+  cursor: default;
+}
+
+
+.public-card-box:active {
+  cursor: default;
+}
+
+
+/* ======================================================
+   END OF BINDER
+   ====================================================== */
+
+.public-binder-blank-side {
+  cursor: default;
+}
+
+
+.public-binder-blank-side
+.blank-page-drop-message {
+  pointer-events: none;
+}
+
+
+/* ======================================================
+   UNSORTED PUBLIC CARDS
+   ====================================================== */
+
+/*
+ * If the owner has collection cards that haven't yet
+ * been placed in a binder pocket, don't silently hide
+ * them from the public collection.
+ */
+
+.public-unsorted-section {
+  margin-top: 28px;
+
+  padding: 20px;
+
+  box-sizing: border-box;
+
+  background: rgba(
+    9,
+    9,
+    14,
+    0.55
+  );
+
+  border:
+    1px solid #45455b;
+
+  border-radius: 14px;
+}
+
+
+.public-unsorted-section h2 {
+  margin:
+    0 0 8px;
+
+  color: white;
+
+  text-align: center;
+}
+
+
+.public-unsorted-description {
+  margin:
+    0 0 18px;
+
+  color: #c9c9d3;
+
+  text-align: center;
+
+  font-size: 12px;
+
+  line-height: 1.4;
+}
+
+
+.public-unsorted-grid {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  align-items: flex-start;
+  justify-content: center;
+
+  gap: 16px;
+}
+
+
+.public-unsorted-grid
+.card-box {
+  cursor: default;
+}
+
+
+/*
+ * Plastic sleeve is intentionally NOT applied here.
+ *
+ * The sleeve selector is:
+ *
+ * .binder-slot .card-image-wrap::after
+ *
+ * so only cards physically inside binder pockets
+ * get the plastic pouch artwork.
+ */
+
+
+/* ======================================================
+   PUBLIC MOBILE
+   ====================================================== */
+
+@media (max-width: 900px) {
+
+  .public-binder-workspace {
+    grid-template-columns:
+      1fr;
+  }
+
+
+  .public-unsorted-section {
+    margin-top: 20px;
+
+    padding: 14px;
+  }
+
+
+  .public-unsorted-grid {
+    gap: 10px;
+  }
+
+
+  .public-unsorted-grid
+  .card-box {
+    width: 150px;
+  }
+}
+
+
+@media (max-width: 520px) {
+
+  .public-unsorted-section {
+    padding: 10px;
+  }
+
+
+  .public-unsorted-grid {
+    gap: 8px;
+  }
+
+
+  .public-unsorted-grid
+  .card-box {
+    width: 135px;
   }
 }

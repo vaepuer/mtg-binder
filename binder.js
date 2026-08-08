@@ -29,20 +29,30 @@ const firebaseConfig = {
 };
 
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const auth = getAuth(app);
-
-
-// ======================================================
-// GENERAL HELPERS
-// ======================================================
-
-const sleep = (ms) =>
-  new Promise(
-    (resolve) =>
-      setTimeout(resolve, ms)
+const app =
+  initializeApp(
+    firebaseConfig
   );
+
+
+const db =
+  getDatabase(
+    app
+  );
+
+
+const auth =
+  getAuth(
+    app
+  );
+
+
+// ======================================================
+// CONSTANTS
+// ======================================================
+
+const BINDER_SLOTS_PER_PAGE =
+  9;
 
 
 const SCRYFALL_HEADERS = {
@@ -50,7 +60,27 @@ const SCRYFALL_HEADERS = {
 };
 
 
-function normalizeSetCode(value) {
+const sleep =
+  (ms) =>
+    new Promise(
+      (
+        resolve
+      ) => {
+        setTimeout(
+          resolve,
+          ms
+        );
+      }
+    );
+
+
+// ======================================================
+// NORMALISATION
+// ======================================================
+
+function normalizeSetCode(
+  value
+) {
 
   return String(
     value || ""
@@ -60,7 +90,9 @@ function normalizeSetCode(value) {
 }
 
 
-function normalizeCollectorNumber(value) {
+function normalizeCollectorNumber(
+  value
+) {
 
   return String(
     value || ""
@@ -73,7 +105,9 @@ function normalizeCollectorNumber(value) {
 }
 
 
-function normalizeTreatment(value) {
+function normalizeTreatment(
+  value
+) {
 
   return String(
     value || ""
@@ -87,7 +121,9 @@ function normalizeTreatment(value) {
 // TREATMENTS
 // ======================================================
 
-function mapTreatment(code) {
+function mapTreatment(
+  code
+) {
 
   const map = {
 
@@ -226,17 +262,25 @@ function mapTreatment(code) {
 
 
 // ======================================================
-// SCRYFALL CACHE / IDENTIFIERS
+// SCRYFALL CACHE KEY
 // ======================================================
 
-function cacheKeyFor(card) {
+function cacheKeyFor(
+  card
+) {
+
+  const scryfallId =
+    String(
+      card?.scryfallId || ""
+    ).trim();
+
 
   if (
-    card?.scryfallId
+    scryfallId
   ) {
 
     return (
-      `scryfall-id:${card.scryfallId}`
+      `scryfall-id:${scryfallId}`
     );
   }
 
@@ -271,10 +315,12 @@ function cacheKeyFor(card) {
 
 
 // ======================================================
-// BUILD VALID SCRYFALL IDENTIFIER
+// SCRYFALL IDENTIFIER
 // ======================================================
 
-function buildIdentifier(card) {
+function buildIdentifier(
+  card
+) {
 
   const scryfallId =
     String(
@@ -300,21 +346,16 @@ function buildIdentifier(card) {
     ).trim();
 
 
-  // Best:
-  // exact Scryfall printing ID
-
   if (
     scryfallId
   ) {
 
     return {
-      id: scryfallId
+      id:
+        scryfallId
     };
   }
 
-
-  // Exact printing:
-  // set + collector number
 
   if (
     setCode &&
@@ -322,7 +363,6 @@ function buildIdentifier(card) {
   ) {
 
     return {
-
       set:
         setCode,
 
@@ -332,25 +372,18 @@ function buildIdentifier(card) {
   }
 
 
-  // Legacy fallback:
-  // name + set
-
   if (
     name &&
     setCode
   ) {
 
     return {
-
       name,
       set:
         setCode
     };
   }
 
-
-  // Final fallback:
-  // name
 
   if (
     name
@@ -362,12 +395,6 @@ function buildIdentifier(card) {
   }
 
 
-  console.warn(
-    "Cannot build Scryfall identifier:",
-    card
-  );
-
-
   return null;
 }
 
@@ -376,7 +403,9 @@ function buildIdentifier(card) {
 // CARD IMAGE
 // ======================================================
 
-function getBestImage(cardObj) {
+function getBestImage(
+  cardObj
+) {
 
   return (
 
@@ -413,7 +442,9 @@ const cardCacheMem =
   new Map();
 
 
-function cacheGet(key) {
+function cacheGet(
+  key
+) {
 
   if (
     cardCacheMem.has(
@@ -433,7 +464,8 @@ function cacheGet(key) {
 
     const raw =
       localStorage.getItem(
-        "scryfall:" + key
+        "scryfall:" +
+        key
       );
 
 
@@ -485,7 +517,8 @@ function cacheSet(
   try {
 
     localStorage.setItem(
-      "scryfall:" + key,
+      "scryfall:" +
+      key,
       JSON.stringify(
         value
       )
@@ -525,7 +558,7 @@ async function fetchScryfallBatches(
     i += CHUNK_SIZE
   ) {
 
-    const identifiersChunk =
+    const chunk =
       identifiers.slice(
         i,
         i + CHUNK_SIZE
@@ -533,20 +566,9 @@ async function fetchScryfallBatches(
 
 
     const body = {
-
       identifiers:
-        identifiersChunk
+        chunk
     };
-
-
-    console.log(
-      "SENDING TO SCRYFALL:",
-      JSON.stringify(
-        body,
-        null,
-        2
-      )
-    );
 
 
     while (
@@ -557,12 +579,10 @@ async function fetchScryfallBatches(
         await fetch(
           "https://api.scryfall.com/cards/collection",
           {
-
             method:
               "POST",
 
             headers: {
-
               "Content-Type":
                 "application/json",
 
@@ -576,10 +596,6 @@ async function fetchScryfallBatches(
           }
         );
 
-
-      // ----------------------------------------------
-      // RATE LIMIT
-      // ----------------------------------------------
 
       if (
         response.status ===
@@ -596,11 +612,6 @@ async function fetchScryfallBatches(
           );
 
 
-        console.warn(
-          `Scryfall rate limit. Waiting ${retryAfter}s`
-        );
-
-
         await sleep(
           retryAfter *
           1000
@@ -610,10 +621,6 @@ async function fetchScryfallBatches(
         continue;
       }
 
-
-      // ----------------------------------------------
-      // ERROR
-      // ----------------------------------------------
 
       if (
         !response.ok
@@ -633,10 +640,6 @@ async function fetchScryfallBatches(
       const data =
         await response.json();
 
-
-      // ----------------------------------------------
-      // STORE RESULTS
-      // ----------------------------------------------
 
       for (
         const card of
@@ -705,7 +708,7 @@ async function fetchScryfallBatches(
 
 
 // ======================================================
-// SCRYFALL SINGLE-CARD FALLBACK
+// SINGLE SCRYFALL FALLBACK
 // ======================================================
 
 async function fetchScryfallCard(
@@ -736,12 +739,9 @@ async function fetchScryfallCard(
     ).trim();
 
 
-  const urls = [];
+  const urls =
+    [];
 
-
-  // --------------------------------------------------
-  // SCRYFALL ID
-  // --------------------------------------------------
 
   if (
     scryfallId
@@ -752,14 +752,8 @@ async function fetchScryfallCard(
         scryfallId
       )}`
     );
-  }
 
-
-  else {
-
-    // ------------------------------------------------
-    // EXACT SET + COLLECTOR
-    // ------------------------------------------------
+  } else {
 
     if (
       setCode &&
@@ -776,25 +770,17 @@ async function fetchScryfallCard(
     }
 
 
-    // ------------------------------------------------
-    // LEGACY NAME + SET FALLBACK
-    // ------------------------------------------------
-    //
-    // This deliberately preserves the behaviour of
-    // old cards which don't have collector numbers.
-    // ------------------------------------------------
-
     if (
       name
     ) {
 
-      const fallbackUrl =
+      const fallback =
         new URL(
           "https://api.scryfall.com/cards/named"
         );
 
 
-      fallbackUrl
+      fallback
         .searchParams
         .set(
           "exact",
@@ -806,7 +792,7 @@ async function fetchScryfallCard(
         setCode
       ) {
 
-        fallbackUrl
+        fallback
           .searchParams
           .set(
             "set",
@@ -816,15 +802,11 @@ async function fetchScryfallCard(
 
 
       urls.push(
-        fallbackUrl.toString()
+        fallback.toString()
       );
     }
   }
 
-
-  // --------------------------------------------------
-  // TRY EACH SAFE SCRYFALL LOOKUP
-  // --------------------------------------------------
 
   for (
     const url of
@@ -881,19 +863,6 @@ async function fetchScryfallCard(
         response.json()
       );
     }
-
-
-    if (
-      response.status !==
-      404
-    ) {
-
-      console.warn(
-        "Scryfall lookup failed:",
-        response.status,
-        url
-      );
-    }
   }
 
 
@@ -902,7 +871,7 @@ async function fetchScryfallCard(
 
 
 // ======================================================
-// CARDMARKET
+// CARDMARKET UTILITIES
 // ======================================================
 
 function cardmarketSlug(
@@ -920,31 +889,25 @@ function cardmarketSlug(
   return String(
     text
   )
-
     .normalize(
       "NFD"
     )
-
     .replace(
       /[\u0300-\u036f]/g,
       ""
     )
-
     .replace(
       /[’']/g,
       ""
     )
-
     .replace(
       /&/g,
       "and"
     )
-
     .replace(
       /[^a-zA-Z0-9]+/g,
       "-"
     )
-
     .replace(
       /^-+|-+$/g,
       ""
@@ -953,22 +916,8 @@ function cardmarketSlug(
 
 
 // ======================================================
-// VERIFIED EXACT CARDMARKET OVERRIDES
+// VERIFIED CARDMARKET OVERRIDES
 // ======================================================
-
-/*
- * Keep this empty unless we verify a specific
- * printing/treatment that Scryfall cannot map
- * correctly to Cardmarket.
- *
- * Format:
- *
- * "set:collector:treatment": "FULL URL"
- *
- * Example:
- *
- * "abc:123:FET": "https://..."
- */
 
 const CARDMARKET_EXACT_OVERRIDES = {
 
@@ -976,25 +925,8 @@ const CARDMARKET_EXACT_OVERRIDES = {
 
 
 // ======================================================
-// STA VERSION HANDLING
+// STRIXHAVEN MYSTICAL ARCHIVE
 // ======================================================
-
-/*
- * Strixhaven Mystical Archive
- *
- * STA #1-63:
- *
- * Non-Foil          = V1
- * Traditional Foil  = V1
- * Foil-Etched       = V3
- *
- *
- * STA #64-126:
- *
- * Non-Foil          = V2
- * Traditional Foil  = V2
- * Foil-Etched       = V4
- */
 
 function getStaCardmarketVersion(
   collectorNumber,
@@ -1016,8 +948,6 @@ function getStaCardmarketVersion(
     return null;
   }
 
-
-  // Global artwork
 
   if (
     number >= 1 &&
@@ -1045,8 +975,6 @@ function getStaCardmarketVersion(
     return null;
   }
 
-
-  // Japanese alternate artwork
 
   if (
     number >= 64 &&
@@ -1080,7 +1008,7 @@ function getStaCardmarketVersion(
 
 
 // ======================================================
-// CLEAN SCRYFALL CARDMARKET URL
+// CLEAN CARDMARKET PURCHASE URL
 // ======================================================
 
 function cleanScryfallCardmarketUrl(
@@ -1171,7 +1099,7 @@ function cleanScryfallCardmarketUrl(
 
 
 // ======================================================
-// CARDMARKET URL RESOLVER
+// CARDMARKET URL
 // ======================================================
 
 function resolveCardmarketUrl(
@@ -1189,44 +1117,27 @@ function resolveCardmarketUrl(
 
   const setCode =
     normalizeSetCode(
-
       scryfallCard.set ||
-
-      firebaseCard
-        ?.setCode
+      firebaseCard?.setCode
     );
 
 
   const collectorNumber =
     normalizeCollectorNumber(
-
-      scryfallCard
-        .collector_number ||
-
-      firebaseCard
-        ?.collectorNumber
+      scryfallCard.collector_number ||
+      firebaseCard?.collectorNumber
     );
 
 
   const treatment =
     normalizeTreatment(
-      firebaseCard
-        ?.treatment
+      firebaseCard?.treatment
     );
 
 
-  const treatmentKey =
-    treatment ||
-    "NONFOIL";
-
-
   const exactKey =
-    `${setCode}:${collectorNumber}:${treatmentKey}`;
+    `${setCode}:${collectorNumber}:${treatment || "NONFOIL"}`;
 
-
-  // --------------------------------------------------
-  // EXACT VERIFIED OVERRIDE
-  // --------------------------------------------------
 
   if (
     Object
@@ -1247,7 +1158,7 @@ function resolveCardmarketUrl(
 
 
   // --------------------------------------------------
-  // STRIXHAVEN MYSTICAL ARCHIVE
+  // STA SPECIAL CASE
   // --------------------------------------------------
 
   if (
@@ -1280,13 +1191,11 @@ function resolveCardmarketUrl(
 
 
   // --------------------------------------------------
-  // NORMAL CASE:
-  // SCRYFALL CARDMARKET PRODUCT ID
+  // PREFERRED NORMAL CASE
   // --------------------------------------------------
 
   if (
-    scryfallCard
-      .cardmarket_id
+    scryfallCard.cardmarket_id
   ) {
 
     return (
@@ -1298,7 +1207,7 @@ function resolveCardmarketUrl(
 
 
   // --------------------------------------------------
-  // SECONDARY SCRYFALL PURCHASE URL
+  // SCRYFALL PURCHASE URI FALLBACK
   // --------------------------------------------------
 
   if (
@@ -1332,32 +1241,19 @@ function buildCardmarketSearchUrl(
 
   const query = [
 
-    scryfallCard
-      ?.name ||
+    scryfallCard?.name ||
+      firebaseCard?.name,
 
-      firebaseCard
-        ?.name,
+    scryfallCard?.set ||
+      firebaseCard?.setCode,
 
-
-    scryfallCard
-      ?.set ||
-
-      firebaseCard
-        ?.setCode,
-
-
-    scryfallCard
-      ?.collector_number ||
-
-      firebaseCard
-        ?.collectorNumber
+    scryfallCard?.collector_number ||
+      firebaseCard?.collectorNumber
 
   ]
-
     .filter(
       Boolean
     )
-
     .join(
       " "
     );
@@ -1372,7 +1268,7 @@ function buildCardmarketSearchUrl(
 
 
 // ======================================================
-// MAIN PAGE FLOW
+// MAIN PAGE
 // ======================================================
 
 document.addEventListener(
@@ -1402,7 +1298,7 @@ document.addEventListener(
 
 
     // ==================================================
-    // RESOLVE UID
+    // RESOLVE USER UID
     // ==================================================
 
     const resolveUid =
@@ -1418,7 +1314,6 @@ document.addEventListener(
               `usernames/${queryUsername}`
             )
           )
-
             .then(
               (
                 snapshot
@@ -1446,10 +1341,8 @@ document.addEventListener(
           queryUid
         ) {
 
-          return (
-            Promise.resolve(
-              queryUid
-            )
+          return Promise.resolve(
+            queryUid
           );
         }
 
@@ -1480,7 +1373,7 @@ document.addEventListener(
 
 
                 reject(
-                  "Not logged in, and no username or uid provided."
+                  "Not logged in and no username or uid supplied."
                 );
               }
             );
@@ -1488,10 +1381,6 @@ document.addEventListener(
         );
       };
 
-
-    // ==================================================
-    // RESOLVE USER
-    // ==================================================
 
     resolveUid()
 
@@ -1581,14 +1470,13 @@ document.addEventListener(
         }
       )
 
-
       .catch(
         (
           error
         ) => {
 
           console.warn(
-            "Redirecting to login due to:",
+            "Redirecting to login:",
             error
           );
 
@@ -1602,12 +1490,8 @@ document.addEventListener(
 
 
 // ======================================================
-// BINDER PAGE ORGANISER
+// BINDER ORGANISER
 // ======================================================
-
-const BINDER_SLOTS_PER_PAGE =
-  9;
-
 
 function loadBinderForUser(
   uid
@@ -1638,7 +1522,7 @@ function loadBinderForUser(
   ) {
 
     console.error(
-      "binderContainer not found!"
+      "binderContainer not found."
     );
 
 
@@ -1647,20 +1531,24 @@ function loadBinderForUser(
 
 
   // ==================================================
-  // DESKTOP / MOBILE BINDER MODE
+  // RESPONSIVE MODES
   // ==================================================
-
-  /*
-   * Wide desktop:
-   * two binder pages at once.
-   *
-   * Smaller screens:
-   * one page at a time.
-   */
 
   const desktopSpreadQuery =
     window.matchMedia(
       "(min-width: 1180px)"
+    );
+
+
+  const stackedTrayQuery =
+    window.matchMedia(
+      "(min-width: 901px)"
+    );
+
+
+  const reducedMotionQuery =
+    window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
     );
 
 
@@ -1673,12 +1561,15 @@ function loadBinderForUser(
 
 
   // ==================================================
-  // BUILD ORGANISER
+  // BUILD INTERFACE
   // ==================================================
 
   container.innerHTML = `
 
-    <div class="binder-workspace">
+    <div
+      class="binder-workspace"
+      id="binderWorkspace"
+    >
 
       <aside
         class="unsorted-panel"
@@ -1698,7 +1589,6 @@ function loadBinderForUser(
             </p>
 
           </div>
-
 
           <span
             class="unsorted-count"
@@ -1797,8 +1687,14 @@ function loadBinderForUser(
 
 
   // ==================================================
-  // DOM REFERENCES
+  // DOM
   // ==================================================
+
+  const binderWorkspace =
+    document.getElementById(
+      "binderWorkspace"
+    );
+
 
   const unsortedPanel =
     document.getElementById(
@@ -1815,6 +1711,12 @@ function loadBinderForUser(
   const unsortedCount =
     document.getElementById(
       "unsortedCount"
+    );
+
+
+  const binderStage =
+    container.querySelector(
+      ".binder-stage"
     );
 
 
@@ -1859,349 +1761,6 @@ function loadBinderForUser(
       "binderStatus"
     );
 
-    // ==================================================
-// CARDS TO PLACE STACK / HEIGHT
-// ==================================================
-
-const binderStage =
-  container.querySelector(
-    ".binder-stage"
-  );
-
-
-const stackedTrayQuery =
-  window.matchMedia(
-    "(min-width: 901px)"
-  );
-
-
-/*
- * Arrange the Cards to Place pile.
- *
- * Desktop:
- * cards overlap vertically, normally by 10px.
- *
- * If there are too many cards to fit inside the
- * available binder height, the gap shrinks so the
- * pile still remains inside the tray.
- *
- * Mobile:
- * inline positioning is removed because the
- * existing horizontal card tray is used instead.
- */
-
-// ==================================================
-// CLEAR CARDS-TO-PLACE STACK POSITIONING
-// ==================================================
-
-function clearUnsortedStackStyles(
-  card
-) {
-
-  if (
-    !card
-  ) {
-
-    return;
-  }
-
-
-  /*
-   * Cards in the Cards to Place pile are given
-   * inline positioning by layoutUnsortedStack().
-   *
-   * Those styles MUST be removed before that same
-   * DOM element is moved into a binder pocket.
-   */
-
-  card.style.removeProperty(
-    "position"
-  );
-
-
-  card.style.removeProperty(
-    "top"
-  );
-
-
-  card.style.removeProperty(
-    "left"
-  );
-
-
-  card.style.removeProperty(
-    "transform"
-  );
-
-
-  card.style.removeProperty(
-    "z-index"
-  );
-}
-
-
-// ==================================================
-// CARDS TO PLACE STACK
-// ==================================================
-
-function layoutUnsortedStack() {
-
-  const cards =
-    Array.from(
-      unsortedCards.querySelectorAll(
-        ":scope > .card-box"
-      )
-    );
-
-
-  // ==================================================
-  // MOBILE / TABLET
-  // ==================================================
-
-  if (
-    !stackedTrayQuery.matches
-  ) {
-
-    cards.forEach(
-      (
-        card
-      ) => {
-
-        clearUnsortedStackStyles(
-          card
-        );
-      }
-    );
-
-
-    return;
-  }
-
-
-  if (
-    cards.length ===
-    0
-  ) {
-
-    return;
-  }
-
-
-  // ==================================================
-  // AVAILABLE HEIGHT
-  // ==================================================
-
-  const availableHeight =
-    unsortedCards.clientHeight;
-
-
-  const cardHeight =
-    cards[0]
-      .getBoundingClientRect()
-      .height;
-
-
-  /*
-   * Preferred exposed amount between cards.
-   */
-
-  let stackGap =
-    50;
-
-
-  // ==================================================
-  // COMPRESS IF REQUIRED
-  // ==================================================
-
-  if (
-    cards.length >
-    1
-  ) {
-
-    const fittingGap =
-      (
-        availableHeight -
-        cardHeight
-      ) /
-      (
-        cards.length -
-        1
-      );
-
-
-    stackGap =
-      Math.min(
-        50,
-        Math.max(
-          8,
-          fittingGap
-        )
-      );
-  }
-
-
-  // ==================================================
-  // POSITION CARDS IN REVERSE ORDER
-  // ==================================================
-
-  cards.forEach(
-    (
-      card,
-      index
-    ) => {
-
-      /*
-       * Firebase/list order:
-       *
-       * A
-       * B
-       * C
-       * D
-       *
-       * Visible pile:
-       *
-       * D
-       * C
-       * B
-       * A
-       *
-       * A therefore becomes the fully-visible
-       * card at the bottom.
-       */
-
-      const reversedIndex =
-        cards.length -
-        1 -
-        index;
-
-
-      card.style.position =
-        "absolute";
-
-
-      card.style.left =
-        "50%";
-
-
-      card.style.top =
-        `${reversedIndex * stackGap}px`;
-
-
-      card.style.transform =
-        "translateX(-50%)";
-
-
-      card.style.zIndex =
-        String(
-          cards.length -
-          reversedIndex
-        );
-    }
-  );
-}
-
-
-/*
- * Keep Cards to Place exactly the same vertical
- * height as the right-hand binder stage.
- */
-
-function syncUnsortedPanelHeight() {
-
-  // ==================================================
-  // MOBILE
-  // ==================================================
-
-  if (
-    !stackedTrayQuery.matches
-  ) {
-
-    unsortedPanel.style.height =
-      "";
-
-
-    layoutUnsortedStack();
-
-
-    return;
-  }
-
-
-  if (
-    !binderStage
-  ) {
-
-    return;
-  }
-
-
-  const binderHeight =
-    binderStage
-      .getBoundingClientRect()
-      .height;
-
-
-  if (
-    binderHeight >
-    0
-  ) {
-
-    unsortedPanel.style.height =
-      `${Math.ceil(
-        binderHeight
-      )}px`;
-  }
-
-
-  requestAnimationFrame(
-    layoutUnsortedStack
-  );
-}
-
-
-/*
- * Automatically keep the left and right sections
- * matched if cards, pages or the browser size
- * change.
- */
-
-if (
-  binderStage &&
-  "ResizeObserver" in window
-) {
-
-  const binderStageObserver =
-    new ResizeObserver(
-      () => {
-
-        syncUnsortedPanelHeight();
-      }
-    );
-
-
-  binderStageObserver.observe(
-    binderStage
-  );
-}
-
-
-stackedTrayQuery.addEventListener(
-  "change",
-  () => {
-
-    syncUnsortedPanelHeight();
-  }
-);
-
-
-window.addEventListener(
-  "resize",
-  () => {
-
-    syncUnsortedPanelHeight();
-  }
-);
-
 
   // ==================================================
   // STATE
@@ -2239,13 +1798,13 @@ window.addEventListener(
     0;
 
 
+  let isPageTurning =
+    false;
+
+
   let layout = {
-
-    pageCount:
-      1,
-
-    positions:
-      {}
+    pageCount: 1,
+    positions: {}
   };
 
 
@@ -2354,10 +1913,9 @@ window.addEventListener(
     }
 
 
-    const pagesNeededForCards =
+    const pagesNeeded =
 
-      highestPosition >=
-      0
+      highestPosition >= 0
 
         ? Math.floor(
             highestPosition /
@@ -2368,13 +1926,10 @@ window.addEventListener(
 
 
     return Math.max(
-
       Number(
         layout.pageCount
       ) || 1,
-
-      pagesNeededForCards,
-
+      pagesNeeded,
       1
     );
   }
@@ -2399,7 +1954,253 @@ window.addEventListener(
 
 
   // ==================================================
-  // CARD SELECTION
+  // CLEAR UNSORTED INLINE POSITION
+  // ==================================================
+
+  function clearUnsortedStackStyles(
+    card
+  ) {
+
+    if (
+      !card
+    ) {
+
+      return;
+    }
+
+
+    card.style.removeProperty(
+      "position"
+    );
+
+
+    card.style.removeProperty(
+      "top"
+    );
+
+
+    card.style.removeProperty(
+      "left"
+    );
+
+
+    card.style.removeProperty(
+      "transform"
+    );
+
+
+    card.style.removeProperty(
+      "z-index"
+    );
+  }
+
+
+  // ==================================================
+  // CARDS TO PLACE PHYSICAL STACK
+  // ==================================================
+
+  function layoutUnsortedStack() {
+
+    const cards =
+      Array.from(
+        unsortedCards.querySelectorAll(
+          ":scope > .card-box"
+        )
+      );
+
+
+    if (
+      !stackedTrayQuery.matches
+    ) {
+
+      cards.forEach(
+        (
+          card
+        ) => {
+
+          clearUnsortedStackStyles(
+            card
+          );
+        }
+      );
+
+
+      return;
+    }
+
+
+    if (
+      cards.length ===
+      0
+    ) {
+
+      return;
+    }
+
+
+    const availableHeight =
+      unsortedCards.clientHeight;
+
+
+    const cardHeight =
+      cards[0]
+        .getBoundingClientRect()
+        .height;
+
+
+    // Preferred exposed portion.
+
+    let stackGap =
+      50;
+
+
+    if (
+      cards.length >
+      1
+    ) {
+
+      const fittingGap =
+        (
+          availableHeight -
+          cardHeight
+        ) /
+        (
+          cards.length -
+          1
+        );
+
+
+      stackGap =
+        Math.min(
+          50,
+          Math.max(
+            8,
+            fittingGap
+          )
+        );
+    }
+
+
+    cards.forEach(
+      (
+        card,
+        index
+      ) => {
+
+        /*
+         * Reverse the visible order.
+         *
+         * First card in the collection becomes
+         * the fully-visible card at the bottom.
+         */
+
+        const reversedIndex =
+          cards.length -
+          1 -
+          index;
+
+
+        card.style.position =
+          "absolute";
+
+
+        card.style.left =
+          "50%";
+
+
+        card.style.top =
+          `${reversedIndex * stackGap}px`;
+
+
+        card.style.transform =
+          "translateX(-50%)";
+
+
+        card.style.zIndex =
+          String(
+            cards.length -
+            reversedIndex
+          );
+      }
+    );
+  }
+
+
+  // ==================================================
+  // MATCH CARDS-TO-PLACE HEIGHT TO BINDER
+  // ==================================================
+
+  function syncUnsortedPanelHeight() {
+
+    if (
+      !stackedTrayQuery.matches
+    ) {
+
+      unsortedPanel.style.height =
+        "";
+
+
+      layoutUnsortedStack();
+
+
+      return;
+    }
+
+
+    if (
+      !binderStage
+    ) {
+
+      return;
+    }
+
+
+    const binderHeight =
+      binderStage
+        .getBoundingClientRect()
+        .height;
+
+
+    if (
+      binderHeight >
+      0
+    ) {
+
+      unsortedPanel.style.height =
+        `${Math.ceil(
+          binderHeight
+        )}px`;
+    }
+
+
+    requestAnimationFrame(
+      layoutUnsortedStack
+    );
+  }
+
+
+  if (
+    binderStage &&
+    "ResizeObserver" in window
+  ) {
+
+    const binderStageObserver =
+      new ResizeObserver(
+        () => {
+
+          syncUnsortedPanelHeight();
+        }
+      );
+
+
+    binderStageObserver.observe(
+      binderStage
+    );
+  }
+
+
+  // ==================================================
+  // SELECTION
   // ==================================================
 
   function refreshSelectionStyles() {
@@ -2434,6 +2235,14 @@ window.addEventListener(
   function selectCard(
     cardId
   ) {
+
+    if (
+      isPageTurning
+    ) {
+
+      return;
+    }
+
 
     if (
       !cardId ||
@@ -2490,7 +2299,7 @@ window.addEventListener(
 
 
   // ==================================================
-  // SAVE CARD MOVE
+  // SAVE MOVE
   // ==================================================
 
   async function saveMove(
@@ -2499,16 +2308,21 @@ window.addEventListener(
   ) {
 
     if (
-      !cardId ||
+      isPageTurning
+    ) {
 
+      return;
+    }
+
+
+    if (
+      !cardId ||
       !currentCards.has(
         cardId
       ) ||
-
       !Number.isInteger(
         targetPosition
       ) ||
-
       targetPosition < 0
     ) {
 
@@ -2558,18 +2372,11 @@ window.addEventListener(
     ] = getEffectivePageCount();
 
 
-    // ==================================================
-    // OCCUPIED POCKET
-    // ==================================================
-
     if (
       occupyingCardId &&
       occupyingCardId !==
         cardId
     ) {
-
-      // Binder card -> binder card:
-      // swap positions.
 
       if (
         oldPosition !==
@@ -2579,13 +2386,8 @@ window.addEventListener(
         updates[
           `binderLayouts/${uid}/positions/${occupyingCardId}`
         ] = oldPosition;
-      }
 
-
-      // Unsorted card -> occupied pocket:
-      // old card is ejected to Cards to Place.
-
-      else {
+      } else {
 
         updates[
           `binderLayouts/${uid}/positions/${occupyingCardId}`
@@ -2653,7 +2455,7 @@ window.addEventListener(
 
 
   // ==================================================
-  // RETURN CARD TO CARDS TO PLACE
+  // RETURN TO UNSORTED
   // ==================================================
 
   async function returnCardToUnsorted(
@@ -2661,12 +2463,18 @@ window.addEventListener(
   ) {
 
     if (
-      !cardId ||
+      isPageTurning
+    ) {
 
+      return;
+    }
+
+
+    if (
+      !cardId ||
       !currentCards.has(
         cardId
       ) ||
-
       getPosition(
         cardId
       ) === null
@@ -2717,7 +2525,7 @@ window.addEventListener(
     ) {
 
       console.error(
-        "Could not return card to Cards to Place:",
+        "Could not return card:",
         error
       );
 
@@ -2734,6 +2542,14 @@ window.addEventListener(
   // ==================================================
 
   async function addBinderPage() {
+
+    if (
+      isPageTurning
+    ) {
+
+      return;
+    }
+
 
     const nextPageCount =
       getEffectivePageCount() +
@@ -2759,17 +2575,9 @@ window.addEventListener(
       );
 
 
-      /*
-       * Update local state immediately.
-       */
-
       layout.pageCount =
         nextPageCount;
 
-
-      /*
-       * Jump directly to the newly-created page.
-       */
 
       currentPage =
         nextPageCount -
@@ -2799,191 +2607,163 @@ window.addEventListener(
     }
   }
 
-  // ======================================================
-// ADD PAGE AND PLACE CARD
-// ======================================================
 
-async function addPageAndPlaceCard(
-  cardId
-) {
+  // ==================================================
+  // ADD PAGE BY DROPPING CARD ON BLANK SIDE
+  // ==================================================
 
-  if (
-    !cardId ||
-    !currentCards.has(
-      cardId
-    )
+  async function addPageAndPlaceCard(
+    cardId
   ) {
 
-    return;
-  }
-
-
-  const oldPageCount =
-    getEffectivePageCount();
-
-
-  const nextPageCount =
-    oldPageCount + 1;
-
-
-  /*
-   * The new page starts immediately after
-   * all existing pages.
-   *
-   * Example:
-   *
-   * Page 1 = positions 0-8
-   * Page 2 = positions 9-17
-   * Page 3 = positions 18-26
-   *
-   * If Page 3 is being created:
-   *
-   * oldPageCount = 2
-   *
-   * 2 * 9 = position 18
-   *
-   * That is Pocket 1 of Page 3.
-   */
-
-  const targetPosition =
-    oldPageCount *
-    BINDER_SLOTS_PER_PAGE;
-
-
-  const updates =
-    {};
-
-
-  /*
-   * Create the page.
-   */
-
-  updates[
-    `binderLayouts/${uid}/pageCount`
-  ] = nextPageCount;
-
-
-  /*
-   * Put the dragged card directly into
-   * Pocket 1 of that page.
-   *
-   * If it was already in the binder,
-   * this simply moves its saved position.
-   *
-   * If it was unsorted, this creates
-   * its first saved position.
-   */
-
-  updates[
-    `binderLayouts/${uid}/positions/${cardId}`
-  ] = targetPosition;
-
-
-  try {
-
-    /*
-     * Both changes happen in one Firebase update.
-     *
-     * We don't want a temporary state where the
-     * page exists but the card isn't there yet.
-     */
-
-    await update(
-      ref(
-        db
-      ),
-      updates
-    );
-
-
-    // ==================================================
-    // UPDATE LOCAL STATE IMMEDIATELY
-    // ==================================================
-
-    layout.pageCount =
-      nextPageCount;
-
-
     if (
-      !layout.positions ||
-      typeof layout.positions !==
-        "object"
+      isPageTurning
     ) {
 
-      layout.positions =
-        {};
+      return;
     }
 
 
-    layout.positions[
-      cardId
-    ] = targetPosition;
+    if (
+      !cardId ||
+      !currentCards.has(
+        cardId
+      )
+    ) {
+
+      return;
+    }
 
 
-    /*
-     * Keep the user on the spread that contains
-     * the newly-created page.
-     *
-     * On a desktop odd-page spread:
-     *
-     * Page 3 | [blank]
-     *
-     * becomes:
-     *
-     * Page 3 | Page 4
-     *
-     * without jumping somewhere else.
-     */
+    const oldPageCount =
+      getEffectivePageCount();
 
-    currentPage =
-      oldPageCount -
+
+    const nextPageCount =
+      oldPageCount +
       1;
 
 
-    selectedCardId =
-      null;
+    const targetPosition =
+      oldPageCount *
+      BINDER_SLOTS_PER_PAGE;
 
 
-    refreshSelectionStyles();
+    const updates =
+      {};
 
 
-    renderLayout();
+    updates[
+      `binderLayouts/${uid}/pageCount`
+    ] = nextPageCount;
 
 
-    const card =
-      currentCards.get(
-        cardId
+    updates[
+      `binderLayouts/${uid}/positions/${cardId}`
+    ] = targetPosition;
+
+
+    try {
+
+      await update(
+        ref(
+          db
+        ),
+        updates
       );
 
 
-    setStatus(
-      `Page ${nextPageCount} created. ${card?.name || "Card"} placed in Pocket 1.`
-    );
+      layout.pageCount =
+        nextPageCount;
 
-  } catch (
-    error
-  ) {
 
-    console.error(
-      "Could not create binder page from dropped card:",
+      if (
+        !layout.positions ||
+        typeof layout.positions !==
+          "object"
+      ) {
+
+        layout.positions =
+          {};
+      }
+
+
+      layout.positions[
+        cardId
+      ] = targetPosition;
+
+
+      /*
+       * Keep the same spread visible.
+       *
+       * Example:
+       *
+       * Page 3 | blank
+       *
+       * becomes:
+       *
+       * Page 3 | Page 4
+       */
+
+      currentPage =
+        Math.max(
+          0,
+          oldPageCount - 1
+        );
+
+
+      selectedCardId =
+        null;
+
+
+      refreshSelectionStyles();
+
+
+      renderLayout();
+
+
+      const card =
+        currentCards.get(
+          cardId
+        );
+
+
+      setStatus(
+        `Page ${nextPageCount} created. ${card?.name || "Card"} placed in Pocket 1.`
+      );
+
+    } catch (
       error
-    );
+    ) {
+
+      console.error(
+        "Could not create page from dropped card:",
+        error
+      );
 
 
-    setStatus(
-      "Could not create the new binder page."
-    );
+      setStatus(
+        "Could not create the new binder page."
+      );
+    }
   }
-}
 
 
   // ==================================================
-  // DELETE A SPECIFIC PAGE
+  // DELETE PAGE
   // ==================================================
 
   async function deleteBinderPage(
     pageToDelete
   ) {
+
+    if (
+      isPageTurning
+    ) {
+
+      return;
+    }
+
 
     const pageCount =
       getEffectivePageCount();
@@ -3060,10 +2840,6 @@ async function addPageAndPlaceCard(
     }
 
 
-    // ==================================================
-    // CONFIRM
-    // ==================================================
-
     let message =
       `Delete Page ${pageNumber}?`;
 
@@ -3106,10 +2882,6 @@ async function addPageAndPlaceCard(
       {};
 
 
-    // ==================================================
-    // REBUILD POSITIONS
-    // ==================================================
-
     for (
       const [
         cardId,
@@ -3138,9 +2910,7 @@ async function addPageAndPlaceCard(
       }
 
 
-      // ----------------------------------------------
-      // CARD ON DELETED PAGE
-      // ----------------------------------------------
+      // Card was on deleted page.
 
       if (
         position >= pageStart &&
@@ -3156,9 +2926,7 @@ async function addPageAndPlaceCard(
       }
 
 
-      // ----------------------------------------------
-      // CARD AFTER DELETED PAGE
-      // ----------------------------------------------
+      // Card comes after deleted page.
 
       if (
         position >=
@@ -3183,10 +2951,6 @@ async function addPageAndPlaceCard(
         continue;
       }
 
-
-      // ----------------------------------------------
-      // CARD BEFORE DELETED PAGE
-      // ----------------------------------------------
 
       nextPositions[
         cardId
@@ -3275,7 +3039,7 @@ async function addPageAndPlaceCard(
 
 
   // ==================================================
-  // BUILD ONE BINDER PAGE
+  // CREATE BINDER PAGE
   // ==================================================
 
   function createBinderPage(
@@ -3297,19 +3061,40 @@ async function addPageAndPlaceCard(
       "binder-page-shell";
 
 
-    pageShell.classList.add(
+    pageShell.dataset.pageIndex =
+      String(
+        pageIndex
+      );
 
+
+    if (
       side ===
-        "left"
+      "left"
+    ) {
 
-        ? "binder-page-left"
+      pageShell.classList.add(
+        "binder-page-left"
+      );
 
-        : "binder-page-right"
-    );
+    } else if (
+      side ===
+      "right"
+    ) {
+
+      pageShell.classList.add(
+        "binder-page-right"
+      );
+
+    } else {
+
+      pageShell.classList.add(
+        "binder-page-single"
+      );
+    }
 
 
     // ==================================================
-    // PAGE HEADER
+    // HEADER
     // ==================================================
 
     const pageHeader =
@@ -3386,7 +3171,7 @@ async function addPageAndPlaceCard(
 
 
     // ==================================================
-    // PAGE INNER
+    // PAGE
     // ==================================================
 
     const page =
@@ -3420,16 +3205,14 @@ async function addPageAndPlaceCard(
 
 
     // ==================================================
-    // NINE POCKETS
+    // 9 POCKETS
     // ==================================================
 
     for (
       let position =
         pageStart;
-
       position <
         pageEnd;
-
       position++
     ) {
 
@@ -3455,10 +3238,6 @@ async function addPageAndPlaceCard(
       );
 
 
-      // ----------------------------------------------
-      // POCKET NUMBER
-      // ----------------------------------------------
-
       const pocketNumber =
         document.createElement(
           "span"
@@ -3483,10 +3262,6 @@ async function addPageAndPlaceCard(
       );
 
 
-      // ----------------------------------------------
-      // CARD?
-      // ----------------------------------------------
-
       const cardId =
         getCardAtPosition(
           position
@@ -3503,34 +3278,29 @@ async function addPageAndPlaceCard(
 
 
         const element =
-  cardElements.get(
-    cardId
-  );
+          cardElements.get(
+            cardId
+          );
 
 
-if (
-  element
-) {
+        if (
+          element
+        ) {
 
-  /*
-   * The card may have previously been inside
-   * Cards to Place, where it had absolute
-   * positioning for the overlapping pile.
-   *
-   * Strip that positioning before putting it
-   * inside a physical binder pocket.
-   */
+          /*
+           * Remove physical Cards-to-Place stack
+           * positioning before putting it in a pocket.
+           */
 
-  clearUnsortedStackStyles(
-    element
-  );
+          clearUnsortedStackStyles(
+            element
+          );
 
 
-  slot.appendChild(
-    element
-  );
-}
-        
+          slot.appendChild(
+            element
+          );
+        }
 
       } else {
 
@@ -3564,6 +3334,14 @@ if (
           event
         ) => {
 
+          if (
+            isPageTurning
+          ) {
+
+            return;
+          }
+
+
           event.preventDefault();
 
 
@@ -3594,6 +3372,14 @@ if (
         (
           event
         ) => {
+
+          if (
+            isPageTurning
+          ) {
+
+            return;
+          }
+
 
           event.preventDefault();
 
@@ -3628,7 +3414,7 @@ if (
 
 
       // ==================================================
-      // TAP EMPTY POCKET
+      // TAP EMPTY SLOT
       // ==================================================
 
       slot.addEventListener(
@@ -3636,6 +3422,14 @@ if (
         (
           event
         ) => {
+
+          if (
+            isPageTurning
+          ) {
+
+            return;
+          }
+
 
           if (
             event.target.closest(
@@ -3681,7 +3475,180 @@ if (
 
 
   // ==================================================
-  // RENDER COMPLETE ORGANISER
+  // CREATE BLANK / ADD PAGE SIDE
+  // ==================================================
+
+  function createBlankBinderSide(
+    pageCount
+  ) {
+
+    const blankSide =
+      document.createElement(
+        "div"
+      );
+
+
+    blankSide.className =
+      "binder-blank-side";
+
+
+    const newPageNumber =
+      pageCount + 1;
+
+
+    blankSide.innerHTML = `
+
+      <div class="binder-blank-side-inner">
+
+        <div class="blank-page-drop-message">
+
+          <span class="blank-page-plus">
+            ＋
+          </span>
+
+          <strong>
+            Create Page ${newPageNumber}
+          </strong>
+
+          <span>
+            Drag a card here to create the page
+            and place it in Pocket 1.
+          </span>
+
+        </div>
+
+      </div>
+    `;
+
+
+    blankSide.addEventListener(
+      "dragover",
+      (
+        event
+      ) => {
+
+        if (
+          isPageTurning
+        ) {
+
+          return;
+        }
+
+
+        event.preventDefault();
+
+
+        if (
+          event.dataTransfer
+        ) {
+
+          event.dataTransfer.dropEffect =
+            "move";
+        }
+
+
+        blankSide.classList.add(
+          "binder-blank-side-dragover"
+        );
+      }
+    );
+
+
+    blankSide.addEventListener(
+      "dragleave",
+      (
+        event
+      ) => {
+
+        if (
+          !blankSide.contains(
+            event.relatedTarget
+          )
+        ) {
+
+          blankSide.classList.remove(
+            "binder-blank-side-dragover"
+          );
+        }
+      }
+    );
+
+
+    blankSide.addEventListener(
+      "drop",
+      (
+        event
+      ) => {
+
+        if (
+          isPageTurning
+        ) {
+
+          return;
+        }
+
+
+        event.preventDefault();
+
+
+        blankSide.classList.remove(
+          "binder-blank-side-dragover"
+        );
+
+
+        const cardId =
+
+          event
+            .dataTransfer
+            ?.getData(
+              "text/plain"
+            ) ||
+
+          draggedCardId;
+
+
+        if (
+          cardId
+        ) {
+
+          addPageAndPlaceCard(
+            cardId
+          );
+        }
+      }
+    );
+
+
+    blankSide.addEventListener(
+      "click",
+      () => {
+
+        if (
+          isPageTurning
+        ) {
+
+          return;
+        }
+
+
+        if (
+          selectedCardId
+        ) {
+
+          addPageAndPlaceCard(
+            selectedCardId
+          );
+        }
+      }
+    );
+
+
+    return blankSide;
+  }
+
+
+  // ==================================================
+  // RENDER
   // ==================================================
 
   function renderLayout() {
@@ -3701,18 +3668,16 @@ if (
 
     currentPage =
       Math.min(
-
         Math.max(
           currentPage,
           0
         ),
-
         pageCount - 1
       );
 
 
     // ==================================================
-    // CARDS TO PLACE
+    // UNSORTED
     // ==================================================
 
     unsortedCards.innerHTML =
@@ -3770,28 +3735,28 @@ if (
       0
     ) {
 
-      const emptyMessage =
+      const empty =
         document.createElement(
           "div"
         );
 
 
-      emptyMessage.className =
+      empty.className =
         "unsorted-empty";
 
 
-      emptyMessage.textContent =
+      empty.textContent =
         "Everything is in the binder.";
 
 
       unsortedCards.appendChild(
-        emptyMessage
+        empty
       );
     }
 
 
     // ==================================================
-    // BINDER PAGES
+    // BINDER
     // ==================================================
 
     binderSpread.innerHTML =
@@ -3810,10 +3775,6 @@ if (
         : "binder-spread binder-spread-single";
 
 
-    // ==================================================
-    // DESKTOP DOUBLE PAGE
-    // ==================================================
-
     if (
       doublePage
     ) {
@@ -3821,10 +3782,6 @@ if (
       const spreadStart =
         getSpreadStart();
 
-
-      /*
-       * Left side
-       */
 
       if (
         spreadStart <
@@ -3840,10 +3797,6 @@ if (
       }
 
 
-      /*
-       * Right side
-       */
-
       if (
         spreadStart + 1 <
         pageCount
@@ -3856,190 +3809,15 @@ if (
           )
         );
 
-      } else{
+      } else {
 
-  // ==================================================
-  // EMPTY RIGHT-HAND SIDE
-  // ==================================================
-
-  const blankSide =
-    document.createElement(
-      "div"
-    );
-
-
-  blankSide.className =
-    "binder-blank-side";
-
-
-  const newPageNumber =
-    pageCount + 1;
-
-
-  blankSide.innerHTML = `
-
-    <div class="binder-blank-side-inner">
-
-      <div class="blank-page-drop-message">
-
-        <span class="blank-page-plus">
-          ＋
-        </span>
-
-        <strong>
-          Create Page ${newPageNumber}
-        </strong>
-
-        <span>
-          Drag a card here to create the page
-          and place it in Pocket 1.
-        </span>
-
-      </div>
-
-    </div>
-  `;
-
-
-  // ==================================================
-  // DRAG OVER
-  // ==================================================
-
-  blankSide.addEventListener(
-    "dragover",
-    (
-      event
-    ) => {
-
-      event.preventDefault();
-
-
-      if (
-        event.dataTransfer
-      ) {
-
-        event.dataTransfer.dropEffect =
-          "move";
-      }
-
-
-      blankSide.classList.add(
-        "binder-blank-side-dragover"
-      );
-    }
-  );
-
-
-  // ==================================================
-  // DRAG LEAVE
-  // ==================================================
-
-  blankSide.addEventListener(
-    "dragleave",
-    (
-      event
-    ) => {
-
-      /*
-       * Don't remove the highlight when the
-       * cursor merely passes over one of the
-       * child text elements.
-       */
-
-      if (
-        !blankSide.contains(
-          event.relatedTarget
-        )
-      ) {
-
-        blankSide.classList.remove(
-          "binder-blank-side-dragover"
+        binderSpread.appendChild(
+          createBlankBinderSide(
+            pageCount
+          )
         );
       }
-    }
-  );
 
-
-  // ==================================================
-  // DROP CARD -> CREATE PAGE
-  // ==================================================
-
-  blankSide.addEventListener(
-    "drop",
-    (
-      event
-    ) => {
-
-      event.preventDefault();
-
-
-      blankSide.classList.remove(
-        "binder-blank-side-dragover"
-      );
-
-
-      const cardId =
-
-        event
-          .dataTransfer
-          ?.getData(
-            "text/plain"
-          ) ||
-
-        draggedCardId;
-
-
-      if (
-        !cardId
-      ) {
-
-        return;
-      }
-
-
-      addPageAndPlaceCard(
-        cardId
-      );
-    }
-  );
-
-
-  // ==================================================
-  // TAP-TO-PLACE SUPPORT
-  // ==================================================
-
-  /*
-   * This also works with the selection system.
-   *
-   * Select a card first, then click the empty
-   * binder side.
-   */
-
-  blankSide.addEventListener(
-    "click",
-    () => {
-
-      if (
-        selectedCardId
-      ) {
-
-        addPageAndPlaceCard(
-          selectedCardId
-        );
-      }
-    }
-  );
-
-
-  binderSpread.appendChild(
-    blankSide
-  );
-}
-
-
-      // ----------------------------------------------
-      // INDICATOR
-      // ----------------------------------------------
 
       if (
         spreadStart + 1 <
@@ -4064,14 +3842,8 @@ if (
       nextPageBtn.disabled =
         spreadStart + 2 >=
         pageCount;
-    }
 
-
-    // ==================================================
-    // MOBILE / TABLET SINGLE PAGE
-    // ==================================================
-
-    else {
+    } else {
 
       binderSpread.appendChild(
         createBinderPage(
@@ -4099,24 +3871,633 @@ if (
     refreshSelectionStyles();
 
 
-      /*
-      * Cards may just have moved into or out of
-      * the unsorted pile, so rebuild the physical stack.
-      */
+    requestAnimationFrame(
+      () => {
 
-      requestAnimationFrame(
-        () => {
+        syncUnsortedPanelHeight();
 
-          syncUnsortedPanelHeight();
-
-          layoutUnsortedStack();
-        }
-      );
+        layoutUnsortedStack();
+      }
+    );
   }
 
 
   // ==================================================
-  // CARD ORGANISER EVENTS
+  // 3D PAGE TURN HELPERS
+  // ==================================================
+
+  function getRelativeRect(
+    element,
+    parent
+  ) {
+
+    const elementRect =
+      element
+        .getBoundingClientRect();
+
+
+    const parentRect =
+      parent
+        .getBoundingClientRect();
+
+
+    return {
+      left:
+        elementRect.left -
+        parentRect.left,
+
+      top:
+        elementRect.top -
+        parentRect.top,
+
+      width:
+        elementRect.width,
+
+      height:
+        elementRect.height
+    };
+  }
+
+
+  function applyOverlayRect(
+    element,
+    rect
+  ) {
+
+    element.style.left =
+      `${rect.left}px`;
+
+
+    element.style.top =
+      `${rect.top}px`;
+
+
+    element.style.width =
+      `${rect.width}px`;
+
+
+    element.style.height =
+      `${rect.height}px`;
+  }
+
+
+  function waitForPageTurn(
+    element
+  ) {
+
+    return new Promise(
+      (
+        resolve
+      ) => {
+
+        let finished =
+          false;
+
+
+        const finish =
+          () => {
+
+            if (
+              finished
+            ) {
+
+              return;
+            }
+
+
+            finished =
+              true;
+
+
+            element.removeEventListener(
+              "animationend",
+              finish
+            );
+
+
+            resolve();
+          };
+
+
+        element.addEventListener(
+          "animationend",
+          finish,
+          {
+            once:
+              true
+          }
+        );
+
+
+        /*
+         * Fallback in case a browser fails to
+         * dispatch animationend.
+         */
+
+        setTimeout(
+          finish,
+          900
+        );
+      }
+    );
+  }
+
+
+  // ==================================================
+  // 3D PAGE TURN
+  // ==================================================
+
+  async function turnPage(
+    direction
+  ) {
+
+    if (
+      isPageTurning
+    ) {
+
+      return;
+    }
+
+
+    const pageCount =
+      getEffectivePageCount();
+
+
+    const doublePage =
+      isDoublePageMode();
+
+
+    let targetPage;
+
+
+    // ==================================================
+    // DETERMINE DESTINATION
+    // ==================================================
+
+    if (
+      doublePage
+    ) {
+
+      const spreadStart =
+        getSpreadStart();
+
+
+      if (
+        direction ===
+        "next"
+      ) {
+
+        if (
+          spreadStart + 2 >=
+          pageCount
+        ) {
+
+          return;
+        }
+
+
+        targetPage =
+          spreadStart + 2;
+
+      } else {
+
+        if (
+          spreadStart <=
+          0
+        ) {
+
+          return;
+        }
+
+
+        targetPage =
+          Math.max(
+            0,
+            spreadStart - 2
+          );
+      }
+
+    } else {
+
+      if (
+        direction ===
+        "next"
+      ) {
+
+        if (
+          currentPage >=
+          pageCount - 1
+        ) {
+
+          return;
+        }
+
+
+        targetPage =
+          currentPage + 1;
+
+      } else {
+
+        if (
+          currentPage <=
+          0
+        ) {
+
+          return;
+        }
+
+
+        targetPage =
+          currentPage - 1;
+      }
+    }
+
+
+    // ==================================================
+    // REDUCED MOTION
+    // ==================================================
+
+    if (
+      reducedMotionQuery.matches
+    ) {
+
+      currentPage =
+        targetPage;
+
+
+      renderLayout();
+
+
+      return;
+    }
+
+
+    // ==================================================
+    // CAPTURE OLD PAGE(S)
+    // ==================================================
+
+    let oldTurningPage;
+    let oldCompanionPage;
+
+
+    if (
+      doublePage
+    ) {
+
+      oldTurningPage =
+
+        direction ===
+        "next"
+
+          ? binderSpread.querySelector(
+              ".binder-page-right"
+            )
+
+          : binderSpread.querySelector(
+              ".binder-page-left"
+            );
+
+
+      oldCompanionPage =
+
+        direction ===
+        "next"
+
+          ? binderSpread.children[0]
+
+          : binderSpread.children[1];
+
+    } else {
+
+      oldTurningPage =
+        binderSpread.querySelector(
+          ".binder-page-shell"
+        );
+
+
+      oldCompanionPage =
+        null;
+    }
+
+
+    if (
+      !oldTurningPage
+    ) {
+
+      currentPage =
+        targetPage;
+
+
+      renderLayout();
+
+
+      return;
+    }
+
+
+    const oldTurningClone =
+      oldTurningPage.cloneNode(
+        true
+      );
+
+
+    const oldTurningRect =
+      getRelativeRect(
+        oldTurningPage,
+        binderSpread
+      );
+
+
+    let oldCompanionClone =
+      null;
+
+
+    let oldCompanionRect =
+      null;
+
+
+    if (
+      oldCompanionPage
+    ) {
+
+      oldCompanionClone =
+        oldCompanionPage.cloneNode(
+          true
+        );
+
+
+      oldCompanionRect =
+        getRelativeRect(
+          oldCompanionPage,
+          binderSpread
+        );
+    }
+
+
+    // ==================================================
+    // RENDER FINAL SPREAD UNDERNEATH
+    // ==================================================
+
+    isPageTurning =
+      true;
+
+
+    binderWorkspace.classList.add(
+      "binder-is-turning"
+    );
+
+
+    currentPage =
+      targetPage;
+
+
+    renderLayout();
+
+
+    // ==================================================
+    // CAPTURE NEW BACK FACE
+    // ==================================================
+
+    let newBackPage;
+
+
+    if (
+      doublePage
+    ) {
+
+      newBackPage =
+
+        direction ===
+        "next"
+
+          ? binderSpread.querySelector(
+              ".binder-page-left"
+            )
+
+          : binderSpread.querySelector(
+              ".binder-page-right"
+            );
+
+    } else {
+
+      newBackPage =
+        binderSpread.querySelector(
+          ".binder-page-shell"
+        );
+    }
+
+
+    if (
+      !newBackPage
+    ) {
+
+      isPageTurning =
+        false;
+
+
+      binderWorkspace.classList.remove(
+        "binder-is-turning"
+      );
+
+
+      renderLayout();
+
+
+      return;
+    }
+
+
+    const newBackClone =
+      newBackPage.cloneNode(
+        true
+      );
+
+
+    // ==================================================
+    // STATIC OLD COMPANION PAGE
+    // ==================================================
+
+    let staticOverlay =
+      null;
+
+
+    if (
+      oldCompanionClone &&
+      oldCompanionRect
+    ) {
+
+      staticOverlay =
+        oldCompanionClone;
+
+
+      staticOverlay.classList.add(
+        "binder-static-page-overlay"
+      );
+
+
+      applyOverlayRect(
+        staticOverlay,
+        oldCompanionRect
+      );
+
+
+      binderSpread.appendChild(
+        staticOverlay
+      );
+    }
+
+
+    // ==================================================
+    // TURNING SHEET
+    // ==================================================
+
+    const turner =
+      document.createElement(
+        "div"
+      );
+
+
+    turner.className =
+      "binder-page-turner";
+
+
+    turner.classList.add(
+
+      direction ===
+        "next"
+
+        ? "binder-page-turner-next"
+
+        : "binder-page-turner-previous"
+    );
+
+
+    applyOverlayRect(
+      turner,
+      oldTurningRect
+    );
+
+
+    oldTurningClone.classList.add(
+      "binder-page-turn-face",
+      "binder-page-turn-front"
+    );
+
+
+    newBackClone.classList.add(
+      "binder-page-turn-face",
+      "binder-page-turn-back"
+    );
+
+
+    /*
+     * These are visual clones only.
+     */
+
+    oldTurningClone
+      .querySelectorAll(
+        "button"
+      )
+      .forEach(
+        (
+          button
+        ) => {
+
+          button.disabled =
+            true;
+        }
+      );
+
+
+    newBackClone
+      .querySelectorAll(
+        "button"
+      )
+      .forEach(
+        (
+          button
+        ) => {
+
+          button.disabled =
+            true;
+        }
+      );
+
+
+    turner.appendChild(
+      oldTurningClone
+    );
+
+
+    turner.appendChild(
+      newBackClone
+    );
+
+
+    binderSpread.appendChild(
+      turner
+    );
+
+
+    /*
+     * Force layout so the browser sees the
+     * unturned state before animation starts.
+     */
+
+    void turner.offsetWidth;
+
+
+    turner.classList.add(
+
+      direction ===
+        "next"
+
+        ? "binder-page-turn-animate-next"
+
+        : "binder-page-turn-animate-previous"
+    );
+
+
+    await waitForPageTurn(
+      turner
+    );
+
+
+    // ==================================================
+    // CLEAN UP
+    // ==================================================
+
+    turner.remove();
+
+
+    if (
+      staticOverlay
+    ) {
+
+      staticOverlay.remove();
+    }
+
+
+    isPageTurning =
+      false;
+
+
+    binderWorkspace.classList.remove(
+      "binder-is-turning"
+    );
+
+
+    /*
+     * Final clean render restores real event
+     * handlers and control states.
+     */
+
+    renderLayout();
+  }
+
+
+  // ==================================================
+  // CARD EVENTS
   // ==================================================
 
   function attachCardOrganiserEvents(
@@ -4132,15 +4513,22 @@ if (
       true;
 
 
-    // ==================================================
-    // DRAG START
-    // ==================================================
-
     cardBox.addEventListener(
       "dragstart",
       (
         event
       ) => {
+
+        if (
+          isPageTurning
+        ) {
+
+          event.preventDefault();
+
+
+          return;
+        }
+
 
         draggedCardId =
           cardId;
@@ -4167,10 +4555,6 @@ if (
       }
     );
 
-
-    // ==================================================
-    // DRAG END
-    // ==================================================
 
     cardBox.addEventListener(
       "dragend",
@@ -4203,20 +4587,19 @@ if (
     );
 
 
-    // ==================================================
-    // TAP CARD
-    // ==================================================
-
     cardBox.addEventListener(
       "click",
       (
         event
       ) => {
 
-        /*
-         * Don't select the card when clicking
-         * Cardmarket.
-         */
+        if (
+          isPageTurning
+        ) {
+
+          return;
+        }
+
 
         if (
           event.target.closest(
@@ -4232,8 +4615,8 @@ if (
 
 
         /*
-         * Card already selected + click another
-         * binder card = swap with that card.
+         * Selected card + another binder card
+         * = swap.
          */
 
         if (
@@ -4273,7 +4656,7 @@ if (
 
 
   // ==================================================
-  // CREATE CARD ELEMENT
+  // CREATE CARD
   // ==================================================
 
   async function createCardElement(
@@ -4315,7 +4698,6 @@ if (
     // ==================================================
 
     const {
-
       text:
         treatmentText,
 
@@ -4323,7 +4705,6 @@ if (
         treatmentClass,
 
       show
-
     } = mapTreatment(
       card.treatment
     );
@@ -4366,6 +4747,16 @@ if (
     // ==================================================
     // IMAGE
     // ==================================================
+
+    const imageWrap =
+      document.createElement(
+        "div"
+      );
+
+
+    imageWrap.className =
+      "card-image-wrap";
+
 
     const image =
       document.createElement(
@@ -4437,8 +4828,13 @@ if (
     }
 
 
+    imageWrap.appendChild(
+      image
+    );
+
+
     // ==================================================
-    // CARDMARKET BUTTON
+    // CARDMARKET
     // ==================================================
 
     const button =
@@ -4469,7 +4865,10 @@ if (
 
 
         /*
-         * Never fetch Cardmarket.
+         * Cardmarket is never fetched.
+         *
+         * We only construct/open a link after
+         * this human click.
          */
 
         let sf =
@@ -4538,19 +4937,19 @@ if (
         }
 
 
-        const searchUrl =
+        window.open(
           buildCardmarketSearchUrl(
             sf,
             card
-          );
-
-
-        window.open(
-          searchUrl,
+          ),
           "_blank"
         );
       };
 
+
+    // ==================================================
+    // BUILD CARD
+    // ==================================================
 
     cardBox.appendChild(
       quantity
@@ -4558,7 +4957,7 @@ if (
 
 
     cardBox.appendChild(
-      image
+      imageWrap
     );
 
 
@@ -4578,117 +4977,36 @@ if (
 
 
   // ==================================================
-  // PREVIOUS
+  // PREVIOUS / NEXT
   // ==================================================
 
   previousPageBtn.addEventListener(
     "click",
     () => {
 
-      if (
-        isDoublePageMode()
-      ) {
-
-        const spreadStart =
-          getSpreadStart();
-
-
-        if (
-          spreadStart >
-          0
-        ) {
-
-          currentPage =
-            Math.max(
-              0,
-              spreadStart - 2
-            );
-
-
-          renderLayout();
-        }
-
-      } else {
-
-        if (
-          currentPage >
-          0
-        ) {
-
-          currentPage -=
-            1;
-
-
-          renderLayout();
-        }
-      }
+      turnPage(
+        "previous"
+      );
     }
   );
 
-
-  // ==================================================
-  // NEXT
-  // ==================================================
 
   nextPageBtn.addEventListener(
     "click",
     () => {
 
-      const pageCount =
-        getEffectivePageCount();
-
-
-      if (
-        isDoublePageMode()
-      ) {
-
-        const spreadStart =
-          getSpreadStart();
-
-
-        if (
-          spreadStart + 2 <
-          pageCount
-        ) {
-
-          currentPage =
-            spreadStart + 2;
-
-
-          renderLayout();
-        }
-
-      } else {
-
-        if (
-          currentPage <
-          pageCount - 1
-        ) {
-
-          currentPage +=
-            1;
-
-
-          renderLayout();
-        }
-      }
+      turnPage(
+        "next"
+      );
     }
   );
 
-
-  // ==================================================
-  // ADD PAGE
-  // ==================================================
 
   addPageBtn.addEventListener(
     "click",
     addBinderPage
   );
 
-
-  // ==================================================
-  // RETURN SELECTED CARD
-  // ==================================================
 
   returnUnsortedBtn.addEventListener(
     "click",
@@ -4707,7 +5025,7 @@ if (
 
 
   // ==================================================
-  // CARDS TO PLACE DROP TARGET
+  // UNSORTED DROP TARGET
   // ==================================================
 
   unsortedPanel.addEventListener(
@@ -4715,6 +5033,14 @@ if (
     (
       event
     ) => {
+
+      if (
+        isPageTurning
+      ) {
+
+        return;
+      }
+
 
       event.preventDefault();
 
@@ -4752,6 +5078,14 @@ if (
       event
     ) => {
 
+      if (
+        isPageTurning
+      ) {
+
+        return;
+      }
+
+
       event.preventDefault();
 
 
@@ -4784,20 +5118,37 @@ if (
 
 
   // ==================================================
-  // SWITCH LAYOUT WHEN SCREEN SIZE CHANGES
+  // RESPONSIVE CHANGES
   // ==================================================
 
   desktopSpreadQuery.addEventListener(
     "change",
     () => {
 
-      renderLayout();
+      if (
+        !isPageTurning
+      ) {
+
+        renderLayout();
+      }
     }
   );
 
 
+  stackedTrayQuery.addEventListener(
+    "change",
+    syncUnsortedPanelHeight
+  );
+
+
+  window.addEventListener(
+    "resize",
+    syncUnsortedPanelHeight
+  );
+
+
   // ==================================================
-  // FIREBASE LAYOUT LISTENER
+  // FIREBASE LAYOUT
   // ==================================================
 
   onValue(
@@ -4815,7 +5166,6 @@ if (
       const positions =
 
         value.positions &&
-
         typeof value.positions ===
           "object"
 
@@ -4825,7 +5175,6 @@ if (
 
 
       layout = {
-
         pageCount:
           Math.max(
             Number(
@@ -4842,9 +5191,13 @@ if (
         true;
 
 
-      renderLayout();
-    },
+      if (
+        !isPageTurning
+      ) {
 
+        renderLayout();
+      }
+    },
 
     (
       error
@@ -4857,12 +5210,8 @@ if (
 
 
       layout = {
-
-        pageCount:
-          1,
-
-        positions:
-          {}
+        pageCount: 1,
+        positions: {}
       };
 
 
@@ -4913,12 +5262,12 @@ if (
         [];
 
 
-      const keyForIndex =
+      const cardMetadata =
         [];
 
 
       // ==================================================
-      // SCRYFALL IDENTIFIERS
+      // BUILD REQUESTS
       // ==================================================
 
       for (
@@ -4935,12 +5284,9 @@ if (
           );
 
 
-        keyForIndex.push({
-
+        cardMetadata.push({
           cardId,
-
           card,
-
           key
         });
 
@@ -4970,7 +5316,7 @@ if (
 
 
       // ==================================================
-      // BATCH FETCH
+      // SCRYFALL BATCH
       // ==================================================
 
       if (
@@ -4990,7 +5336,7 @@ if (
               card,
               key
             } of
-            keyForIndex
+            cardMetadata
           ) {
 
             if (
@@ -5101,7 +5447,7 @@ if (
 
 
       // ==================================================
-      // CREATE CARDS
+      // BUILD CARD ELEMENTS
       // ==================================================
 
       const nextCards =
@@ -5114,15 +5460,11 @@ if (
 
       for (
         const {
-
           cardId,
-
           card,
-
           key
-
         } of
-        keyForIndex
+        cardMetadata
       ) {
 
         nextCards.set(
@@ -5193,7 +5535,6 @@ if (
       renderLayout();
     },
 
-
     (
       error
     ) => {
@@ -5235,7 +5576,6 @@ function enableShareControls(
 
   shareBtn.addEventListener(
     "click",
-
     async () => {
 
       const usernameSnap =
@@ -5273,7 +5613,9 @@ function enableShareControls(
           "📎 Shareable binder link copied to clipboard!"
         );
 
-      } catch {
+      } catch (
+        error
+      ) {
 
         fallbackCopyToClipboard(
           shareUrl
@@ -5328,10 +5670,9 @@ function enableShareControls(
 
 
       alert(
-
         successful
 
-          ? "📎 Link copied (fallback)!"
+          ? "📎 Link copied!"
 
           : "❌ Copy failed."
       );
