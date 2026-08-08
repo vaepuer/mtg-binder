@@ -1293,8 +1293,8 @@ document.addEventListener(
       );
 
 
-    const basePath =
-      `${window.location.origin}/mtg-binder`;
+    //const basePath =
+    //  `${window.location.origin}/mtg-binder`;
 
 
     // ==================================================
@@ -1482,7 +1482,7 @@ document.addEventListener(
 
 
           location.href =
-            `${basePath}/login.html`;
+            "login.html";
         }
       );
   }
@@ -5586,27 +5586,41 @@ function enableShareControls(
           )
         );
 
-
-      const basePath =
-        `${window.location.origin}/mtg-binder`;
-
-
-      const shareUrl =
-
-        usernameSnap.exists()
-
-          ? `${basePath}/public-binder.html?username=${usernameSnap.val()}`
-
-          : `${basePath}/public-binder.html?uid=${user.uid}`;
+        const shareUrl =
+  new URL(
+    "public-binder.html",
+    window.location.href
+  );
 
 
+if (
+  usernameSnap.exists()
+) {
+
+  shareUrl.searchParams.set(
+    "username",
+    usernameSnap.val()
+  );
+
+} else {
+
+  shareUrl.searchParams.set(
+    "uid",
+    user.uid
+  );
+}
+
+
+const shareUrlText =
+  shareUrl.toString();
+      
       try {
 
         await navigator
-          .clipboard
-          .writeText(
-            shareUrl
-          );
+  .clipboard
+  .writeText(
+    shareUrlText
+  );
 
 
         alert(
@@ -5618,7 +5632,7 @@ function enableShareControls(
       ) {
 
         fallbackCopyToClipboard(
-          shareUrl
+          shareUrlText
         );
       }
     }

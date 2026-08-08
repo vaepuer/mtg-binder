@@ -7,38 +7,101 @@
   <link rel="stylesheet" href="style-binder.css" />
   <link rel="icon" href="favicon.ico" type="image/x-icon" />
 </head>
+
 <body>
+
   <header>
     <div class="container">
       <img src="Credits.png" alt="logo" class="site-logo">
     </div>
   </header>
+
+
   <div id="banner" class="banner">
     Now Viewing Your Binder!
   </div>
+
+
   <div class="user-container">
-    <a href="index.html" class="back-button">Go Back to Index</a>    
-    <a href="settings.html" class="back-button">Settings</a>
-    <button id="shareBinderBtn">🔗 Share Binder</button>
-    
+
+    <a
+      href="index.html"
+      class="back-button"
+    >
+      Go Back to Index
+    </a>
+
+    <a
+      href="settings.html"
+      class="back-button"
+    >
+      Settings
+    </a>
+
+    <button id="shareBinderBtn">
+      🔗 Share Binder
+    </button>
+
   </div>
-  <div class="binder-container" id="binderContainer"></div>  
-  <script type="module" src="binder.js"></script>
+
+
+  <div
+    class="binder-container"
+    id="binderContainer"
+  ></div>
+
+
+  <script
+    type="module"
+    src="binder.js"
+  ></script>
+
 </body>
+
+
 <footer id="foot-notes">
+
   <div id="ko-fi-footer">
-    <script src='https://storage.ko-fi.com/cdn/scripts/overlay-widget.js'></script>
-    <script  class="ko-fi">
-      kofiWidgetOverlay.draw('vaemtg', {
-        'type': 'floating-chat',
-        'floating-chat.donateButton.text': 'Donate',
-        'floating-chat.donateButton.background-color': '#323842',
-        'floating-chat.donateButton.text-color': '#fff'
-      });
-    </script>    
+
+    <script src="https://storage.ko-fi.com/cdn/scripts/overlay-widget.js"></script>
+
+    <script class="ko-fi">
+
+      kofiWidgetOverlay.draw(
+        "vaemtg",
+        {
+          "type":
+            "floating-chat",
+
+          "floating-chat.donateButton.text":
+            "Donate",
+
+          "floating-chat.donateButton.background-color":
+            "#323842",
+
+          "floating-chat.donateButton.text-color":
+            "#fff"
+        }
+      );
+
+    </script>
+
   </div>
+
+
   <div>
-    <p>&copy; 2025 TGBinder. All rights reserved. | <a href="/mtg-binder/privacy.html">[Privacy Policy]</a></p>
+
+    <p>
+      &copy; 2026 TGBinder.
+      All rights reserved.
+      |
+      <a href="privacy.html">
+        [Privacy Policy]
+      </a>
+    </p>
+
   </div>
+
 </footer>
+
 </html>

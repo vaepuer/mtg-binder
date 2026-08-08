@@ -1,78 +1,241 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
   <meta charset="UTF-8" />
-  <title>Card Inventory</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link rel="stylesheet" href="index-style.css" />
-  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+
+  <title>
+    Card Inventory
+  </title>
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <link
+    rel="stylesheet"
+    href="index-style.css"
+  />
+
+  <link
+    rel="icon"
+    href="favicon.ico"
+    type="image/x-icon"
+  />
+
 </head>
+
+
 <body>
+
   <header>
+
     <div class="container">
-      <img src="Logo.png" alt="logo" class="site-logo">
+
+      <img
+        src="Logo.png"
+        alt="logo"
+        class="site-logo"
+      >
+
     </div>
+
   </header>
+
+
   <div id="header">
+
     <div id="part1">
     </div>
-    
+
   </div>
 
-  <!-- Content for authenticated users -->
-  <div id="cardContent" class="container">
-    <!-- Add this section inside the authenticated content (cardContent) -->
-     <div>
-      <button id="logoutBtn">Logout</button>
-      <a href="binder.html" class="button" id="openBinderButton"">Open Binder</a>
-      <a href="settings.html" class="button">Settings</a>
-     </div>
-     
-    
+
+  <div
+    id="cardContent"
+    class="container"
+  >
+
+    <div>
+
+      <button id="logoutBtn">
+        Logout
+      </button>
+
+
+      <a
+        href="binder.html"
+        class="button"
+        id="openBinderButton"
+      >
+        Open Binder
+      </a>
+
+
+      <a
+        href="settings.html"
+        class="button"
+      >
+        Settings
+      </a>
+
+    </div>
+
 
     <div class="form-with-image">
-      <div class="form-container">
-        <!-- Form to add cards -->
-        <form id="cardForm">
-          <input type="text" id="cardNameInput" placeholder="Card Name or '2 Card Name" required />
-          <div id="cardNameSuggestions" class="suggestions-container"></div> <!-- Suggestions Container -->
 
-          <input type="text" id="setCodeInput" placeholder="Set Code" required />
-          <div id="setCodeSuggestions" class="suggestions-container"></div> <!-- Suggestions Container -->
-          
-          <input type="text" id="collectorNumberInput" placeholder="Collector #" />
-          <select id="treatmentSelect" title="Card Finish Type">
-            <option value="">Non-Foil</option>
-            <option value="PRM">Pre-Modern</option>
-            <option value="TRA">Traditional</option>
-            <option value="FTV">From the Vault</option>
-            <option value="FET">Foil-Etched</option>
-            <option value="GET">Gold-Etched</option>
-            <option value="TEX">Textured Foil</option>
-            <option value="AMP">Ampersand Foil</option>
-            <option value="SIL">Silverscreen Foil</option>
-            <option value="NEON">Neon Ink</option>
-            <option value="GIL">Gilded Foil</option>
-            <option value="GAL">Galaxy Foil</option>
-            <option value="SUR">Surge Foil</option>
-            <option value="DBR">Double Rainbow</option>
-            <option value="SCT">Step-and-Compleat Foil</option>
-            <option value="OSR">Oil Slick Raised Foil</option>
-            <option value="HAL">Halo Foil</option>
-            <option value="RAI">Rainbow Foil</option>
-            <option value="RIP">Ripple Foil</option>
-            <option value="FRA">Fracture Foil</option>
-            <option value="MAN">Mana Foil</option>
-            <option value="FIR">First Place Foil</option>
+      <div class="form-container">
+
+        <form id="cardForm">
+
+          <input
+            type="text"
+            id="cardNameInput"
+            placeholder="Card Name or '2 Card Name"
+            required
+          />
+
+
+          <div
+            id="cardNameSuggestions"
+            class="suggestions-container"
+          ></div>
+
+
+          <input
+            type="text"
+            id="setCodeInput"
+            placeholder="Set Code"
+            required
+          />
+
+
+          <div
+            id="setCodeSuggestions"
+            class="suggestions-container"
+          ></div>
+
+
+          <input
+            type="text"
+            id="collectorNumberInput"
+            placeholder="Collector #"
+          />
+
+
+          <select
+            id="treatmentSelect"
+            title="Card Finish Type"
+          >
+
+            <option value="">
+              Non-Foil
+            </option>
+
+            <option value="PRM">
+              Pre-Modern
+            </option>
+
+            <option value="TRA">
+              Traditional
+            </option>
+
+            <option value="FTV">
+              From the Vault
+            </option>
+
+            <option value="FET">
+              Foil-Etched
+            </option>
+
+            <option value="GET">
+              Gold-Etched
+            </option>
+
+            <option value="TEX">
+              Textured Foil
+            </option>
+
+            <option value="AMP">
+              Ampersand Foil
+            </option>
+
+            <option value="SIL">
+              Silverscreen Foil
+            </option>
+
+            <option value="NEON">
+              Neon Ink
+            </option>
+
+            <option value="GIL">
+              Gilded Foil
+            </option>
+
+            <option value="GAL">
+              Galaxy Foil
+            </option>
+
+            <option value="SUR">
+              Surge Foil
+            </option>
+
+            <option value="DBR">
+              Double Rainbow
+            </option>
+
+            <option value="SCT">
+              Step-and-Compleat Foil
+            </option>
+
+            <option value="OSR">
+              Oil Slick Raised Foil
+            </option>
+
+            <option value="HAL">
+              Halo Foil
+            </option>
+
+            <option value="RAI">
+              Rainbow Foil
+            </option>
+
+            <option value="RIP">
+              Ripple Foil
+            </option>
+
+            <option value="FRA">
+              Fracture Foil
+            </option>
+
+            <option value="MAN">
+              Mana Foil
+            </option>
+
+            <option value="FIR">
+              First Place Foil
+            </option>
+
           </select>
-          <button type="submit">Add Card</button>
+
+
+          <button type="submit">
+            Add Card
+          </button>
+
         </form>
 
-        <!-- Table for displaying added cards -->
+
         <div id="cardTableWrapper">
+
           <table id="cardTable">
+
             <thead>
+
               <tr>
+
                 <th>Name</th>
                 <th>Qty</th>
                 <th>Treatment</th>
@@ -81,72 +244,237 @@
                 <th>Search</th>
                 <th>Edit</th>
                 <th>Delete</th>
+
               </tr>
+
             </thead>
+
+
             <tbody id="cardTableBody">
-
             </tbody>
+
           </table>
+
         </div>
+
       </div>
+
     </div>
+
   </div>
 
-  <div id="editModal" class="modal">
-  <div class="modal-content">
-    <span id="closeModalBtn" class="close-btn">×</span>
-    <h2>Edit Card</h2>
-    <form id="modalCardForm">
-      <input type="text" id="modalCardNameInput" placeholder="Card Name" required />
-      <input type="text" id="modalSetCodeInput" placeholder="Set Code" />
-      <input type="text" id="modalCollectorNumberInput" placeholder="Collector #" />
-      <input type="number" id="modalQuantityInput" placeholder="Quantity" required />
-      <label for="modalTreatmentSelect">Treatment</label>
+
+  <div
+    id="editModal"
+    class="modal"
+  >
+
+    <div class="modal-content">
+
+      <span
+        id="closeModalBtn"
+        class="close-btn"
+      >
+        ×
+      </span>
+
+
+      <h2>
+        Edit Card
+      </h2>
+
+
+      <form id="modalCardForm">
+
+        <input
+          type="text"
+          id="modalCardNameInput"
+          placeholder="Card Name"
+          required
+        />
+
+
+        <input
+          type="text"
+          id="modalSetCodeInput"
+          placeholder="Set Code"
+        />
+
+
+        <input
+          type="text"
+          id="modalCollectorNumberInput"
+          placeholder="Collector #"
+        />
+
+
+        <input
+          type="number"
+          id="modalQuantityInput"
+          placeholder="Quantity"
+          required
+        />
+
+
+        <label for="modalTreatmentSelect">
+          Treatment
+        </label>
+
+
         <select id="modalTreatmentSelect">
-          <option value="">Non-Foil</option>
-          <option value="PRM">Pre-Modern</option>
-          <option value="TRA">Traditional</option>
-          <option value="FTV">From the Vault</option>
-          <option value="FET">Foil-Etched</option>
-          <option value="GET">Gold-Etched</option>
-          <option value="TEX">Textured Foil</option>
-          <option value="AMP">Ampersand Foil</option>
-          <option value="SIL">Silverscreen Foil</option>
-          <option value="NEON">Neon Ink</option>
-          <option value="GIL">Gilded Foil</option>
-          <option value="GAL">Galaxy Foil</option>
-          <option value="SUR">Surge Foil</option>
-          <option value="DBR">Double Rainbow</option>
-          <option value="SCT">Step-and-Compleat Foil</option>
-          <option value="OSR">Oil Slick Raised Foil</option>
-          <option value="HAL">Halo Foil</option>
-          <option value="RAI">Rainbow Foil</option>
-          <option value="RIP">Ripple Foil</option>
-          <option value="FRA">Fracture Foil</option>
-          <option value="MAN">Mana Foil</option>
-          <option value="FIR">First Place Foil</option>
-        </select>
-      <button type="button" id="saveEditBtn">Save Changes</button>
-    </form>
-  </div>
-</div>
 
-  
-  <script type="module" src="index.js"></script>
-</body>
-<footer id="foot-notes">
-  <div id="ko-fi-footer">
-    <script src='https://storage.ko-fi.com/cdn/scripts/overlay-widget.js'></script>
-    <script  class="ko-fi">
-      kofiWidgetOverlay.draw('vaemtg', {
-        'type': 'floating-chat',
-        'floating-chat.donateButton.text': 'Donate',
-        'floating-chat.donateButton.background-color': '#323842',
-        'floating-chat.donateButton.text-color': '#fff'
-      });
-    </script>
-  
-    <p>&copy; 2025 TGBinder. All rights reserved. | <a href="/mtg-binder/privacy.html">[Privacy Policy]</a></p>
+          <option value="">
+            Non-Foil
+          </option>
+
+          <option value="PRM">
+            Pre-Modern
+          </option>
+
+          <option value="TRA">
+            Traditional
+          </option>
+
+          <option value="FTV">
+            From the Vault
+          </option>
+
+          <option value="FET">
+            Foil-Etched
+          </option>
+
+          <option value="GET">
+            Gold-Etched
+          </option>
+
+          <option value="TEX">
+            Textured Foil
+          </option>
+
+          <option value="AMP">
+            Ampersand Foil
+          </option>
+
+          <option value="SIL">
+            Silverscreen Foil
+          </option>
+
+          <option value="NEON">
+            Neon Ink
+          </option>
+
+          <option value="GIL">
+            Gilded Foil
+          </option>
+
+          <option value="GAL">
+            Galaxy Foil
+          </option>
+
+          <option value="SUR">
+            Surge Foil
+          </option>
+
+          <option value="DBR">
+            Double Rainbow
+          </option>
+
+          <option value="SCT">
+            Step-and-Compleat Foil
+          </option>
+
+          <option value="OSR">
+            Oil Slick Raised Foil
+          </option>
+
+          <option value="HAL">
+            Halo Foil
+          </option>
+
+          <option value="RAI">
+            Rainbow Foil
+          </option>
+
+          <option value="RIP">
+            Ripple Foil
+          </option>
+
+          <option value="FRA">
+            Fracture Foil
+          </option>
+
+          <option value="MAN">
+            Mana Foil
+          </option>
+
+          <option value="FIR">
+            First Place Foil
+          </option>
+
+        </select>
+
+
+        <button
+          type="button"
+          id="saveEditBtn"
+        >
+          Save Changes
+        </button>
+
+      </form>
+
+    </div>
+
   </div>
+
+
+  <script
+    type="module"
+    src="index.js"
+  ></script>
+
+</body>
+
+
+<footer id="foot-notes">
+
+  <div id="ko-fi-footer">
+
+    <script src="https://storage.ko-fi.com/cdn/scripts/overlay-widget.js"></script>
+
+    <script class="ko-fi">
+
+      kofiWidgetOverlay.draw(
+        "vaemtg",
+        {
+          "type":
+            "floating-chat",
+
+          "floating-chat.donateButton.text":
+            "Donate",
+
+          "floating-chat.donateButton.background-color":
+            "#323842",
+
+          "floating-chat.donateButton.text-color":
+            "#fff"
+        }
+      );
+
+    </script>
+
+
+    <p>
+      &copy; 2026 TGBinder.
+      All rights reserved.
+      |
+      <a href="privacy.html">
+        [Privacy Policy]
+      </a>
+    </p>
+
+  </div>
+
 </footer>
+
 </html>
